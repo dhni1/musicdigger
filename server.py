@@ -190,6 +190,19 @@ class Handler(SimpleHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, directory=str(ROOT), **kwargs)
 
+    def do_GET(self):
+        parsed = parse.urlparse(self.path)
+
+        if parsed.path == "/api/genres":
+            self._handle_genres()
+            return
+
+        if parsed.path == "/api/genre-details":
+            self._handle_genre_details(parsed.query)
+            return
+
+        super().do_GET()
+
     def do_OPTIONS(self):
         self.send_response(200)
         self.send_header('Access-Control-Allow-Origin', '*')
