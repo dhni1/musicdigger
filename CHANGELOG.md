@@ -57,3 +57,8 @@
 ## v0.4.5
 - Spotify 장르 시드 API 의존성을 제거하고 `data/genres.json` 기반으로 장르 목록 응답하도록 수정
 - `/api/genres` 호출 시 502가 발생하던 문제 수정
+
+## v0.4.6
+- 검색창이 트랙명이나 아티스트명이 아니라 장르 이름과 스타일만 검색하도록 수정
+- Spotify `Get Available Genre Seeds` 와 `Get Recommendations` 흐름을 기준으로 장르별 추천 곡을 우선 불러오도록 수정
+- 추천 API 실패 시 로컬 장르 데이터와 장르 기반 검색 결과로 자연스럽게 폴백되도록 보강

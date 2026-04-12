@@ -320,18 +320,21 @@ async function fetchGenreDetails(genreId) {
 }
 
 function applySearch(query) {
-  const keyword = query.trim().toLowerCase();
+  const keyword = buildSearchToken(query);
 
-  state.filteredGenres = state.genres.filter(genre => {
-    const tracks = (genre.tracks ?? [])
-      .map(track => `${track.title} ${track.artist}`)
-      .join(' ')
-      .toLowerCase();
-
-    return `${genre.name} ${genre.description ?? ''} ${tracks}`
-      .toLowerCase()
-      .includes(keyword);
-  });
+  if (!keyword.normalized) {
+    state.filteredGenres = [...state.genres];
+  } else {
+    state.filteredGenres = state.genres
+      .map((genre, index) => ({
+        genre,
+        index,
+        score: getGenreSearchScore(genre, keyword),
+      }))
+      .filter(item => item.score > 0)
+      .sort((left, right) => right.score - left.score || left.index - right.index)
+      .map(item => item.genre);
+  }
 
   updateSearchStatus(keyword);
   renderGenreList();
@@ -347,9 +350,93 @@ function applySearch(query) {
 }
 
 function updateSearchStatus(keyword) {
-  const message = keyword ? `${state.filteredGenres.length} Results` : 'All Results';
+  const message = keyword.normalized ? `${state.filteredGenres.length} Genres` : 'All Genres';
   elements.searchStatus.textContent = message;
   elements.heroSearchStatus.textContent = message;
+}
+
+function getGenreSearchScore(genre, keyword) {
+  const primaryTerms = [genre.name, genre.id];
+  const secondaryTerms = [
+    genre.description,
+    ...(genre.subgenres ?? []).map(resolveGenreSearchLabel),
+    ...(genre.similar ?? []).map(resolveGenreSearchLabel),
+    ...(genre.fusion ?? []).map(resolveGenreSearchLabel),
+    ...(genre.relatedNames ?? []),
+  ];
+
+  let score = 0;
+
+  primaryTerms.forEach(value => {
+    score = Math.max(score, scoreSearchValue(value, keyword, 120, 90, 70));
+  });
+
+  secondaryTerms.forEach(value => {
+    score = Math.max(score, scoreSearchValue(value, keyword, 45, 30, 15));
+  });
+
+  return score;
+}
+
+function resolveGenreSearchLabel(value) {
+  const normalizedValue = normalizeSearchText(value);
+  const relatedGenre = state.genres.find(genre => {
+    return (
+      normalizeSearchText(genre.id) === normalizedValue ||
+      normalizeSearchText(genre.name) === normalizedValue
+    );
+  });
+
+  return relatedGenre?.name ?? value;
+}
+
+function scoreSearchValue(value, keyword, exactScore, prefixScore, includeScore) {
+  const normalizedValue = normalizeSearchText(value);
+  if (!normalizedValue) {
+    return 0;
+  }
+
+  const compactValue = compactSearchText(normalizedValue);
+
+  if (normalizedValue === keyword.normalized || compactValue === keyword.compact) {
+    return exactScore;
+  }
+
+  if (
+    normalizedValue.startsWith(keyword.normalized) ||
+    compactValue.startsWith(keyword.compact)
+  ) {
+    return prefixScore;
+  }
+
+  if (
+    normalizedValue.includes(keyword.normalized) ||
+    compactValue.includes(keyword.compact)
+  ) {
+    return includeScore;
+  }
+
+  return 0;
+}
+
+function buildSearchToken(value) {
+  const normalized = normalizeSearchText(value);
+  return {
+    normalized,
+    compact: compactSearchText(normalized),
+  };
+}
+
+function normalizeSearchText(value) {
+  return String(value ?? '')
+    .toLowerCase()
+    .replace(/[_-]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function compactSearchText(value) {
+  return value.replace(/\s+/g, '');
 }
 
 function renderGenreList() {
@@ -357,7 +444,7 @@ function renderGenreList() {
 
   if (state.filteredGenres.length === 0) {
     elements.genreList.innerHTML =
-      '<div class="empty-state">검색 결과가 없습니다. 다른 키워드로 다시 찾아보세요.</div>';
+      '<div class="empty-state">검색된 장르가 없습니다. 다른 장르 이름으로 다시 찾아보세요.</div>';
     return;
   }
 
@@ -375,7 +462,7 @@ function renderGenreList() {
         <span class="genre-index">${String(index + 1).padStart(2, '0')}</span>
         <h4>${genre.name}</h4>
         <p>${genre.description ?? 'Spotify 장르 데이터를 불러오는 중입니다.'}</p>
-        <span class="genre-meta">${(genre.tracks ?? []).length} tracks ready</span>
+        <span class="genre-meta">${(genre.tracks ?? []).length} recommendation picks</span>
       </div>
     `;
 
@@ -397,7 +484,11 @@ async function showGenre(id) {
 
   if (genre.spotifyBacked && !genre.detailsLoaded && !genre.detailsLoading) {
     genre.detailsLoading = true;
-    if (!genre.description || genre.description.startsWith('Spotify genre seed')) {
+    if (
+      !genre.description ||
+      genre.description.startsWith('Spotify genre seed') ||
+      genre.description.startsWith('Spotify 추천 장르 seed')
+    ) {
       genre.description = `${genre.name} 관련 Spotify 데이터를 불러오는 중입니다.`;
     }
   }
@@ -533,8 +624,8 @@ function renderButtons(container, ids) {
 
 function renderEmptyGenre() {
   state.currentGenreId = null;
-  elements.genreTitle.textContent = '검색 결과가 없습니다';
-  elements.genreDesc.textContent = '다른 키워드로 장르, 분위기, 트랙 이름을 다시 찾아보세요.';
+  elements.genreTitle.textContent = '검색된 장르가 없습니다';
+  elements.genreDesc.textContent = '다른 장르 이름이나 스타일 키워드로 다시 찾아보세요.';
   elements.heroTag.textContent = 'Search Empty';
   elements.currentGenreChip.textContent = 'No Match';
   elements.trackCount.textContent = '0';

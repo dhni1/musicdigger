@@ -30,7 +30,17 @@ class SpotifyCatalog:
         if self._genres_cache and time.time() - self._genres_cache_time < 3600:
             return self._genres_cache
 
-        genres = load_local_genres(spotify_backed=self.configured())
+        local_genres = load_local_genres(spotify_backed=self.configured())
+        genres = local_genres
+
+        if self.configured():
+            try:
+                data = self._spotify_get("/recommendations/available-genre-seeds")
+                seeds = data.get("genres", [])
+                if seeds:
+                    genres = merge_seed_genres(local_genres, seeds)
+            except RuntimeError:
+                genres = local_genres
 
         self._genres_cache = genres
         self._genres_cache_time = time.time()
@@ -43,7 +53,22 @@ class SpotifyCatalog:
         if cached and time.time() - cached["time"] < 1800:
             return cached["data"]
 
-        tracks = self._search_tracks_for_genre(genre)
+        local_genre = find_local_genre(genre, spotify_backed=self.configured())
+
+        tracks = []
+
+        if self.configured():
+            try:
+                tracks = self._recommend_tracks_for_genre(genre)
+            except RuntimeError:
+                try:
+                    tracks = self._search_tracks_for_genre(genre)
+                except RuntimeError:
+                    tracks = []
+
+        if not tracks and local_genre:
+            tracks = local_genre.get("tracks", [])
+
         artist_ids = []
         artist_names = []
 
@@ -62,7 +87,10 @@ class SpotifyCatalog:
 
         related_pool = []
         for artist_id in artist_ids:
-            artist = self._spotify_get(f"/artists/{artist_id}")
+            try:
+                artist = self._spotify_get(f"/artists/{artist_id}")
+            except RuntimeError:
+                continue
             related_pool.extend(artist.get("genres", []))
 
         related_names = []
@@ -74,16 +102,16 @@ class SpotifyCatalog:
             if name not in related_names:
                 related_names.append(name)
 
-        description = build_description(genre, artist_names, tracks)
+        description = build_description(local_genre or {"id": genre}, artist_names, tracks)
         data = {
-            "id": genre,
-            "name": format_genre_name(genre),
+            "id": local_genre.get("id", genre) if local_genre else genre,
+            "name": local_genre.get("name", format_genre_name(genre)) if local_genre else format_genre_name(genre),
             "description": description,
-            "subgenres": [],
-            "similar": [],
-            "fusion": [],
+            "subgenres": local_genre.get("subgenres", []) if local_genre else [],
+            "similar": local_genre.get("similar", []) if local_genre else [],
+            "fusion": local_genre.get("fusion", []) if local_genre else [],
             "tracks": tracks,
-            "spotifyBacked": True,
+            "spotifyBacked": self.configured(),
             "relatedNames": related_names[:8],
         }
 
@@ -92,6 +120,19 @@ class SpotifyCatalog:
             "data": data,
         }
         return data
+
+    def _recommend_tracks_for_genre(self, genre):
+        seed = genre_to_seed(genre)
+        data = self._spotify_get(
+            "/recommendations",
+            {
+                "limit": "8",
+                "market": SPOTIFY_MARKET,
+                "seed_genres": seed,
+            },
+        )
+        items = data.get("tracks", [])
+        return [map_track(item) for item in items]
 
     def _search_tracks_for_genre(self, genre):
         query = f'genre:"{genre}"'
@@ -140,6 +181,8 @@ class SpotifyCatalog:
         except error.HTTPError as exc:
             payload = exc.read().decode("utf-8", errors="ignore")
             raise RuntimeError(payload or f"Spotify API error: {exc.code}") from exc
+        except error.URLError as exc:
+            raise RuntimeError(f"Spotify API connection failed: {exc.reason}") from exc
 
     def _get_token(self):
         if self._token and time.time() < self._expires_at - 60:
@@ -164,6 +207,8 @@ class SpotifyCatalog:
         except error.HTTPError as exc:
             payload = exc.read().decode("utf-8", errors="ignore")
             raise RuntimeError(payload or "Failed to fetch Spotify token") from exc
+        except error.URLError as exc:
+            raise RuntimeError(f"Spotify token request failed: {exc.reason}") from exc
 
         self._token = data["access_token"]
         self._expires_at = time.time() + int(data.get("expires_in", 3600))
@@ -275,22 +320,75 @@ def load_local_genres(spotify_backed):
     return normalized
 
 
+def merge_seed_genres(local_genres, seeds):
+    local_index = {
+        normalize_genre_name(genre.get("id", "")): genre
+        for genre in local_genres
+        if genre.get("id")
+    }
+    merged = []
+    seen = set()
+
+    for seed in sorted(seeds):
+        key = normalize_genre_name(seed)
+        local = local_index.get(key, {})
+        merged.append(
+            {
+                "id": seed,
+                "name": local.get("name") or format_genre_name(seed),
+                "description": local.get("description")
+                or f"Spotify 추천 장르 seed: {format_genre_name(seed)}",
+                "subgenres": local.get("subgenres", []),
+                "similar": local.get("similar", []),
+                "fusion": local.get("fusion", []),
+                "tracks": local.get("tracks", []),
+                "spotifyBacked": True,
+            }
+        )
+        seen.add(key)
+
+    for genre in local_genres:
+        key = normalize_genre_name(genre.get("id", ""))
+        if key and key not in seen:
+            merged.append({**genre, "spotifyBacked": True})
+
+    return merged
+
+
+def find_local_genre(query, spotify_backed):
+    target = normalize_genre_name(query)
+
+    for genre in load_local_genres(spotify_backed=spotify_backed):
+        candidates = {
+            normalize_genre_name(genre.get("id", "")),
+            normalize_genre_name(genre.get("name", "")),
+        }
+        if target in candidates:
+            return genre
+
+    return None
+
+
+def genre_to_seed(value):
+    return normalize_genre_name(value).replace(" ", "-")
+
+
 def format_genre_name(name):
-    return " ".join(part.capitalize() for part in name.replace("-", " ").split())
+    return " ".join(part.capitalize() for part in name.replace("_", " ").replace("-", " ").split())
 
 
 def normalize_genre_name(name):
-    return name.replace("-", " ").strip().lower()
+    return name.replace("_", " ").replace("-", " ").strip().lower()
 
 
 def build_description(genre, artist_names, tracks):
-    display = format_genre_name(genre)
+    display = genre.get("name") or format_genre_name(genre.get("id", ""))
     if artist_names:
         names = ", ".join(artist_names[:3])
-        return f"Spotify에서 {display} 관련 결과를 불러왔습니다. {names} 같은 아티스트를 중심으로 탐색합니다."
+        return f"Spotify 추천을 기준으로 {display} 분위기에 맞는 곡을 골랐습니다. {names} 같은 아티스트를 중심으로 탐색합니다."
     if tracks:
-        return f"Spotify에서 {display} 장르 기준으로 검색한 대표 트랙입니다."
-    return f"Spotify에서 {display} 장르 결과를 찾지 못했습니다."
+        return f"Spotify 추천을 기준으로 {display} 장르에 맞는 곡을 불러왔습니다."
+    return f"Spotify에서 {display} 장르 추천 곡을 찾지 못했습니다."
 
 
 def main():
