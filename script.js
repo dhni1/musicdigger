@@ -19,6 +19,81 @@ const spotifyConfig = {
   scopes: window.SPOTIFY_CONFIG?.scopes ?? SPOTIFY_SCOPES,
 };
 
+const BUILTIN_GENRES = [
+  {
+    id: 'hiphop',
+    name: 'Hip-Hop',
+    description: '리듬과 랩 중심의 장르',
+    subgenres: ['jazz-hiphop', 'trap'],
+    similar: ['rnb'],
+    fusion: ['boom-bap'],
+    tracks: [
+      { title: 'SICKO MODE', artist: 'Travis Scott' },
+      { title: 'HUMBLE.', artist: 'Kendrick Lamar' },
+    ],
+  },
+  {
+    id: 'jazz-hiphop',
+    name: 'Jazz Hip-Hop',
+    description: '재즈와 힙합이 결합된 장르',
+    subgenres: [],
+    similar: ['lofi'],
+    fusion: [],
+    tracks: [
+      { title: 'Feather', artist: 'Nujabes' },
+      { title: 'Luv(sic)', artist: 'Nujabes' },
+    ],
+  },
+  {
+    id: 'trap',
+    name: 'Trap',
+    description: '강한 베이스와 하이햇이 특징인 현대 힙합',
+    subgenres: [],
+    similar: ['hiphop'],
+    fusion: [],
+    tracks: [
+      { title: 'Mask Off', artist: 'Future' },
+      { title: 'goosebumps', artist: 'Travis Scott' },
+    ],
+  },
+  {
+    id: 'boom-bap',
+    name: 'Boom Bap',
+    description: '킥과 스네어가 선명한 클래식 힙합 스타일',
+    subgenres: [],
+    similar: ['hiphop'],
+    fusion: [],
+    tracks: [
+      { title: 'N.Y. State of Mind', artist: 'Nas' },
+      { title: 'Mass Appeal', artist: 'Gang Starr' },
+    ],
+  },
+  {
+    id: 'rnb',
+    name: 'R&B',
+    description: '보컬과 그루브 중심의 감각적인 장르',
+    subgenres: [],
+    similar: ['hiphop'],
+    fusion: [],
+    tracks: [
+      { title: 'Blinding Lights', artist: 'The Weeknd' },
+      { title: 'Location', artist: 'Khalid' },
+    ],
+  },
+  {
+    id: 'lofi',
+    name: 'Lo-Fi',
+    description: '편안하고 거친 질감의 비트 중심 장르',
+    subgenres: [],
+    similar: ['jazz-hiphop'],
+    fusion: [],
+    tracks: [
+      { title: 'affection', artist: 'Jinsang' },
+      { title: 'snowman', artist: 'WYS' },
+    ],
+  },
+];
+
 const state = {
   genres: [],
   filteredGenres: [],
@@ -190,15 +265,31 @@ async function loadGenres() {
     state.filteredGenres = [...backendGenres];
     state.usingBackendGenres = true;
   } catch {
-    const response = await fetch('data/genres.json');
-    const data = await response.json();
-    state.genres = data.genres ?? [];
-    state.filteredGenres = [...state.genres];
-    state.usingBackendGenres = false;
+    try {
+      const response = await fetch('data/genres.json');
+      const data = await response.json();
+      state.genres = data.genres ?? [];
+      state.filteredGenres = [...state.genres];
+      state.usingBackendGenres = false;
+    } catch {
+      state.genres = BUILTIN_GENRES.map(genre => ({
+        ...genre,
+        subgenres: [...genre.subgenres],
+        similar: [...genre.similar],
+        fusion: [...genre.fusion],
+        tracks: genre.tracks.map(track => ({ ...track })),
+      }));
+      state.filteredGenres = [...state.genres];
+      state.usingBackendGenres = false;
+      elements.searchStatus.textContent = 'Offline Fallback';
+      elements.heroSearchStatus.textContent = 'Offline Fallback';
+    }
   }
 
   elements.genreCount.textContent = String(state.genres.length);
-  updateSearchStatus('');
+  if (elements.searchStatus.textContent !== 'Offline Fallback') {
+    updateSearchStatus('');
+  }
   renderGenreList();
 
   if (state.filteredGenres.length > 0) {

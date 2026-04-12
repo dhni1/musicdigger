@@ -4,7 +4,7 @@
       "id": "hiphop",
       "name": "Hip-Hop",
       "description": "리듬과 랩 중심의 장르",
-      "subgenres": ["jazz_hiphop", "trap"],
+      "subgenres": ["jazz_hiphop", "trap", "BoomBap"],
       "similar": ["rnb"],
       "fusion": ["rap_rock"],
       "tracks": [
