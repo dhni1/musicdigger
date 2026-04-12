@@ -458,11 +458,10 @@ def normalize_genre_name(name):
 
 def build_description(genre, artist_names, tracks):
     display = genre.get("name") or format_genre_name(genre.get("id", ""))
-    if artist_names:
-        names = ", ".join(artist_names[:3])
-        return f"Spotify 추천을 기준으로 {display} 분위기에 맞는 곡을 골랐습니다. {names} 같은 아티스트를 중심으로 탐색합니다."
-    if tracks:
-        return f"Spotify 추천을 기준으로 {display} 장르에 맞는 곡을 불러왔습니다."
+    if genre.get("description"):
+        return genre["description"]
+    if artist_names or tracks:
+        return f"Spotify 추천을 바탕으로 {display}의 대표적인 분위기와 결을 살펴볼 수 있습니다."
     return f"Spotify에서 {display} 장르 추천 곡을 찾지 못했습니다."
 
 

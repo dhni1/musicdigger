@@ -67,3 +67,11 @@
 - `Boom Bap`, `R&B`, `Lo-Fi`, `K-Pop` 같은 장르 별칭을 Spotify seed와 매핑하도록 보강
 - 장르 검색 시 별칭, seed 이름, 검색어까지 함께 인식하도록 수정
 - `data/genres.json`에 Spotify 기반 탐색용 장르를 대폭 추가하고 연결 장르(`dance`, `grime`, `rap-rock`, `drill`)도 함께 보강
+
+## v0.5.0
+- 홈 화면 장르 라이브러리를 기본 4개만 노출하고 `All Genres` 버튼으로 전체 확장되도록 수정
+- `Library`와 `Profile`을 스크롤 섹션이 아닌 별도 화면 전환 방식으로 개편
+- 프로필 버튼 클릭 시 Spotify 계정 상태와 라이브러리 요약을 보는 프로필 화면으로 이동하도록 수정
+- 장르 카드의 `recommendation picks` 문구와 waveform 패널 제거
+- `Jazz Hip-Hop` 설명이 Spotify 아티스트 문구로 덮어써지지 않도록 수정하고 기본 대표 곡 수 보강
+- `K-Pop` seed/search 기준과 대표 곡을 한국 아이돌 음악 맥락에 맞게 조정

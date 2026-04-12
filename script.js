@@ -19,6 +19,8 @@ const spotifyConfig = {
   scopes: window.SPOTIFY_CONFIG?.scopes ?? SPOTIFY_SCOPES,
 };
 
+const DEFAULT_VISIBLE_GENRES = 4;
+
 const BUILTIN_GENRES = [
   {
     id: 'hiphop',
@@ -35,13 +37,15 @@ const BUILTIN_GENRES = [
   {
     id: 'jazz-hiphop',
     name: 'Jazz Hip-Hop',
-    description: '재즈와 힙합이 결합된 장르',
+    description: '재즈 화성과 힙합 비트가 결합된 부드러운 그루브',
     subgenres: [],
     similar: ['lofi'],
     fusion: [],
     tracks: [
       { title: 'Feather', artist: 'Nujabes' },
-      { title: 'Luv(sic)', artist: 'Nujabes' },
+      { title: 'Luv(sic.) pt3', artist: 'Nujabes' },
+      { title: 'Aruarian Dance', artist: 'Nujabes' },
+      { title: 'Rebirth of Slick (Cool Like Dat)', artist: 'Digable Planets' },
     ],
   },
   {
@@ -69,7 +73,7 @@ const BUILTIN_GENRES = [
     ],
   },
   {
-    id: 'rnb',
+    id: 'r-n-b',
     name: 'R&B',
     description: '보컬과 그루브 중심의 감각적인 장르',
     subgenres: [],
@@ -98,7 +102,10 @@ const state = {
   genres: [],
   filteredGenres: [],
   currentGenreId: null,
+  currentView: 'home',
+  genreListExpanded: false,
   isDarkMode: true,
+  searchQuery: '',
   usingBackendGenres: false,
   spotify: {
     configured: isSpotifyConfigured(),
@@ -115,7 +122,11 @@ const state = {
 
 const elements = {
   body: document.body,
+  homeView: document.getElementById('home-view'),
+  libraryView: document.getElementById('library-view'),
+  profileView: document.getElementById('profile-view'),
   genreList: document.getElementById('genre-list'),
+  genreToggle: document.getElementById('genre-toggle'),
   genreTitle: document.getElementById('genre-title'),
   genreDesc: document.getElementById('genre-desc'),
   trackList: document.getElementById('track-list'),
@@ -133,6 +144,8 @@ const elements = {
   menuToggle: document.getElementById('menu-toggle'),
   menuPanel: document.getElementById('menu-panel'),
   menuHome: document.getElementById('menu-home'),
+  menuLibrary: document.getElementById('menu-library'),
+  menuProfile: document.getElementById('menu-profile'),
   menuRandom: document.getElementById('menu-random'),
   menuSearch: document.getElementById('menu-search'),
   heroTheme: document.getElementById('hero-theme'),
@@ -146,14 +159,26 @@ const elements = {
   navPlaylists: document.getElementById('nav-playlists'),
   navLiked: document.getElementById('nav-liked'),
   navSearch: document.getElementById('nav-search'),
+  navProfile: document.getElementById('nav-profile'),
   profileSlot: document.getElementById('profile-slot'),
   profileAvatar: document.getElementById('profile-avatar'),
   spotifyLibrary: document.getElementById('spotify-library'),
   spotifyAuthButton: document.getElementById('spotify-auth-button'),
   spotifyRefreshButton: document.getElementById('spotify-refresh-button'),
+  spotifyCreatePlaylistButton: document.getElementById('spotify-create-playlist-button'),
   spotifyProfileCard: document.getElementById('spotify-profile-card'),
+  playlistSection: document.getElementById('playlist-section'),
+  likedSection: document.getElementById('liked-section'),
   playlistList: document.getElementById('playlist-list'),
   likedTrackList: document.getElementById('liked-track-list'),
+  profileAuthButton: document.getElementById('profile-auth-button'),
+  profileRefreshButton: document.getElementById('profile-refresh-button'),
+  profileCreatePlaylistButton: document.getElementById('profile-create-playlist-button'),
+  profileScreenCard: document.getElementById('profile-screen-card'),
+  profileSummary: document.getElementById('profile-summary'),
+  profileOpenLibrary: document.getElementById('profile-open-library'),
+  profileOpenPlaylists: document.getElementById('profile-open-playlists'),
+  profileOpenLiked: document.getElementById('profile-open-liked'),
   playlistModal: document.getElementById('playlist-modal'),
   playlistModalClose: document.getElementById('playlist-modal-close'),
   playlistForm: document.getElementById('playlist-form'),
@@ -183,12 +208,23 @@ function bindEvents() {
     setMenuOpen(false);
   });
 
+  addClick(elements.menuLibrary, () => {
+    openLibraryView(elements.navLibrary);
+    setMenuOpen(false);
+  });
+
+  addClick(elements.menuProfile, () => {
+    openProfileView();
+    setMenuOpen(false);
+  });
+
   addClick(elements.menuRandom, () => {
     void showRandomGenre();
     setMenuOpen(false);
   });
 
   addClick(elements.menuSearch, () => {
+    showView('home');
     elements.searchInput.focus();
     setActiveNav(elements.navSearch);
     setMenuOpen(false);
@@ -203,34 +239,54 @@ function bindEvents() {
     setActiveNav(elements.navHome);
   });
   addClick(elements.navLibrary, () => {
-    focusSection(elements.spotifyLibrary);
-    setActiveNav(elements.navLibrary);
+    openLibraryView(elements.navLibrary);
   });
   addClick(elements.navPlaylists, () => {
-    void handlePlaylistNav();
+    handlePlaylistNav();
   });
   addClick(elements.navLiked, () => {
-    focusSection(elements.spotifyLibrary);
-    setActiveNav(elements.navLiked);
+    openLibraryView(elements.navLiked, elements.likedSection);
   });
   addClick(elements.navSearch, () => {
+    showView('home');
     elements.searchInput.focus();
     setActiveNav(elements.navSearch);
   });
+  addClick(elements.navProfile, openProfileView);
   addClick(elements.profileSlot, () => {
-    if (state.spotify.accessToken) {
-      focusSection(elements.spotifyLibrary);
-      setActiveNav(elements.navLibrary);
-      return;
-    }
-
-    void loginToSpotify();
+    openProfileView();
   });
   addClick(elements.spotifyAuthButton, () => {
     void handleSpotifyAuthButton();
   });
   addClick(elements.spotifyRefreshButton, () => {
     void syncSpotifyData();
+  });
+  addClick(elements.spotifyCreatePlaylistButton, () => {
+    void openPlaylistModalFromView();
+  });
+  addClick(elements.profileAuthButton, () => {
+    void handleSpotifyAuthButton();
+  });
+  addClick(elements.profileRefreshButton, () => {
+    void syncSpotifyData();
+  });
+  addClick(elements.profileCreatePlaylistButton, () => {
+    void openPlaylistModalFromView();
+  });
+  addClick(elements.genreToggle, () => {
+    state.genreListExpanded = !state.genreListExpanded;
+    renderGenreList();
+    updateSearchStatus(buildSearchToken(state.searchQuery));
+  });
+  addClick(elements.profileOpenLibrary, () => {
+    openLibraryView(elements.navLibrary);
+  });
+  addClick(elements.profileOpenPlaylists, () => {
+    openLibraryView(elements.navPlaylists, elements.playlistSection);
+  });
+  addClick(elements.profileOpenLiked, () => {
+    openLibraryView(elements.navLiked, elements.likedSection);
   });
   addClick(elements.playlistModalClose, closePlaylistModal);
   addClick(elements.playlistModal, event => {
@@ -240,6 +296,8 @@ function bindEvents() {
   });
 
   elements.searchInput.addEventListener('input', event => {
+    showView('home');
+    setActiveNav(elements.navSearch);
     applySearch(event.target.value);
   });
 
@@ -288,7 +346,7 @@ async function loadGenres() {
 
   elements.genreCount.textContent = String(state.genres.length);
   if (elements.searchStatus.textContent !== 'Offline Fallback') {
-    updateSearchStatus('');
+    updateSearchStatus(buildSearchToken(''));
   }
   renderGenreList();
 
@@ -320,11 +378,14 @@ async function fetchGenreDetails(genreId) {
 }
 
 function applySearch(query) {
+  state.searchQuery = query;
   const keyword = buildSearchToken(query);
 
   if (!keyword.normalized) {
+    state.genreListExpanded = false;
     state.filteredGenres = [...state.genres];
   } else {
+    state.genreListExpanded = true;
     state.filteredGenres = state.genres
       .map((genre, index) => ({
         genre,
@@ -350,9 +411,19 @@ function applySearch(query) {
 }
 
 function updateSearchStatus(keyword) {
-  const message = keyword.normalized ? `${state.filteredGenres.length} Genres` : 'All Genres';
+  const isSearching = Boolean(keyword.normalized);
+  const visibleCount = getVisibleGenres().length;
+  let message = '전체 장르';
+
+  if (isSearching) {
+    message = `${state.filteredGenres.length}개 결과`;
+  } else if (!state.genreListExpanded && state.filteredGenres.length > DEFAULT_VISIBLE_GENRES) {
+    message = `${visibleCount} / ${state.filteredGenres.length} 장르`;
+  }
+
   elements.searchStatus.textContent = message;
   elements.heroSearchStatus.textContent = message;
+  updateGenreToggle(isSearching);
 }
 
 function getGenreSearchScore(genre, keyword) {
@@ -442,6 +513,45 @@ function compactSearchText(value) {
   return value.replace(/[^a-z0-9]+/g, '');
 }
 
+function getVisibleGenres() {
+  if (
+    state.genreListExpanded ||
+    state.filteredGenres.length <= DEFAULT_VISIBLE_GENRES ||
+    buildSearchToken(state.searchQuery).normalized
+  ) {
+    return state.filteredGenres;
+  }
+
+  const visibleGenres = state.filteredGenres.slice(0, DEFAULT_VISIBLE_GENRES);
+
+  if (
+    state.currentGenreId &&
+    !visibleGenres.some(genre => genre.id === state.currentGenreId)
+  ) {
+    const currentGenre = state.filteredGenres.find(genre => genre.id === state.currentGenreId);
+    if (currentGenre) {
+      visibleGenres[visibleGenres.length - 1] = currentGenre;
+    }
+  }
+
+  return visibleGenres;
+}
+
+function updateGenreToggle(isSearching) {
+  if (!elements.genreToggle) {
+    return;
+  }
+
+  const shouldShow = !isSearching && state.filteredGenres.length > DEFAULT_VISIBLE_GENRES;
+  elements.genreToggle.hidden = !shouldShow;
+
+  if (!shouldShow) {
+    return;
+  }
+
+  elements.genreToggle.textContent = state.genreListExpanded ? 'Show Less' : 'All Genres';
+}
+
 function renderGenreList() {
   elements.genreList.innerHTML = '';
 
@@ -451,10 +561,11 @@ function renderGenreList() {
     return;
   }
 
-  state.filteredGenres.forEach((genre, index) => {
+  getVisibleGenres().forEach(genre => {
     const button = document.createElement('button');
     button.type = 'button';
     button.className = 'genre-card';
+    const genreIndex = state.filteredGenres.findIndex(item => item.id === genre.id) + 1;
 
     if (genre.id === state.currentGenreId) {
       button.classList.add('is-active');
@@ -462,14 +573,15 @@ function renderGenreList() {
 
     button.innerHTML = `
       <div class="genre-card-content">
-        <span class="genre-index">${String(index + 1).padStart(2, '0')}</span>
+        <span class="genre-index">${String(genreIndex).padStart(2, '0')}</span>
         <h4>${genre.name}</h4>
         <p>${genre.description ?? 'Spotify 장르 데이터를 불러오는 중입니다.'}</p>
-        <span class="genre-meta">${(genre.tracks ?? []).length} recommendation picks</span>
       </div>
     `;
 
     button.addEventListener('click', () => {
+      showView('home');
+      setActiveNav(elements.navHome);
       void showGenre(genre.id);
     });
     elements.genreList.appendChild(button);
@@ -619,6 +731,8 @@ function renderButtons(container, ids) {
     button.className = 'pill-btn';
     button.textContent = genre.name;
     button.addEventListener('click', () => {
+      showView('home');
+      setActiveNav(elements.navHome);
       void showGenre(genre.id);
     });
     container.appendChild(button);
@@ -651,13 +765,15 @@ async function showRandomGenre() {
   const randomGenre =
     state.filteredGenres[Math.floor(Math.random() * state.filteredGenres.length)];
 
+  showView('home');
+  setActiveNav(elements.navHome);
   await showGenre(randomGenre.id);
 }
 
 function focusHome() {
-  window.scrollTo({ top: 0, behavior: 'smooth' });
+  showView('home');
 
-  if (state.filteredGenres.length > 0) {
+  if (!state.currentGenreId && state.filteredGenres.length > 0) {
     void showGenre(state.filteredGenres[0].id);
   }
 }
@@ -666,6 +782,38 @@ function focusSection(element) {
   if (element) {
     element.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
+}
+
+function showView(view) {
+  const previousView = state.currentView;
+  state.currentView = view;
+  setMenuOpen(false);
+
+  [
+    ['home', elements.homeView],
+    ['library', elements.libraryView],
+    ['profile', elements.profileView],
+  ].forEach(([name, element]) => {
+    element?.classList.toggle('is-active', name === view);
+  });
+
+  window.scrollTo({ top: 0, behavior: previousView === view ? 'auto' : 'smooth' });
+}
+
+function openLibraryView(navButton = elements.navLibrary, targetSection = null) {
+  showView('library');
+  setActiveNav(navButton);
+
+  if (targetSection) {
+    window.requestAnimationFrame(() => {
+      focusSection(targetSection);
+    });
+  }
+}
+
+function openProfileView() {
+  showView('profile');
+  setActiveNav(elements.navProfile);
 }
 
 function toggleTheme() {
@@ -698,6 +846,7 @@ function setActiveNav(target) {
     elements.navPlaylists,
     elements.navLiked,
     elements.navSearch,
+    elements.navProfile,
   ].forEach(button => {
     button?.classList.toggle('is-current', button === target);
   });
@@ -763,13 +912,7 @@ async function initializeSpotify() {
 }
 
 async function handlePlaylistNav() {
-  setActiveNav(elements.navPlaylists);
-
-  if (!(await ensureSpotifyReady(true))) {
-    return;
-  }
-
-  openPlaylistModal();
+  openLibraryView(elements.navPlaylists, elements.playlistSection);
 }
 
 async function handleSpotifyAuthButton() {
@@ -779,6 +922,16 @@ async function handleSpotifyAuthButton() {
   }
 
   await syncSpotifyData();
+}
+
+async function openPlaylistModalFromView() {
+  openLibraryView(elements.navPlaylists, elements.playlistSection);
+
+  if (!(await ensureSpotifyReady(true))) {
+    return;
+  }
+
+  openPlaylistModal();
 }
 
 function openPlaylistModal() {
@@ -827,8 +980,7 @@ async function submitPlaylistForm() {
 
     closePlaylistModal();
     await syncSpotifyData();
-    focusSection(elements.spotifyLibrary);
-    setActiveNav(elements.navLibrary);
+    openLibraryView(elements.navLibrary, elements.playlistSection);
   } catch (error) {
     updateSpotifyMessage(error.message);
   } finally {
@@ -903,6 +1055,7 @@ async function syncLikedTracks() {
     state.spotify.likedTracks.map(track => makeTrackKeyFromSpotify(track)),
   );
   renderLikedTracks();
+  renderProfileSummary();
 }
 
 function renderTracksForCurrentGenre() {
@@ -918,14 +1071,33 @@ function renderTracksForCurrentGenre() {
 
 function renderSpotifyState() {
   renderProfileCard();
+  renderProfileSummary();
   renderPlaylistList();
   renderLikedTracks();
   updateProfileSlot();
 
-  elements.spotifyRefreshButton.disabled = !state.spotify.accessToken;
-  elements.spotifyAuthButton.textContent = state.spotify.accessToken
-    ? 'Refresh Library'
-    : 'Connect Spotify';
+  const hasAccessToken = Boolean(state.spotify.accessToken);
+
+  if (elements.spotifyRefreshButton) {
+    elements.spotifyRefreshButton.disabled = !hasAccessToken;
+  }
+  if (elements.profileRefreshButton) {
+    elements.profileRefreshButton.disabled = !hasAccessToken;
+  }
+  if (elements.spotifyCreatePlaylistButton) {
+    elements.spotifyCreatePlaylistButton.disabled = !hasAccessToken;
+  }
+  if (elements.profileCreatePlaylistButton) {
+    elements.profileCreatePlaylistButton.disabled = !hasAccessToken;
+  }
+
+  const authLabel = hasAccessToken ? 'Refresh Library' : 'Connect Spotify';
+  if (elements.spotifyAuthButton) {
+    elements.spotifyAuthButton.textContent = authLabel;
+  }
+  if (elements.profileAuthButton) {
+    elements.profileAuthButton.textContent = authLabel;
+  }
 }
 
 function renderProfileCard() {
@@ -939,8 +1111,29 @@ function renderProfileCard() {
 
   const imageUrl = state.spotify.profile.images?.[0]?.url;
   const product = state.spotify.profile.product ?? 'spotify';
+  const followers = state.spotify.profile.followers?.total ?? 0;
+  const compactMarkup = buildCompactProfileMarkup(imageUrl, product);
 
-  elements.spotifyProfileCard.innerHTML = `
+  elements.spotifyProfileCard.innerHTML = compactMarkup;
+  elements.profileScreenCard.innerHTML = `
+    <div class="profile-detail-stack">
+      ${compactMarkup}
+      <div class="profile-detail-grid">
+        <article class="detail-chip">
+          <span>Plan</span>
+          <strong>${product}</strong>
+        </article>
+        <article class="detail-chip">
+          <span>Followers</span>
+          <strong>${followers}</strong>
+        </article>
+      </div>
+    </div>
+  `;
+}
+
+function buildCompactProfileMarkup(imageUrl, product) {
+  return `
     <div class="spotify-profile">
       ${
         imageUrl
@@ -955,10 +1148,40 @@ function renderProfileCard() {
   `;
 }
 
+function renderProfileSummary() {
+  if (!elements.profileSummary) {
+    return;
+  }
+
+  if (!state.spotify.accessToken) {
+    elements.profileSummary.innerHTML = `
+      <div class="empty-state">
+        Spotify를 연결하면 플레이리스트 수와 좋아요한 곡 수를 이 화면에서 바로 확인할 수 있습니다.
+      </div>
+    `;
+    return;
+  }
+
+  elements.profileSummary.innerHTML = `
+    <article class="summary-card">
+      <span>Playlists</span>
+      <strong>${state.spotify.playlists.length}</strong>
+    </article>
+    <article class="summary-card">
+      <span>Liked Tracks</span>
+      <strong>${state.spotify.likedTracks.length}</strong>
+    </article>
+    <article class="summary-card">
+      <span>Current Focus</span>
+      <strong>${getCurrentGenreName()}</strong>
+    </article>
+  `;
+}
+
 function renderPlaylistList() {
   if (!state.spotify.accessToken) {
     elements.playlistList.innerHTML =
-      '<div class="empty-state">Playlists 메뉴를 누르면 Spotify 플레이리스트를 만들 수 있습니다.</div>';
+      '<div class="empty-state">Spotify에 로그인하면 플레이리스트를 여기서 확인하고 새로 만들 수 있습니다.</div>';
     return;
   }
 
@@ -1019,13 +1242,16 @@ function renderLikedTracks() {
 
 function updateProfileSlot() {
   const imageUrl = state.spotify.profile?.images?.[0]?.url;
-  elements.profileSlot.title = state.spotify.profile?.display_name ?? 'Spotify 로그인';
+  elements.profileSlot.title = state.spotify.profile?.display_name ?? '프로필 화면 열기';
   elements.profileAvatar.style.backgroundImage = imageUrl ? `url("${imageUrl}")` : '';
   elements.profileAvatar.classList.toggle('has-image', Boolean(imageUrl));
 }
 
 function updateSpotifyMessage(message) {
   elements.spotifyProfileCard.innerHTML = `<div class="empty-state">${message}</div>`;
+  if (elements.profileScreenCard) {
+    elements.profileScreenCard.innerHTML = `<div class="empty-state">${message}</div>`;
+  }
 }
 
 async function ensureSpotifyReady(promptLogin) {
@@ -1236,6 +1462,11 @@ async function getCurrentGenreSpotifyUris() {
 
 function getProfileInitial() {
   return state.spotify.profile?.display_name?.trim()?.[0]?.toUpperCase() ?? 'S';
+}
+
+function getCurrentGenreName() {
+  const genre = state.genres.find(item => item.id === state.currentGenreId);
+  return genre?.name ?? 'No Genre';
 }
 
 function clearSpotifyQueryParams() {

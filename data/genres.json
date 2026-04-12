@@ -27,7 +27,9 @@
       "fusion": [],
       "tracks": [
         { "title": "Feather", "artist": "Nujabes" },
-        { "title": "Luv(sic.) pt3", "artist": "Nujabes" }
+        { "title": "Luv(sic.) pt3", "artist": "Nujabes" },
+        { "title": "Aruarian Dance", "artist": "Nujabes" },
+        { "title": "Rebirth of Slick (Cool Like Dat)", "artist": "Digable Planets" }
       ]
     },
     {
@@ -245,14 +247,16 @@
       "name": "K-Pop",
       "description": "강한 훅과 퍼포먼스 중심 구조가 특징인 한국 대중음악",
       "aliases": ["kpop", "k pop"],
-      "spotifySeedGenres": ["k-pop", "pop"],
-      "spotifySearchTerms": ["k-pop", "kpop", "k pop"],
+      "spotifySeedGenres": ["k-pop"],
+      "spotifySearchTerms": ["k-pop", "kpop", "korean pop"],
       "subgenres": [],
       "similar": ["pop", "dance"],
       "fusion": [],
       "tracks": [
         { "title": "Supernova", "artist": "aespa" },
-        { "title": "Super Shy", "artist": "NewJeans" }
+        { "title": "Super Shy", "artist": "NewJeans" },
+        { "title": "Love Dive", "artist": "IVE" },
+        { "title": "Into The New World", "artist": "Girls' Generation" }
       ]
     },
     {
