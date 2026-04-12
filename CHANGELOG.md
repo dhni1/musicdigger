@@ -41,3 +41,6 @@
 
 ## v0.4.1
 - frontend
+
+## v0.5.1
+- error
