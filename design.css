@@ -12,9 +12,9 @@
   --accent: #8f6bff;
   --accent-2: #24c6e8;
   --shadow: 0 14px 34px rgba(0, 0, 0, 0.24);
-  --radius-lg: 12px;
-  --radius-md: 10px;
-  --radius-sm: 8px;
+  --radius-lg: 8px;
+  --radius-md: 6px;
+  --radius-sm: 4px;
 }
 
 body.theme-light {
@@ -105,7 +105,7 @@ body.theme-light .background-layer {
   border: 1px solid var(--line);
   border-radius: var(--radius-md);
   background: var(--bg-panel);
-  box-shadow: var(--shadow);
+  box-shadow: none;
 }
 
 .dock {
@@ -210,7 +210,7 @@ body.theme-light .background-layer {
   grid-template-columns: minmax(180px, 1fr) minmax(260px, 520px) auto;
   align-items: center;
   gap: 12px;
-  min-height: 68px;
+  min-height: 64px;
   margin: 0 -14px;
   padding: 10px 14px;
   border: 0;
@@ -247,7 +247,7 @@ body.theme-light .topbar {
   height: 38px;
   padding: 0 10px;
   border: 1px solid var(--line);
-  border-radius: 0;
+  border-radius: 2px;
   background: var(--bg-panel);
   cursor: pointer;
 }
@@ -295,7 +295,7 @@ body.theme-light .topbar {
   min-height: 40px;
   padding: 0 14px 0 40px;
   border: 1px solid var(--line);
-  border-radius: 0;
+  border-radius: var(--radius-sm);
   background: var(--bg-panel);
   color: var(--text-main);
 }
@@ -316,7 +316,7 @@ body.theme-light .topbar {
   min-height: 30px;
   padding: 0 10px;
   border: 1px solid var(--line);
-  border-radius: 0;
+  border-radius: var(--radius-sm);
   background: var(--bg-panel);
   color: var(--text-soft);
   font-size: 0.8rem;
@@ -341,9 +341,9 @@ body.theme-light .topbar {
   width: 200px;
   padding: 8px;
   border: 1px solid var(--line-strong);
-  border-radius: 0;
+  border-radius: var(--radius-sm);
   background: var(--bg-panel);
-  box-shadow: var(--shadow);
+  box-shadow: none;
   opacity: 0;
   pointer-events: none;
   transform: translateY(-6px);
@@ -360,7 +360,7 @@ body.theme-light .topbar {
   min-height: 40px;
   padding: 0 12px;
   border: 1px solid var(--line);
-  border-radius: 0;
+  border-radius: 2px;
   text-align: left;
   background: var(--bg-panel-2);
   cursor: pointer;
@@ -381,7 +381,7 @@ body.theme-light .topbar {
   height: 40px;
   padding: 0;
   border: 1px solid var(--line);
-  border-radius: 0;
+  border-radius: 2px;
   background: var(--bg-panel);
   cursor: pointer;
 }
@@ -412,7 +412,7 @@ body.theme-light .topbar {
   gap: 12px;
   padding: 18px;
   overflow: hidden;
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-sm);
 }
 
 .hero-backdrop {
@@ -460,7 +460,7 @@ body.theme-light .topbar {
   min-height: 40px;
   padding: 0 14px;
   border: 1px solid var(--line-strong);
-  border-radius: 0;
+  border-radius: var(--radius-sm);
   font-weight: 700;
   cursor: pointer;
 }
@@ -587,7 +587,7 @@ body.theme-light .genre-card.is-active {
   height: 22px;
   padding: 0 8px;
   border: 1px solid var(--line);
-  border-radius: 0;
+  border-radius: 2px;
   color: var(--text-soft);
   font-size: 0.72rem;
   font-weight: 700;
@@ -773,7 +773,7 @@ body.theme-light .spotlight-art {
   min-height: 32px;
   padding: 0 10px;
   border: 1px solid var(--line);
-  border-radius: 0;
+  border-radius: 3px;
   background: var(--bg-panel);
   cursor: pointer;
 }
@@ -854,7 +854,7 @@ body.theme-light .spotlight-art {
   min-height: 34px;
   padding: 0 10px;
   border: 1px solid transparent;
-  border-radius: 0;
+  border-radius: 3px;
   color: var(--text-soft);
   cursor: pointer;
 }

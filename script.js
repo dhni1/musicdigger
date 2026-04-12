@@ -27,8 +27,6 @@ const elements = {
   menuHome: document.getElementById('menu-home'),
   menuRandom: document.getElementById('menu-random'),
   menuSearch: document.getElementById('menu-search'),
-  menuTheme: document.getElementById('menu-theme'),
-  heroRandom: document.getElementById('hero-random'),
   heroTheme: document.getElementById('hero-theme'),
   sidebarRandom: document.getElementById('sidebar-random'),
   playerTrackTitle: document.getElementById('player-track-title'),
@@ -70,14 +68,8 @@ function bindEvents() {
     setMenuOpen(false);
   });
 
-  elements.menuTheme.addEventListener('click', () => {
-    toggleTheme();
-    setMenuOpen(false);
-  });
-
-  elements.heroRandom.addEventListener('click', showRandomGenre);
-  elements.sidebarRandom.addEventListener('click', showRandomGenre);
-  elements.heroTheme.addEventListener('click', toggleTheme);
+  addClick(elements.sidebarRandom, showRandomGenre);
+  addClick(elements.heroTheme, toggleTheme);
 
   document.addEventListener('click', event => {
     const clickedInsideMenu = elements.menuPanel.contains(event.target);
@@ -315,11 +307,19 @@ function updateThemeUI() {
   elements.body.classList.remove(oldThemeClass);
   elements.body.classList.add(themeClass);
 
-  elements.menuTheme.textContent = state.isDarkMode ? '라이트 모드' : '다크 모드';
+  if (elements.heroTheme) {
+    elements.heroTheme.textContent = state.isDarkMode ? 'Light Mode' : 'Dark Mode';
+  }
 }
 
 function makeDuration(index) {
   const minutes = 3 + (index % 3);
   const seconds = 10 + index * 17;
   return `${String(minutes).padStart(2, '0')}:${String(seconds % 60).padStart(2, '0')}`;
+}
+
+function addClick(element, handler) {
+  if (element) {
+    element.addEventListener('click', handler);
+  }
 }
