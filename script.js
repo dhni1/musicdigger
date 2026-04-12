@@ -21,8 +21,6 @@ const elements = {
   heroSearchStatus: document.getElementById('hero-search-status'),
   heroTag: document.getElementById('hero-tag'),
   currentGenreChip: document.getElementById('current-genre-chip'),
-  themeBadge: document.getElementById('theme-badge'),
-  themeStatus: document.getElementById('theme-status'),
   searchInput: document.getElementById('genre-search'),
   menuToggle: document.getElementById('menu-toggle'),
   menuPanel: document.getElementById('menu-panel'),
@@ -317,9 +315,7 @@ function updateThemeUI() {
   elements.body.classList.remove(oldThemeClass);
   elements.body.classList.add(themeClass);
 
-  elements.themeBadge.textContent = state.isDarkMode ? 'Dark First' : 'Light Preview';
-  elements.themeStatus.textContent = state.isDarkMode ? 'Dark Mode' : 'Light Mode';
-  elements.menuTheme.textContent = state.isDarkMode ? 'Light Preview' : 'Dark Preview';
+  elements.menuTheme.textContent = state.isDarkMode ? '라이트 모드' : '다크 모드';
 }
 
 function makeDuration(index) {

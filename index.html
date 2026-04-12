@@ -21,11 +21,6 @@
 
   <div class="app-shell">
     <aside class="dock panel-surface">
-      <div class="dock-brand">
-        <p class="dock-overline">Your Digital Sanctuary</p>
-        <h1>MUSICDIGGER</h1>
-      </div>
-
       <nav class="dock-nav" aria-label="기본 탐색">
         <button class="dock-link is-current" type="button">Home</button>
         <button class="dock-link" type="button">Library</button>
@@ -37,9 +32,7 @@
       <button id="sidebar-random" class="dock-cta" type="button">Random Dig</button>
 
       <div class="dock-footer">
-        <p class="dock-overline">Curated</p>
-        <button class="dock-mini" type="button">Trending Tags</button>
-        <button class="dock-mini" type="button">Vinyl Hub</button>
+        <button class="dock-mini" type="button">Profile</button>
       </div>
     </aside>
 
@@ -58,10 +51,7 @@
             <span></span>
             <span></span>
           </button>
-          <div class="brand-block">
-            <span class="brand-chip">Dark UI</span>
-            <strong class="brand">MUSICDIGGER</strong>
-          </div>
+          <strong class="brand">MUSICDIGGER</strong>
         </div>
 
         <div class="topbar-search">
@@ -76,14 +66,16 @@
         </div>
 
         <div class="topbar-right">
-          <span id="theme-badge" class="theme-badge">Dark First</span>
+          <button class="profile-slot" type="button" aria-label="프로필">
+            <span class="profile-avatar" aria-hidden="true"></span>
+          </button>
         </div>
 
         <div id="menu-panel" class="menu-panel" aria-hidden="true">
           <button id="menu-home" type="button">Home Focus</button>
           <button id="menu-random" type="button">Random Genre</button>
           <button id="menu-search" type="button">Focus Search</button>
-          <button id="menu-theme" type="button">Light Preview</button>
+          <button id="menu-theme" type="button">라이트 모드</button>
         </div>
       </header>
 
@@ -113,10 +105,6 @@
           </div>
 
           <div class="hero-stats">
-            <article class="hero-stat-card">
-              <span>Theme</span>
-              <strong id="theme-status">Dark Mode</strong>
-            </article>
             <article class="hero-stat-card">
               <span>Genres</span>
               <strong id="genre-count">0</strong>
