@@ -2,7 +2,7 @@
   "genres": [
     {
       "id": "hiphop",
-      "name": "힙합",
+      "name": "Hip-Hop",
       "description": "리듬과 랩 중심의 장르",
       "subgenres": ["jazz_hiphop", "trap"],
       "similar": ["rnb"],
@@ -14,7 +14,7 @@
     },
     {
       "id": "jazz_hiphop",
-      "name": "재즈 힙합",
+      "name": "Jazz HipHop",
       "description": "재즈와 힙합이 결합된 장르",
       "subgenres": [],
       "similar": ["lofi"],
@@ -26,7 +26,7 @@
     },
     {
       "id": "trap",
-      "name": "트랩",
+      "name": "Trap",
       "description": "강한 베이스와 하이햇이 특징",
       "subgenres": [],
       "similar": ["hiphop"],
@@ -34,6 +34,18 @@
       "tracks": [
         {"title": "Mask Off", "artist": "Future"},
         {"title": "Goosebumps", "artist": "Travis Scott"}
+      ]
+    },
+    {
+      "id": "BoomBap",
+      "name": "BoomBap",
+      "description": "boom과 bap 사운드가 특징인 힙합의 한 형태",
+      "subgenres": [],
+      "similar": ["hiphop"],
+      "fusion": [],
+      "tracks": [
+        {"title": "The Genesis", "artist": "Nas"},
+        {"title": "N.Y. State of Mind", "artist": "Nas"}
       ]
     },
     {
@@ -50,7 +62,7 @@
     },
     {
       "id": "lofi",
-      "name": "로파이",
+      "name": "Lofi",
       "description": "편안하고 반복적인 비트",
       "subgenres": [],
       "similar": ["jazz_hiphop"],
