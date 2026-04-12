@@ -75,3 +75,10 @@
 - 장르 카드의 `recommendation picks` 문구와 waveform 패널 제거
 - `Jazz Hip-Hop` 설명이 Spotify 아티스트 문구로 덮어써지지 않도록 수정하고 기본 대표 곡 수 보강
 - `K-Pop` seed/search 기준과 대표 곡을 한국 아이돌 음악 맥락에 맞게 조정
+
+## v0.5.1
+- 장르 상태 표시에서 `4 / 23 장르` 같은 축약 카운트 문구 제거
+- 사이드바에서 `Liked Tracks`, `Search` 메뉴를 제거하고 `Playlists`를 생성 진입점으로 유지
+- 라이브러리 화면의 `Create Playlist` 버튼 제거
+- 프로필 화면의 액션 버튼을 제거하고 `Go To` 영역을 `Settings` 영역으로 변경
+- 상단 메뉴 패널은 `Settings` 한 개만 노출되도록 정리

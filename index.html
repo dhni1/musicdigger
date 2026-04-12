@@ -27,8 +27,6 @@
         <button id="nav-home" class="dock-link is-current" type="button">Home</button>
         <button id="nav-library" class="dock-link" type="button">Library</button>
         <button id="nav-playlists" class="dock-link" type="button">Playlists</button>
-        <button id="nav-liked" class="dock-link" type="button">Liked Tracks</button>
-        <button id="nav-search" class="dock-link" type="button">Search</button>
       </nav>
 
       <button id="sidebar-random" class="dock-cta" type="button">Random Dig</button>
@@ -74,11 +72,7 @@
         </div>
 
         <div id="menu-panel" class="menu-panel" aria-hidden="true">
-          <button id="menu-home" type="button">Home Focus</button>
-          <button id="menu-library" type="button">Open Library</button>
-          <button id="menu-profile" type="button">Open Profile</button>
-          <button id="menu-random" type="button">Random Genre</button>
-          <button id="menu-search" type="button">Focus Search</button>
+          <button id="menu-settings" type="button">Settings</button>
         </div>
       </header>
 
@@ -212,9 +206,6 @@
                 <button id="spotify-refresh-button" class="secondary-button" type="button">
                   Refresh
                 </button>
-                <button id="spotify-create-playlist-button" class="primary-button" type="button">
-                  Create Playlist
-                </button>
               </div>
             </div>
 
@@ -265,17 +256,6 @@
                 <p class="section-kicker">Account Center</p>
                 <h3>Profile</h3>
               </div>
-              <div class="library-actions">
-                <button id="profile-auth-button" class="secondary-button" type="button">
-                  Connect Spotify
-                </button>
-                <button id="profile-refresh-button" class="secondary-button" type="button">
-                  Refresh
-                </button>
-                <button id="profile-create-playlist-button" class="primary-button" type="button">
-                  Create Playlist
-                </button>
-              </div>
             </div>
             <p class="hero-description profile-copy">
               Spotify 계정 상태와 라이브러리 요약을 한 화면에서 확인할 수 있습니다.
@@ -305,23 +285,20 @@
               <div id="profile-summary" class="profile-summary"></div>
             </section>
 
-            <section class="panel-surface profile-block">
+            <section id="profile-settings-block" class="panel-surface profile-block">
               <div class="section-heading tight">
                 <div>
-                  <p class="section-kicker">Shortcuts</p>
-                  <h3>Go To</h3>
+                  <p class="section-kicker">Preferences</p>
+                  <h3>Settings</h3>
                 </div>
               </div>
-              <div class="profile-shortcuts">
-                <button id="profile-open-library" class="secondary-button" type="button">
-                  Open Library
+              <div class="profile-settings">
+                <button id="profile-theme-toggle" class="secondary-button" type="button">
+                  Light Mode
                 </button>
-                <button id="profile-open-playlists" class="secondary-button" type="button">
-                  Playlists
-                </button>
-                <button id="profile-open-liked" class="secondary-button" type="button">
-                  Liked Tracks
-                </button>
+                <div id="profile-settings-note" class="empty-state">
+                  테마 전환과 계정 연결 상태를 이 화면에서 확인할 수 있습니다.
+                </div>
               </div>
             </section>
           </div>

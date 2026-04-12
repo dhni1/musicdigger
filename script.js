@@ -143,11 +143,7 @@ const elements = {
   searchInput: document.getElementById('genre-search'),
   menuToggle: document.getElementById('menu-toggle'),
   menuPanel: document.getElementById('menu-panel'),
-  menuHome: document.getElementById('menu-home'),
-  menuLibrary: document.getElementById('menu-library'),
-  menuProfile: document.getElementById('menu-profile'),
-  menuRandom: document.getElementById('menu-random'),
-  menuSearch: document.getElementById('menu-search'),
+  menuSettings: document.getElementById('menu-settings'),
   heroTheme: document.getElementById('hero-theme'),
   sidebarRandom: document.getElementById('sidebar-random'),
   playerTrackTitle: document.getElementById('player-track-title'),
@@ -157,28 +153,22 @@ const elements = {
   navHome: document.getElementById('nav-home'),
   navLibrary: document.getElementById('nav-library'),
   navPlaylists: document.getElementById('nav-playlists'),
-  navLiked: document.getElementById('nav-liked'),
-  navSearch: document.getElementById('nav-search'),
   navProfile: document.getElementById('nav-profile'),
   profileSlot: document.getElementById('profile-slot'),
   profileAvatar: document.getElementById('profile-avatar'),
   spotifyLibrary: document.getElementById('spotify-library'),
   spotifyAuthButton: document.getElementById('spotify-auth-button'),
   spotifyRefreshButton: document.getElementById('spotify-refresh-button'),
-  spotifyCreatePlaylistButton: document.getElementById('spotify-create-playlist-button'),
   spotifyProfileCard: document.getElementById('spotify-profile-card'),
   playlistSection: document.getElementById('playlist-section'),
   likedSection: document.getElementById('liked-section'),
   playlistList: document.getElementById('playlist-list'),
   likedTrackList: document.getElementById('liked-track-list'),
-  profileAuthButton: document.getElementById('profile-auth-button'),
-  profileRefreshButton: document.getElementById('profile-refresh-button'),
-  profileCreatePlaylistButton: document.getElementById('profile-create-playlist-button'),
   profileScreenCard: document.getElementById('profile-screen-card'),
   profileSummary: document.getElementById('profile-summary'),
-  profileOpenLibrary: document.getElementById('profile-open-library'),
-  profileOpenPlaylists: document.getElementById('profile-open-playlists'),
-  profileOpenLiked: document.getElementById('profile-open-liked'),
+  profileSettingsBlock: document.getElementById('profile-settings-block'),
+  profileThemeToggle: document.getElementById('profile-theme-toggle'),
+  profileSettingsNote: document.getElementById('profile-settings-note'),
   playlistModal: document.getElementById('playlist-modal'),
   playlistModalClose: document.getElementById('playlist-modal-close'),
   playlistForm: document.getElementById('playlist-form'),
@@ -202,31 +192,8 @@ function bindEvents() {
     setMenuOpen(!elements.menuPanel.classList.contains('is-open'));
   });
 
-  addClick(elements.menuHome, () => {
-    focusHome();
-    setActiveNav(elements.navHome);
-    setMenuOpen(false);
-  });
-
-  addClick(elements.menuLibrary, () => {
-    openLibraryView(elements.navLibrary);
-    setMenuOpen(false);
-  });
-
-  addClick(elements.menuProfile, () => {
-    openProfileView();
-    setMenuOpen(false);
-  });
-
-  addClick(elements.menuRandom, () => {
-    void showRandomGenre();
-    setMenuOpen(false);
-  });
-
-  addClick(elements.menuSearch, () => {
-    showView('home');
-    elements.searchInput.focus();
-    setActiveNav(elements.navSearch);
+  addClick(elements.menuSettings, () => {
+    openProfileSettings();
     setMenuOpen(false);
   });
 
@@ -234,6 +201,7 @@ function bindEvents() {
     void showRandomGenre();
   });
   addClick(elements.heroTheme, toggleTheme);
+  addClick(elements.profileThemeToggle, toggleTheme);
   addClick(elements.navHome, () => {
     focusHome();
     setActiveNav(elements.navHome);
@@ -243,14 +211,6 @@ function bindEvents() {
   });
   addClick(elements.navPlaylists, () => {
     handlePlaylistNav();
-  });
-  addClick(elements.navLiked, () => {
-    openLibraryView(elements.navLiked, elements.likedSection);
-  });
-  addClick(elements.navSearch, () => {
-    showView('home');
-    elements.searchInput.focus();
-    setActiveNav(elements.navSearch);
   });
   addClick(elements.navProfile, openProfileView);
   addClick(elements.profileSlot, () => {
@@ -262,31 +222,10 @@ function bindEvents() {
   addClick(elements.spotifyRefreshButton, () => {
     void syncSpotifyData();
   });
-  addClick(elements.spotifyCreatePlaylistButton, () => {
-    void openPlaylistModalFromView();
-  });
-  addClick(elements.profileAuthButton, () => {
-    void handleSpotifyAuthButton();
-  });
-  addClick(elements.profileRefreshButton, () => {
-    void syncSpotifyData();
-  });
-  addClick(elements.profileCreatePlaylistButton, () => {
-    void openPlaylistModalFromView();
-  });
   addClick(elements.genreToggle, () => {
     state.genreListExpanded = !state.genreListExpanded;
     renderGenreList();
     updateSearchStatus(buildSearchToken(state.searchQuery));
-  });
-  addClick(elements.profileOpenLibrary, () => {
-    openLibraryView(elements.navLibrary);
-  });
-  addClick(elements.profileOpenPlaylists, () => {
-    openLibraryView(elements.navPlaylists, elements.playlistSection);
-  });
-  addClick(elements.profileOpenLiked, () => {
-    openLibraryView(elements.navLiked, elements.likedSection);
   });
   addClick(elements.playlistModalClose, closePlaylistModal);
   addClick(elements.playlistModal, event => {
@@ -297,7 +236,7 @@ function bindEvents() {
 
   elements.searchInput.addEventListener('input', event => {
     showView('home');
-    setActiveNav(elements.navSearch);
+    setActiveNav(elements.navHome);
     applySearch(event.target.value);
   });
 
@@ -412,14 +351,7 @@ function applySearch(query) {
 
 function updateSearchStatus(keyword) {
   const isSearching = Boolean(keyword.normalized);
-  const visibleCount = getVisibleGenres().length;
-  let message = '전체 장르';
-
-  if (isSearching) {
-    message = `${state.filteredGenres.length}개 결과`;
-  } else if (!state.genreListExpanded && state.filteredGenres.length > DEFAULT_VISIBLE_GENRES) {
-    message = `${visibleCount} / ${state.filteredGenres.length} 장르`;
-  }
+  const message = isSearching ? `${state.filteredGenres.length}개 결과` : '전체 장르';
 
   elements.searchStatus.textContent = message;
   elements.heroSearchStatus.textContent = message;
@@ -816,6 +748,16 @@ function openProfileView() {
   setActiveNav(elements.navProfile);
 }
 
+function openProfileSettings() {
+  openProfileView();
+
+  if (elements.profileSettingsBlock) {
+    window.requestAnimationFrame(() => {
+      focusSection(elements.profileSettingsBlock);
+    });
+  }
+}
+
 function toggleTheme() {
   state.isDarkMode = !state.isDarkMode;
   updateThemeUI();
@@ -837,6 +779,9 @@ function updateThemeUI() {
   if (elements.heroTheme) {
     elements.heroTheme.textContent = state.isDarkMode ? 'Light Mode' : 'Dark Mode';
   }
+  if (elements.profileThemeToggle) {
+    elements.profileThemeToggle.textContent = state.isDarkMode ? 'Light Mode' : 'Dark Mode';
+  }
 }
 
 function setActiveNav(target) {
@@ -844,8 +789,6 @@ function setActiveNav(target) {
     elements.navHome,
     elements.navLibrary,
     elements.navPlaylists,
-    elements.navLiked,
-    elements.navSearch,
     elements.navProfile,
   ].forEach(button => {
     button?.classList.toggle('is-current', button === target);
@@ -912,7 +855,13 @@ async function initializeSpotify() {
 }
 
 async function handlePlaylistNav() {
-  openLibraryView(elements.navPlaylists, elements.playlistSection);
+  setActiveNav(elements.navPlaylists);
+
+  if (!(await ensureSpotifyReady(true))) {
+    return;
+  }
+
+  openPlaylistModal();
 }
 
 async function handleSpotifyAuthButton() {
@@ -922,16 +871,6 @@ async function handleSpotifyAuthButton() {
   }
 
   await syncSpotifyData();
-}
-
-async function openPlaylistModalFromView() {
-  openLibraryView(elements.navPlaylists, elements.playlistSection);
-
-  if (!(await ensureSpotifyReady(true))) {
-    return;
-  }
-
-  openPlaylistModal();
 }
 
 function openPlaylistModal() {
@@ -1081,22 +1020,13 @@ function renderSpotifyState() {
   if (elements.spotifyRefreshButton) {
     elements.spotifyRefreshButton.disabled = !hasAccessToken;
   }
-  if (elements.profileRefreshButton) {
-    elements.profileRefreshButton.disabled = !hasAccessToken;
-  }
-  if (elements.spotifyCreatePlaylistButton) {
-    elements.spotifyCreatePlaylistButton.disabled = !hasAccessToken;
-  }
-  if (elements.profileCreatePlaylistButton) {
-    elements.profileCreatePlaylistButton.disabled = !hasAccessToken;
-  }
-
-  const authLabel = hasAccessToken ? 'Refresh Library' : 'Connect Spotify';
   if (elements.spotifyAuthButton) {
-    elements.spotifyAuthButton.textContent = authLabel;
+    elements.spotifyAuthButton.textContent = hasAccessToken ? 'Refresh Library' : 'Connect Spotify';
   }
-  if (elements.profileAuthButton) {
-    elements.profileAuthButton.textContent = authLabel;
+  if (elements.profileSettingsNote) {
+    elements.profileSettingsNote.textContent = hasAccessToken
+      ? 'Spotify 연결 상태는 위 프로필 요약과 라이브러리 화면에서 확인할 수 있습니다.'
+      : 'Spotify를 연결하면 프로필과 라이브러리 정보를 더 자세히 볼 수 있습니다.';
   }
 }
 
@@ -1181,7 +1111,7 @@ function renderProfileSummary() {
 function renderPlaylistList() {
   if (!state.spotify.accessToken) {
     elements.playlistList.innerHTML =
-      '<div class="empty-state">Spotify에 로그인하면 플레이리스트를 여기서 확인하고 새로 만들 수 있습니다.</div>';
+      '<div class="empty-state">Spotify에 로그인하면 플레이리스트를 여기서 확인할 수 있습니다.</div>';
     return;
   }
 
