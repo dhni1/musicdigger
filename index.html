@@ -22,11 +22,11 @@
   <div class="app-shell">
     <aside class="dock panel-surface">
       <nav class="dock-nav" aria-label="기본 탐색">
-        <button class="dock-link is-current" type="button">Home</button>
-        <button class="dock-link" type="button">Library</button>
-        <button class="dock-link" type="button">Playlists</button>
-        <button class="dock-link" type="button">Liked Tracks</button>
-        <button class="dock-link" type="button">Search</button>
+        <button id="nav-home" class="dock-link is-current" type="button">Home</button>
+        <button id="nav-library" class="dock-link" type="button">Library</button>
+        <button id="nav-playlists" class="dock-link" type="button">Playlists</button>
+        <button id="nav-liked" class="dock-link" type="button">Liked Tracks</button>
+        <button id="nav-search" class="dock-link" type="button">Search</button>
       </nav>
 
       <button id="sidebar-random" class="dock-cta" type="button">Random Dig</button>
@@ -66,8 +66,8 @@
         </div>
 
         <div class="topbar-right">
-          <button class="profile-slot" type="button" aria-label="프로필">
-            <span class="profile-avatar" aria-hidden="true"></span>
+          <button id="profile-slot" class="profile-slot" type="button" aria-label="프로필">
+            <span id="profile-avatar" class="profile-avatar" aria-hidden="true"></span>
           </button>
         </div>
 
@@ -215,6 +215,61 @@
             </section>
           </aside>
         </section>
+
+        <section id="spotify-library" class="panel-surface library-panel">
+          <div class="section-heading">
+            <div>
+              <p class="section-kicker">Spotify Sync</p>
+              <h3>Library</h3>
+            </div>
+            <div class="library-actions">
+              <button id="spotify-auth-button" class="secondary-button" type="button">
+                Connect Spotify
+              </button>
+              <button id="spotify-refresh-button" class="secondary-button" type="button">
+                Refresh
+              </button>
+            </div>
+          </div>
+
+          <div class="library-grid">
+            <section class="library-block">
+              <div class="section-heading tight">
+                <div>
+                  <p class="section-kicker">Account</p>
+                  <h3>Profile</h3>
+                </div>
+              </div>
+              <div id="spotify-profile-card" class="empty-state">
+                Spotify에 로그인하면 프로필과 플레이리스트를 여기서 불러옵니다.
+              </div>
+            </section>
+
+            <section class="library-block">
+              <div class="section-heading tight">
+                <div>
+                  <p class="section-kicker">Your Library</p>
+                  <h3>Playlists</h3>
+                </div>
+              </div>
+              <div id="playlist-list" class="playlist-list">
+                <div class="empty-state">플레이리스트가 아직 없습니다.</div>
+              </div>
+            </section>
+
+            <section class="library-block">
+              <div class="section-heading tight">
+                <div>
+                  <p class="section-kicker">Your Library</p>
+                  <h3>Liked Tracks</h3>
+                </div>
+              </div>
+              <div id="liked-track-list" class="liked-track-list">
+                <div class="empty-state">좋아요한 트랙이 아직 없습니다.</div>
+              </div>
+            </section>
+          </div>
+        </section>
       </main>
 
       <div class="player-bar panel-surface">
@@ -245,6 +300,45 @@
     </div>
   </div>
 
+  <div id="playlist-modal" class="modal-shell" aria-hidden="true">
+    <div class="modal-backdrop" data-close-modal="true"></div>
+    <section class="modal-card panel-surface" role="dialog" aria-modal="true" aria-labelledby="playlist-modal-title">
+      <div class="section-heading tight">
+        <div>
+          <p class="section-kicker">Spotify</p>
+          <h3 id="playlist-modal-title">Create Playlist</h3>
+        </div>
+        <button id="playlist-modal-close" class="modal-close" type="button" aria-label="닫기">Close</button>
+      </div>
+
+      <form id="playlist-form" class="playlist-form">
+        <label class="field-group">
+          <span>Playlist Name</span>
+          <input id="playlist-name" name="playlistName" type="text" maxlength="100" required>
+        </label>
+
+        <label class="field-group">
+          <span>Description</span>
+          <textarea id="playlist-description" name="playlistDescription" rows="4"></textarea>
+        </label>
+
+        <label class="checkbox-row">
+          <input id="playlist-private" name="playlistPrivate" type="checkbox" checked>
+          <span>Private playlist로 만들기</span>
+        </label>
+
+        <p class="modal-note">
+          현재 선택한 장르의 대표 곡을 Spotify에서 찾을 수 있으면 새 플레이리스트에 함께 추가합니다.
+        </p>
+
+        <div class="modal-actions">
+          <button id="playlist-submit" class="primary-button" type="submit">Create</button>
+        </div>
+      </form>
+    </section>
+  </div>
+
+  <script src="spotify-config.js"></script>
   <script src="script.js"></script>
 </body>
 </html>
