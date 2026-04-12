@@ -359,6 +359,9 @@ function getGenreSearchScore(genre, keyword) {
   const primaryTerms = [genre.name, genre.id];
   const secondaryTerms = [
     genre.description,
+    ...(genre.aliases ?? []),
+    ...(genre.spotifySeedGenres ?? []),
+    ...(genre.spotifySearchTerms ?? []),
     ...(genre.subgenres ?? []).map(resolveGenreSearchLabel),
     ...(genre.similar ?? []).map(resolveGenreSearchLabel),
     ...(genre.fusion ?? []).map(resolveGenreSearchLabel),
@@ -430,13 +433,13 @@ function buildSearchToken(value) {
 function normalizeSearchText(value) {
   return String(value ?? '')
     .toLowerCase()
-    .replace(/[_-]+/g, ' ')
+    .replace(/[^a-z0-9]+/g, ' ')
     .replace(/\s+/g, ' ')
     .trim();
 }
 
 function compactSearchText(value) {
-  return value.replace(/\s+/g, '');
+  return value.replace(/[^a-z0-9]+/g, '');
 }
 
 function renderGenreList() {

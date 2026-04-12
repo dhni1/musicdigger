@@ -1,75 +1,348 @@
 {
   "genres": [
     {
-      "id": "hiphop",
+      "id": "hip-hop",
       "name": "Hip-Hop",
-      "description": "리듬과 랩 중심의 장르",
-      "subgenres": ["jazz_hiphop", "trap", "BoomBap"],
-      "similar": ["rnb"],
-      "fusion": ["rap_rock"],
+      "description": "리듬과 랩 중심의 대표적인 스트리트 사운드",
+      "aliases": ["hiphop", "rap"],
+      "spotifySeedGenres": ["hip-hop"],
+      "spotifySearchTerms": ["hip hop", "rap"],
+      "subgenres": ["jazz-hiphop", "trap", "boom-bap"],
+      "similar": ["r-n-b", "grime"],
+      "fusion": ["rap-rock"],
       "tracks": [
-        {"title": "SICKO MODE", "artist": "Travis Scott"},
-        {"title": "HUMBLE", "artist": "Kendrick Lamar"}
+        { "title": "SICKO MODE", "artist": "Travis Scott" },
+        { "title": "HUMBLE.", "artist": "Kendrick Lamar" }
       ]
     },
     {
-      "id": "jazz_hiphop",
-      "name": "Jazz HipHop",
-      "description": "재즈와 힙합이 결합된 장르",
+      "id": "jazz-hiphop",
+      "name": "Jazz Hip-Hop",
+      "description": "재즈 화성과 힙합 비트가 결합된 부드러운 그루브",
+      "aliases": ["jazz hiphop", "jazz rap"],
+      "spotifySeedGenres": ["hip-hop", "jazz"],
+      "spotifySearchTerms": ["jazz hip hop", "jazz rap"],
       "subgenres": [],
-      "similar": ["lofi"],
+      "similar": ["lofi", "hip-hop"],
       "fusion": [],
       "tracks": [
-        {"title": "Feather", "artist": "Nujabes"},
-        {"title": "Luv(sic)", "artist": "Nujabes"}
+        { "title": "Feather", "artist": "Nujabes" },
+        { "title": "Luv(sic.) pt3", "artist": "Nujabes" }
       ]
     },
     {
       "id": "trap",
       "name": "Trap",
-      "description": "강한 베이스와 하이햇이 특징",
+      "description": "강한 808과 하이햇 롤이 중심이 되는 현대 힙합",
+      "aliases": ["trap hip hop"],
+      "spotifySeedGenres": ["hip-hop"],
+      "spotifySearchTerms": ["trap", "trap hip hop"],
       "subgenres": [],
-      "similar": ["hiphop"],
+      "similar": ["hip-hop", "drill"],
       "fusion": [],
       "tracks": [
-        {"title": "Mask Off", "artist": "Future"},
-        {"title": "Goosebumps", "artist": "Travis Scott"}
+        { "title": "Mask Off", "artist": "Future" },
+        { "title": "goosebumps", "artist": "Travis Scott" }
       ]
     },
     {
-      "id": "BoomBap",
-      "name": "BoomBap",
-      "description": "boom과 bap 사운드가 특징인 힙합의 한 형태",
+      "id": "boom-bap",
+      "name": "Boom Bap",
+      "description": "킥과 스네어가 선명한 클래식한 90년대 힙합 질감",
+      "aliases": ["boombap", "boom bap", "90s hip hop"],
+      "spotifySeedGenres": ["hip-hop"],
+      "spotifySearchTerms": ["boom bap", "boombap", "90s hip hop"],
       "subgenres": [],
-      "similar": ["hiphop"],
+      "similar": ["hip-hop", "jazz-hiphop"],
       "fusion": [],
       "tracks": [
-        {"title": "The Genesis", "artist": "Nas"},
-        {"title": "N.Y. State of Mind", "artist": "Nas"}
+        { "title": "N.Y. State of Mind", "artist": "Nas" },
+        { "title": "Mass Appeal", "artist": "Gang Starr" }
       ]
     },
     {
-      "id": "rnb",
+      "id": "r-n-b",
       "name": "R&B",
-      "description": "부드러운 보컬 중심 장르",
+      "description": "감각적인 보컬과 리듬감이 중심인 소울풀한 장르",
+      "aliases": ["rnb", "r&b", "rhythm and blues"],
+      "spotifySeedGenres": ["r-n-b", "soul"],
+      "spotifySearchTerms": ["r&b", "rnb", "rhythm and blues"],
       "subgenres": [],
-      "similar": ["hiphop"],
+      "similar": ["hip-hop", "soul", "pop"],
       "fusion": [],
       "tracks": [
-        {"title": "Blinding Lights", "artist": "The Weeknd"},
-        {"title": "Location", "artist": "Khalid"}
+        { "title": "Location", "artist": "Khalid" },
+        { "title": "Earned It", "artist": "The Weeknd" }
       ]
     },
     {
       "id": "lofi",
-      "name": "Lofi",
-      "description": "편안하고 반복적인 비트",
+      "name": "Lo-Fi",
+      "description": "편안한 반복 비트와 빈티지 질감이 특징인 집중형 사운드",
+      "aliases": ["lo fi", "lo-fi", "lofi hip hop"],
+      "spotifySeedGenres": ["chill", "study"],
+      "spotifySearchTerms": ["lofi hip hop", "lo-fi beats", "chill beats"],
       "subgenres": [],
-      "similar": ["jazz_hiphop"],
+      "similar": ["jazz-hiphop", "ambient"],
       "fusion": [],
       "tracks": [
-        {"title": "lofi hip hop radio", "artist": "Various"},
-        {"title": "Chill Beats", "artist": "Various"}
+        { "title": "affection", "artist": "Jinsang" },
+        { "title": "snowman", "artist": "WYS" }
+      ]
+    },
+    {
+      "id": "pop",
+      "name": "Pop",
+      "description": "대중적 멜로디와 직관적인 훅이 강한 메인스트림 장르",
+      "aliases": ["popular"],
+      "spotifySeedGenres": ["pop"],
+      "spotifySearchTerms": ["pop"],
+      "subgenres": [],
+      "similar": ["dance", "r-n-b", "k-pop"],
+      "fusion": [],
+      "tracks": [
+        { "title": "Levitating", "artist": "Dua Lipa" },
+        { "title": "Style", "artist": "Taylor Swift" }
+      ]
+    },
+    {
+      "id": "indie",
+      "name": "Indie",
+      "description": "독립적인 감성과 질감이 살아 있는 대안적 팝/록 사운드",
+      "aliases": ["indie pop", "indie rock"],
+      "spotifySeedGenres": ["indie", "alternative"],
+      "spotifySearchTerms": ["indie", "indie pop", "indie rock"],
+      "subgenres": [],
+      "similar": ["alternative", "rock", "ambient"],
+      "fusion": [],
+      "tracks": [
+        { "title": "The Less I Know The Better", "artist": "Tame Impala" },
+        { "title": "Space Song", "artist": "Beach House" }
+      ]
+    },
+    {
+      "id": "alternative",
+      "name": "Alternative",
+      "description": "정통 메인스트림과 다른 결을 가진 실험적 밴드 사운드",
+      "aliases": ["alt rock", "alternative rock"],
+      "spotifySeedGenres": ["alternative", "rock"],
+      "spotifySearchTerms": ["alternative", "alternative rock"],
+      "subgenres": [],
+      "similar": ["indie", "rock", "punk"],
+      "fusion": [],
+      "tracks": [
+        { "title": "Do I Wanna Know?", "artist": "Arctic Monkeys" },
+        { "title": "Creep", "artist": "Radiohead" }
+      ]
+    },
+    {
+      "id": "rock",
+      "name": "Rock",
+      "description": "기타 리프와 밴드 에너지가 중심인 클래식한 장르",
+      "aliases": ["rock and roll"],
+      "spotifySeedGenres": ["rock"],
+      "spotifySearchTerms": ["rock", "rock music"],
+      "subgenres": [],
+      "similar": ["alternative", "metal", "punk"],
+      "fusion": ["rap-rock"],
+      "tracks": [
+        { "title": "Smells Like Teen Spirit", "artist": "Nirvana" },
+        { "title": "Mr. Brightside", "artist": "The Killers" }
+      ]
+    },
+    {
+      "id": "jazz",
+      "name": "Jazz",
+      "description": "즉흥성과 화성 진행이 돋보이는 어쿠스틱 중심 장르",
+      "aliases": ["modern jazz"],
+      "spotifySeedGenres": ["jazz"],
+      "spotifySearchTerms": ["jazz", "modern jazz"],
+      "subgenres": [],
+      "similar": ["jazz-hiphop", "soul"],
+      "fusion": [],
+      "tracks": [
+        { "title": "So What", "artist": "Miles Davis" },
+        { "title": "Take Five", "artist": "The Dave Brubeck Quartet" }
+      ]
+    },
+    {
+      "id": "soul",
+      "name": "Soul",
+      "description": "감정선이 깊고 그루브가 풍부한 보컬 중심 장르",
+      "aliases": ["neo soul"],
+      "spotifySeedGenres": ["soul"],
+      "spotifySearchTerms": ["soul", "neo soul"],
+      "subgenres": [],
+      "similar": ["r-n-b", "jazz"],
+      "fusion": [],
+      "tracks": [
+        { "title": "Untitled (How Does It Feel)", "artist": "D'Angelo" },
+        { "title": "Ain't No Sunshine", "artist": "Bill Withers" }
+      ]
+    },
+    {
+      "id": "electronic",
+      "name": "Electronic",
+      "description": "신시사이저와 프로덕션 중심으로 펼쳐지는 전자음악 전반",
+      "aliases": ["electronica", "edm"],
+      "spotifySeedGenres": ["electronic", "edm"],
+      "spotifySearchTerms": ["electronic", "edm", "electronica"],
+      "subgenres": ["house", "techno"],
+      "similar": ["ambient", "dance"],
+      "fusion": [],
+      "tracks": [
+        { "title": "Strobe", "artist": "deadmau5" },
+        { "title": "Midnight City", "artist": "M83" }
+      ]
+    },
+    {
+      "id": "house",
+      "name": "House",
+      "description": "반복적인 4/4 킥과 그루브가 중심인 클럽 사운드",
+      "aliases": ["deep house"],
+      "spotifySeedGenres": ["house"],
+      "spotifySearchTerms": ["house", "deep house"],
+      "subgenres": [],
+      "similar": ["electronic", "dance", "techno"],
+      "fusion": [],
+      "tracks": [
+        { "title": "Turn Me On", "artist": "Riton x Oliver Heldens" },
+        { "title": "Cola", "artist": "CamelPhat & Elderbrook" }
+      ]
+    },
+    {
+      "id": "techno",
+      "name": "Techno",
+      "description": "기계적 반복과 추진력이 강한 전자 클럽 장르",
+      "aliases": ["minimal techno"],
+      "spotifySeedGenres": ["techno"],
+      "spotifySearchTerms": ["techno", "minimal techno"],
+      "subgenres": [],
+      "similar": ["house", "electronic"],
+      "fusion": [],
+      "tracks": [
+        { "title": "Spastik", "artist": "Plastikman" },
+        { "title": "Your Mind", "artist": "Adam Beyer & Bart Skils" }
+      ]
+    },
+    {
+      "id": "ambient",
+      "name": "Ambient",
+      "description": "질감과 공간감이 중심이 되는 부유감 있는 장르",
+      "aliases": ["ambient music"],
+      "spotifySeedGenres": ["ambient"],
+      "spotifySearchTerms": ["ambient", "ambient music"],
+      "subgenres": [],
+      "similar": ["lofi", "indie", "electronic"],
+      "fusion": [],
+      "tracks": [
+        { "title": "An Ending (Ascent)", "artist": "Brian Eno" },
+        { "title": "Weird Fishes/Arpeggi", "artist": "Lusine" }
+      ]
+    },
+    {
+      "id": "k-pop",
+      "name": "K-Pop",
+      "description": "강한 훅과 퍼포먼스 중심 구조가 특징인 한국 대중음악",
+      "aliases": ["kpop", "k pop"],
+      "spotifySeedGenres": ["k-pop", "pop"],
+      "spotifySearchTerms": ["k-pop", "kpop", "k pop"],
+      "subgenres": [],
+      "similar": ["pop", "dance"],
+      "fusion": [],
+      "tracks": [
+        { "title": "Supernova", "artist": "aespa" },
+        { "title": "Super Shy", "artist": "NewJeans" }
+      ]
+    },
+    {
+      "id": "punk",
+      "name": "Punk",
+      "description": "짧고 빠른 전개와 반항적인 에너지가 중심인 록 장르",
+      "aliases": ["punk rock"],
+      "spotifySeedGenres": ["punk", "rock"],
+      "spotifySearchTerms": ["punk", "punk rock"],
+      "subgenres": [],
+      "similar": ["alternative", "rock"],
+      "fusion": [],
+      "tracks": [
+        { "title": "Basket Case", "artist": "Green Day" },
+        { "title": "Blitzkrieg Bop", "artist": "Ramones" }
+      ]
+    },
+    {
+      "id": "metal",
+      "name": "Metal",
+      "description": "강한 디스토션과 묵직한 리프가 중심인 헤비 사운드",
+      "aliases": ["heavy metal"],
+      "spotifySeedGenres": ["metal"],
+      "spotifySearchTerms": ["metal", "heavy metal"],
+      "subgenres": [],
+      "similar": ["rock", "punk"],
+      "fusion": [],
+      "tracks": [
+        { "title": "Master of Puppets", "artist": "Metallica" },
+        { "title": "Chop Suey!", "artist": "System Of A Down" }
+      ]
+    },
+    {
+      "id": "dance",
+      "name": "Dance",
+      "description": "직관적인 리듬과 에너지로 몸을 움직이게 만드는 대중 장르",
+      "aliases": ["dance pop"],
+      "spotifySeedGenres": ["dance"],
+      "spotifySearchTerms": ["dance", "dance pop"],
+      "subgenres": [],
+      "similar": ["pop", "house", "electronic"],
+      "fusion": [],
+      "tracks": [
+        { "title": "Don't Start Now", "artist": "Dua Lipa" },
+        { "title": "Titanium", "artist": "David Guetta feat. Sia" }
+      ]
+    },
+    {
+      "id": "grime",
+      "name": "Grime",
+      "description": "영국 특유의 거친 비트와 빠른 랩 플로우가 중심인 장르",
+      "aliases": ["uk grime"],
+      "spotifySeedGenres": ["hip-hop"],
+      "spotifySearchTerms": ["grime", "uk grime"],
+      "subgenres": [],
+      "similar": ["hip-hop", "drill"],
+      "fusion": [],
+      "tracks": [
+        { "title": "Shutdown", "artist": "Skepta" },
+        { "title": "That's Not Me", "artist": "Skepta" }
+      ]
+    },
+    {
+      "id": "rap-rock",
+      "name": "Rap Rock",
+      "description": "랩과 밴드 사운드가 함께 밀어붙이는 크로스오버 장르",
+      "aliases": ["raprock", "rap rock"],
+      "spotifySeedGenres": ["rock", "hip-hop"],
+      "spotifySearchTerms": ["rap rock", "raprock"],
+      "subgenres": [],
+      "similar": ["hip-hop", "rock", "alternative"],
+      "fusion": [],
+      "tracks": [
+        { "title": "Numb / Encore", "artist": "JAY-Z & Linkin Park" },
+        { "title": "Bulls on Parade", "artist": "Rage Against The Machine" }
+      ]
+    },
+    {
+      "id": "drill",
+      "name": "Drill",
+      "description": "어둡고 묵직한 비트 위에 공격적인 랩이 올라가는 현대 힙합 장르",
+      "aliases": ["uk drill", "brooklyn drill"],
+      "spotifySeedGenres": ["hip-hop"],
+      "spotifySearchTerms": ["drill", "uk drill", "brooklyn drill"],
+      "subgenres": [],
+      "similar": ["trap", "grime"],
+      "fusion": [],
+      "tracks": [
+        { "title": "Welcome to the Party", "artist": "Pop Smoke" },
+        { "title": "Body", "artist": "Tion Wayne & Russ Millions" }
       ]
     }
   ]

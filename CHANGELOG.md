@@ -62,3 +62,8 @@
 - 검색창이 트랙명이나 아티스트명이 아니라 장르 이름과 스타일만 검색하도록 수정
 - Spotify `Get Available Genre Seeds` 와 `Get Recommendations` 흐름을 기준으로 장르별 추천 곡을 우선 불러오도록 수정
 - 추천 API 실패 시 로컬 장르 데이터와 장르 기반 검색 결과로 자연스럽게 폴백되도록 보강
+
+## v0.4.7
+- `Boom Bap`, `R&B`, `Lo-Fi`, `K-Pop` 같은 장르 별칭을 Spotify seed와 매핑하도록 보강
+- 장르 검색 시 별칭, seed 이름, 검색어까지 함께 인식하도록 수정
+- `data/genres.json`에 Spotify 기반 탐색용 장르를 대폭 추가하고 연결 장르(`dance`, `grime`, `rap-rock`, `drill`)도 함께 보강

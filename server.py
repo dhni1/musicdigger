@@ -4,6 +4,7 @@ from urllib import error, parse, request
 import base64
 import json
 import os
+import re
 import time
 
 
@@ -54,15 +55,17 @@ class SpotifyCatalog:
             return cached["data"]
 
         local_genre = find_local_genre(genre, spotify_backed=self.configured())
+        seed_genres = get_seed_genres(local_genre, genre)
+        search_terms = get_search_terms(local_genre, genre)
 
         tracks = []
 
         if self.configured():
             try:
-                tracks = self._recommend_tracks_for_genre(genre)
+                tracks = self._recommend_tracks_for_genre(seed_genres)
             except RuntimeError:
                 try:
-                    tracks = self._search_tracks_for_genre(genre)
+                    tracks = self._search_tracks_for_genre(search_terms)
                 except RuntimeError:
                     tracks = []
 
@@ -112,6 +115,9 @@ class SpotifyCatalog:
             "fusion": local_genre.get("fusion", []) if local_genre else [],
             "tracks": tracks,
             "spotifyBacked": self.configured(),
+            "aliases": local_genre.get("aliases", []) if local_genre else [],
+            "spotifySeedGenres": seed_genres,
+            "spotifySearchTerms": search_terms,
             "relatedNames": related_names[:8],
         }
 
@@ -121,37 +127,47 @@ class SpotifyCatalog:
         }
         return data
 
-    def _recommend_tracks_for_genre(self, genre):
-        seed = genre_to_seed(genre)
+    def _recommend_tracks_for_genre(self, seed_genres):
+        seed_values = ",".join(seed_genres[:5])
         data = self._spotify_get(
             "/recommendations",
             {
                 "limit": "8",
                 "market": SPOTIFY_MARKET,
-                "seed_genres": seed,
+                "seed_genres": seed_values,
             },
         )
         items = data.get("tracks", [])
         return [map_track(item) for item in items]
 
-    def _search_tracks_for_genre(self, genre):
-        query = f'genre:"{genre}"'
-        data = self._spotify_get(
-            "/search",
-            {
-                "q": query,
-                "type": "track",
-                "limit": "8",
-                "market": SPOTIFY_MARKET,
-            },
-        )
-        items = data.get("tracks", {}).get("items", [])
+    def _search_tracks_for_genre(self, search_terms):
+        for term in search_terms:
+            if not term:
+                continue
 
-        if not items:
+            query = f'genre:"{term}"'
+            data = self._spotify_get(
+                "/search",
+                {
+                    "q": query,
+                    "type": "track",
+                    "limit": "8",
+                    "market": SPOTIFY_MARKET,
+                },
+            )
+            items = data.get("tracks", {}).get("items", [])
+
+            if items:
+                return [map_track(item) for item in items]
+
+        for term in search_terms:
+            if not term:
+                continue
+
             fallback = self._spotify_get(
                 "/search",
                 {
-                    "q": genre,
+                    "q": term,
                     "type": "track",
                     "limit": "8",
                     "market": SPOTIFY_MARKET,
@@ -159,7 +175,10 @@ class SpotifyCatalog:
             )
             items = fallback.get("tracks", {}).get("items", [])
 
-        return [map_track(item) for item in items]
+            if items:
+                return [map_track(item) for item in items]
+
+        return []
 
     def _spotify_get(self, path, params=None):
         token = self._get_token()
@@ -313,6 +332,9 @@ def load_local_genres(spotify_backed):
                 "similar": genre.get("similar", []),
                 "fusion": genre.get("fusion", []),
                 "tracks": genre.get("tracks", []),
+                "aliases": genre.get("aliases", []),
+                "spotifySeedGenres": genre.get("spotifySeedGenres", []),
+                "spotifySearchTerms": genre.get("spotifySearchTerms", []),
                 "spotifyBacked": spotify_backed,
             }
         )
@@ -321,11 +343,7 @@ def load_local_genres(spotify_backed):
 
 
 def merge_seed_genres(local_genres, seeds):
-    local_index = {
-        normalize_genre_name(genre.get("id", "")): genre
-        for genre in local_genres
-        if genre.get("id")
-    }
+    local_index = build_local_genre_index(local_genres)
     merged = []
     seen = set()
 
@@ -342,6 +360,9 @@ def merge_seed_genres(local_genres, seeds):
                 "similar": local.get("similar", []),
                 "fusion": local.get("fusion", []),
                 "tracks": local.get("tracks", []),
+                "aliases": local.get("aliases", []),
+                "spotifySeedGenres": local.get("spotifySeedGenres", [seed]),
+                "spotifySearchTerms": local.get("spotifySearchTerms", [format_genre_name(seed)]),
                 "spotifyBacked": True,
             }
         )
@@ -358,19 +379,73 @@ def merge_seed_genres(local_genres, seeds):
 def find_local_genre(query, spotify_backed):
     target = normalize_genre_name(query)
 
-    for genre in load_local_genres(spotify_backed=spotify_backed):
-        candidates = {
-            normalize_genre_name(genre.get("id", "")),
-            normalize_genre_name(genre.get("name", "")),
-        }
-        if target in candidates:
-            return genre
+    return build_local_genre_index(load_local_genres(spotify_backed=spotify_backed)).get(target)
 
-    return None
+
+def build_local_genre_index(local_genres):
+    index = {}
+
+    for genre in local_genres:
+        for candidate in [genre.get("id", ""), genre.get("name", ""), *genre.get("aliases", [])]:
+            key = normalize_genre_name(candidate)
+            if key:
+                index[key] = genre
+
+    return index
+
+
+def get_seed_genres(local_genre, fallback_value):
+    candidates = []
+
+    if local_genre:
+        candidates.extend(local_genre.get("spotifySeedGenres", []))
+        candidates.append(local_genre.get("id", ""))
+        candidates.extend(local_genre.get("aliases", []))
+
+    candidates.append(fallback_value)
+
+    seeds = []
+    seen = set()
+
+    for candidate in candidates:
+        seed = genre_to_seed(candidate)
+        if seed and seed not in seen:
+            seeds.append(seed)
+            seen.add(seed)
+
+    return seeds
+
+
+def get_search_terms(local_genre, fallback_value):
+    candidates = []
+
+    if local_genre:
+        candidates.extend(local_genre.get("spotifySearchTerms", []))
+        candidates.append(local_genre.get("name", ""))
+        candidates.append(local_genre.get("id", ""))
+        candidates.extend(local_genre.get("aliases", []))
+
+    candidates.append(fallback_value)
+
+    terms = []
+    seen = set()
+
+    for candidate in candidates:
+        label = format_search_label(candidate)
+        key = normalize_genre_name(label)
+        if key and key not in seen:
+            terms.append(label)
+            seen.add(key)
+
+    return terms
 
 
 def genre_to_seed(value):
     return normalize_genre_name(value).replace(" ", "-")
+
+
+def format_search_label(value):
+    return re.sub(r"\s+", " ", str(value or "").replace("_", " ").replace("-", " ")).strip()
 
 
 def format_genre_name(name):
@@ -378,7 +453,7 @@ def format_genre_name(name):
 
 
 def normalize_genre_name(name):
-    return name.replace("_", " ").replace("-", " ").strip().lower()
+    return re.sub(r"[^a-z0-9]+", " ", str(name or "").lower()).strip()
 
 
 def build_description(genre, artist_names, tracks):
