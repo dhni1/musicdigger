@@ -984,15 +984,6 @@ async function loginToSpotify() {
   window.location.assign(`https://accounts.spotify.com/authorize?${params.toString()}`);
 }
 
-async function initializeSpotify() {
-  hydrateSpotifyToken();
-  await handleSpotifyCallback();
-
-  if (state.spotify.accessToken) {
-    await syncSpotifyData();
-  }
-}
-
 async function handleSpotifyCallback() {
   const params = new URLSearchParams(window.location.search);
   const code = params.get('code');
