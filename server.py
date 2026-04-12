@@ -8,6 +8,7 @@ import time
 
 
 ROOT = Path(__file__).resolve().parent
+GENRES_DATA_FILE = ROOT / "data" / "genres.json"
 PORT = int(os.environ.get("PORT", "8000"))
 SPOTIFY_CLIENT_ID = os.environ.get("SPOTIFY_CLIENT_ID", "")
 SPOTIFY_CLIENT_SECRET = os.environ.get("SPOTIFY_CLIENT_SECRET", "")
@@ -29,21 +30,7 @@ class SpotifyCatalog:
         if self._genres_cache and time.time() - self._genres_cache_time < 3600:
             return self._genres_cache
 
-        data = self._spotify_get("/recommendations/available-genre-seeds")
-        seeds = data.get("genres", [])
-        genres = [
-            {
-                "id": seed,
-                "name": format_genre_name(seed),
-                "description": f"Spotify genre seed: {format_genre_name(seed)}",
-                "subgenres": [],
-                "similar": [],
-                "fusion": [],
-                "tracks": [],
-                "spotifyBacked": True,
-            }
-            for seed in sorted(seeds)
-        ]
+        genres = load_local_genres(spotify_backed=self.configured())
 
         self._genres_cache = genres
         self._genres_cache_time = time.time()
@@ -211,12 +198,6 @@ class Handler(SimpleHTTPRequestHandler):
         self.end_headers()
 
     def _handle_genres(self):
-        if not catalog.configured():
-            return self._send_json(
-                503,
-                {"error": "Spotify server credentials are not configured."},
-            )
-
         try:
             genres = catalog.get_genres()
         except RuntimeError as exc:
@@ -266,6 +247,32 @@ def map_track(item):
         "spotifyUri": item.get("uri"),
         "spotifyUrl": item.get("external_urls", {}).get("spotify"),
     }
+
+
+def load_local_genres(spotify_backed):
+    try:
+        payload = json.loads(GENRES_DATA_FILE.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return []
+
+    genres = payload.get("genres", [])
+    normalized = []
+
+    for genre in genres:
+        normalized.append(
+            {
+                "id": genre.get("id", ""),
+                "name": genre.get("name") or format_genre_name(genre.get("id", "")),
+                "description": genre.get("description", ""),
+                "subgenres": genre.get("subgenres", []),
+                "similar": genre.get("similar", []),
+                "fusion": genre.get("fusion", []),
+                "tracks": genre.get("tracks", []),
+                "spotifyBacked": spotify_backed,
+            }
+        )
+
+    return normalized
 
 
 def format_genre_name(name):

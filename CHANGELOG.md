@@ -53,3 +53,7 @@
 - DOM 로딩 전 이벤트 바인딩으로 발생하던 콘솔 에러 수정
 - 백엔드 `/api/genres`, `/api/genre-details` 라우팅 추가
 - Render 배포 환경에서 API가 404를 반환하던 문제 수정
+
+## v0.4.5
+- Spotify 장르 시드 API 의존성을 제거하고 `data/genres.json` 기반으로 장르 목록 응답하도록 수정
+- `/api/genres` 호출 시 502가 발생하던 문제 수정
