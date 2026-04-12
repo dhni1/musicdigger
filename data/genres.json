@@ -1,0 +1,64 @@
+{
+  "genres": [
+    {
+      "id": "hiphop",
+      "name": "힙합",
+      "description": "리듬과 랩 중심의 장르",
+      "subgenres": ["jazz_hiphop", "trap"],
+      "similar": ["rnb"],
+      "fusion": ["rap_rock"],
+      "tracks": [
+        {"title": "SICKO MODE", "artist": "Travis Scott"},
+        {"title": "HUMBLE", "artist": "Kendrick Lamar"}
+      ]
+    },
+    {
+      "id": "jazz_hiphop",
+      "name": "재즈 힙합",
+      "description": "재즈와 힙합이 결합된 장르",
+      "subgenres": [],
+      "similar": ["lofi"],
+      "fusion": [],
+      "tracks": [
+        {"title": "Feather", "artist": "Nujabes"},
+        {"title": "Luv(sic)", "artist": "Nujabes"}
+      ]
+    },
+    {
+      "id": "trap",
+      "name": "트랩",
+      "description": "강한 베이스와 하이햇이 특징",
+      "subgenres": [],
+      "similar": ["hiphop"],
+      "fusion": [],
+      "tracks": [
+        {"title": "Mask Off", "artist": "Future"},
+        {"title": "Goosebumps", "artist": "Travis Scott"}
+      ]
+    },
+    {
+      "id": "rnb",
+      "name": "R&B",
+      "description": "부드러운 보컬 중심 장르",
+      "subgenres": [],
+      "similar": ["hiphop"],
+      "fusion": [],
+      "tracks": [
+        {"title": "Blinding Lights", "artist": "The Weeknd"},
+        {"title": "Location", "artist": "Khalid"}
+      ]
+    },
+    {
+      "id": "lofi",
+      "name": "로파이",
+      "description": "편안하고 반복적인 비트",
+      "subgenres": [],
+      "similar": ["jazz_hiphop"],
+      "fusion": [],
+      "tracks": [
+        {"title": "lofi hip hop radio", "artist": "Various"},
+        {"title": "Chill Beats", "artist": "Various"}
+      ]
+    }
+  ]
+}

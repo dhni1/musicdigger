@@ -1,0 +1,46 @@
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+}
+
+.container {
+  display: flex;
+  height: 100vh;
+}
+
+.sidebar {
+  width: 20%;
+  background: #222;
+  color: white;
+  padding: 10px;
+  overflow-y: auto;
+}
+
+.main {
+  width: 50%;
+  padding: 20px;
+}
+
+.side-info {
+  width: 30%;
+  background: #f4f4f4;
+  padding: 10px;
+}
+
+button {
+  display: block;
+  margin: 5px 0;
+  padding: 8px;
+  width: 100%;
+  cursor: pointer;
+}
+
+.genre-btn {
+  background: #444;
+  color: white;
+  border: none;
+}
+
+.genre-btn:hover {
+  background: #666;
+}

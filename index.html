@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>Music Digging</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="container">
+  <!-- 왼쪽: 장르 목록 -->
+  <div class="sidebar">
+    <h2>장르</h2>
+    <div id="genre-list"></div>
+  </div>
+
+  <!-- 가운데: 장르 정보 -->
+  <div class="main">
+    <h2 id="genre-title">장르를 선택하세요</h2>
+    <p id="genre-desc"></p>
+
+    <h3>대표 곡</h3>
+    <ul id="track-list"></ul>
+  </div>
+
+  <!-- 오른쪽: 탐색 -->
+  <div class="side-info">
+    <h3>하위 장르</h3>
+    <div id="subgenres"></div>
+
+    <h3>비슷한 장르</h3>
+    <div id="similar"></div>
+
+    <h3>융합 장르</h3>
+    <div id="fusion"></div>
+  </div>
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>
