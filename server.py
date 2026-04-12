@@ -145,7 +145,7 @@ class SpotifyCatalog:
             recommended_tracks = []
 
         merged = merge_tracks(ranked_tracks, recommended_tracks)
-        return merged[:TRACKS_PER_GENRE]
+        return rank_tracks(merged)[:TRACKS_PER_GENRE]
 
     def _recommend_tracks_for_genre(self, seed_genres):
         seed_values = ",".join(seed_genres[:5])
@@ -342,11 +342,10 @@ def rank_tracks(tracks):
     return sorted(
         unique,
         key=lambda track: (
-            int(track.get("popularity", 0) or 0),
-            track.get("title", ""),
-            track.get("artist", ""),
+            -int(track.get("popularity", 0) or 0),
+            normalize_genre_name(track.get("title", "")),
+            normalize_genre_name(track.get("artist", "")),
         ),
-        reverse=True,
     )
 
 

@@ -781,9 +781,13 @@ body.theme-light .spotlight-art {
 .side-panel {
   display: grid;
   gap: 10px;
+  align-content: start;
 }
 
 .side-block {
+  display: flex;
+  flex-direction: column;
+  min-height: 190px;
   padding: 12px;
   border-radius: var(--radius-sm);
 }
@@ -792,6 +796,8 @@ body.theme-light .spotlight-art {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
+  align-content: flex-start;
+  min-height: 96px;
 }
 
 .pill-btn {
@@ -812,9 +818,12 @@ body.theme-light .spotlight-art {
 
 .empty-state {
   width: 100%;
+  min-height: 96px;
   padding: 12px;
   border: 1px dashed var(--line-strong);
   border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
   color: var(--text-soft);
   line-height: 1.6;
   font-size: 0.9rem;

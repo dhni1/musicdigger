@@ -361,10 +361,12 @@ function applySearch(query) {
 
 function updateSearchStatus(keyword) {
   const isSearching = Boolean(keyword.normalized);
-  const message = isSearching ? `${state.filteredGenres.length}개 결과` : '전체 장르';
-
-  elements.searchStatus.textContent = message;
-  elements.heroSearchStatus.textContent = message;
+  const heroMessage = isSearching ? `${state.filteredGenres.length}개 결과` : 'All Genres';
+  if (elements.searchStatus) {
+    elements.searchStatus.hidden = !isSearching;
+    elements.searchStatus.textContent = isSearching ? `${state.filteredGenres.length}개 결과` : '';
+  }
+  elements.heroSearchStatus.textContent = heroMessage;
   updateGenreToggle(isSearching);
 }
 
@@ -491,7 +493,7 @@ function updateGenreToggle(isSearching) {
     return;
   }
 
-  elements.genreToggle.textContent = state.genreListExpanded ? 'Show Less' : 'All Genres';
+  elements.genreToggle.textContent = state.genreListExpanded ? 'Show Less' : 'Show More';
 }
 
 function renderGenreList() {
