@@ -24,6 +24,7 @@ const state = {
   filteredGenres: [],
   currentGenreId: null,
   isDarkMode: true,
+  usingBackendGenres: false,
   spotify: {
     configured: isSpotifyConfigured(),
     accessToken: null,
@@ -93,14 +94,12 @@ async function initialize() {
   bindEvents();
   updateThemeUI();
   renderSpotifyState();
-  loadGenres();
-  await initializeSpotify();
+  await Promise.all([loadGenres(), initializeSpotify()]);
 }
 
 function bindEvents() {
   addClick(elements.menuToggle, () => {
-    const willOpen = !elements.menuPanel.classList.contains('is-open');
-    setMenuOpen(willOpen);
+    setMenuOpen(!elements.menuPanel.classList.contains('is-open'));
   });
 
   addClick(elements.menuHome, () => {
@@ -110,7 +109,7 @@ function bindEvents() {
   });
 
   addClick(elements.menuRandom, () => {
-    showRandomGenre();
+    void showRandomGenre();
     setMenuOpen(false);
   });
 
@@ -120,7 +119,9 @@ function bindEvents() {
     setMenuOpen(false);
   });
 
-  addClick(elements.sidebarRandom, showRandomGenre);
+  addClick(elements.sidebarRandom, () => {
+    void showRandomGenre();
+  });
   addClick(elements.heroTheme, toggleTheme);
   addClick(elements.navHome, () => {
     focusHome();
@@ -182,48 +183,63 @@ function bindEvents() {
   });
 }
 
-async function initializeSpotify() {
-  hydrateSpotifyToken();
-  await handleSpotifyCallback();
+async function loadGenres() {
+  try {
+    const backendGenres = await fetchBackendGenres();
+    state.genres = backendGenres;
+    state.filteredGenres = [...backendGenres];
+    state.usingBackendGenres = true;
+  } catch {
+    const response = await fetch('data/genres.json');
+    const data = await response.json();
+    state.genres = data.genres ?? [];
+    state.filteredGenres = [...state.genres];
+    state.usingBackendGenres = false;
+  }
 
-  if (state.spotify.accessToken) {
-    await syncSpotifyData();
-  } else {
-    renderSpotifyState();
+  elements.genreCount.textContent = String(state.genres.length);
+  updateSearchStatus('');
+  renderGenreList();
+
+  if (state.filteredGenres.length > 0) {
+    await showGenre(state.filteredGenres[0].id);
   }
 }
 
-function loadGenres() {
-  fetch('data/genres.json')
-    .then(response => response.json())
-    .then(data => {
-      state.genres = data.genres ?? [];
-      state.filteredGenres = [...state.genres];
+async function fetchBackendGenres() {
+  const response = await fetch('/api/genres');
 
-      elements.genreCount.textContent = String(state.genres.length);
-      updateSearchStatus('');
-      renderGenreList();
+  if (!response.ok) {
+    throw new Error('backend unavailable');
+  }
 
-      if (state.filteredGenres.length > 0) {
-        showGenre(state.filteredGenres[0].id);
-      }
-    })
-    .catch(() => {
-      elements.genreList.innerHTML =
-        '<div class="empty-state">장르 데이터를 불러오지 못했습니다. 파일 경로를 확인해주세요.</div>';
-    });
+  const data = await response.json();
+  return data.genres ?? [];
+}
+
+async function fetchGenreDetails(genreId) {
+  const response = await fetch(`/api/genre-details?genre=${encodeURIComponent(genreId)}`);
+
+  if (!response.ok) {
+    throw new Error('genre details unavailable');
+  }
+
+  const data = await response.json();
+  return data.genre;
 }
 
 function applySearch(query) {
   const keyword = query.trim().toLowerCase();
 
   state.filteredGenres = state.genres.filter(genre => {
-    const trackText = genre.tracks
+    const tracks = (genre.tracks ?? [])
       .map(track => `${track.title} ${track.artist}`)
       .join(' ')
       .toLowerCase();
 
-    return `${genre.name} ${genre.description} ${trackText}`.toLowerCase().includes(keyword);
+    return `${genre.name} ${genre.description ?? ''} ${tracks}`
+      .toLowerCase()
+      .includes(keyword);
   });
 
   updateSearchStatus(keyword);
@@ -234,12 +250,8 @@ function applySearch(query) {
     return;
   }
 
-  const currentVisible = state.filteredGenres.some(
-    genre => genre.id === state.currentGenreId,
-  );
-
-  if (!currentVisible) {
-    showGenre(state.filteredGenres[0].id);
+  if (!state.filteredGenres.some(genre => genre.id === state.currentGenreId)) {
+    void showGenre(state.filteredGenres[0].id);
   }
 }
 
@@ -271,17 +283,19 @@ function renderGenreList() {
       <div class="genre-card-content">
         <span class="genre-index">${String(index + 1).padStart(2, '0')}</span>
         <h4>${genre.name}</h4>
-        <p>${genre.description}</p>
-        <span class="genre-meta">${genre.tracks.length} tracks ready</span>
+        <p>${genre.description ?? 'Spotify 장르 데이터를 불러오는 중입니다.'}</p>
+        <span class="genre-meta">${(genre.tracks ?? []).length} tracks ready</span>
       </div>
     `;
 
-    button.addEventListener('click', () => showGenre(genre.id));
+    button.addEventListener('click', () => {
+      void showGenre(genre.id);
+    });
     elements.genreList.appendChild(button);
   });
 }
 
-function showGenre(id) {
+async function showGenre(id) {
   const genre = state.genres.find(item => item.id === id);
 
   if (!genre) {
@@ -290,15 +304,57 @@ function showGenre(id) {
 
   state.currentGenreId = genre.id;
 
+  if (genre.spotifyBacked && !genre.detailsLoaded && !genre.detailsLoading) {
+    genre.detailsLoading = true;
+    if (!genre.description || genre.description.startsWith('Spotify genre seed')) {
+      genre.description = `${genre.name} 관련 Spotify 데이터를 불러오는 중입니다.`;
+    }
+  }
+
+  applyGenreToUI(genre);
+  renderGenreList();
+
+  if (!genre.spotifyBacked || genre.detailsLoaded || !state.usingBackendGenres) {
+    return;
+  }
+
+  try {
+    const detail = await fetchGenreDetails(genre.id);
+    Object.assign(genre, detail, {
+      detailsLoaded: true,
+      detailsLoading: false,
+    });
+
+    if (detail.relatedNames?.length) {
+      genre.similar = detail.relatedNames.slice(0, 6).map(name => ensureGenreStub(name));
+    }
+  } catch {
+    genre.detailsLoading = false;
+    genre.detailsLoaded = true;
+    if (!genre.description) {
+      genre.description = `${genre.name} 장르 상세 정보를 불러오지 못했습니다.`;
+    }
+  }
+
+  if (state.currentGenreId === genre.id) {
+    applyGenreToUI(genre);
+    renderGenreList();
+  }
+}
+
+function applyGenreToUI(genre) {
+  const tracks = genre.tracks ?? [];
   const relationTotal =
-    genre.subgenres.length + genre.similar.length + genre.fusion.length;
-  const leadTrack = genre.tracks[0];
+    (genre.subgenres?.length ?? 0) +
+    (genre.similar?.length ?? 0) +
+    (genre.fusion?.length ?? 0);
+  const leadTrack = tracks[0];
 
   elements.genreTitle.textContent = genre.name;
-  elements.genreDesc.textContent = genre.description;
+  elements.genreDesc.textContent = genre.description ?? '';
   elements.heroTag.textContent = `${genre.name} Focus`;
   elements.currentGenreChip.textContent = genre.name;
-  elements.trackCount.textContent = String(genre.tracks.length);
+  elements.trackCount.textContent = String(tracks.length);
   elements.relationCount.textContent = String(relationTotal);
   elements.playerTrackTitle.textContent = leadTrack ? leadTrack.title : 'No track available';
   elements.playerTrackArtist.textContent = leadTrack
@@ -309,11 +365,20 @@ function showGenre(id) {
     ? `${leadTrack.artist} · ${genre.name}`
     : 'MUSICDIGGER queue';
 
-  renderGenreList();
-  renderTracks(genre.tracks);
-  renderButtons(elements.subgenres, genre.subgenres);
-  renderButtons(elements.similar, genre.similar);
-  renderButtons(elements.fusion, genre.fusion);
+  if (genre.detailsLoading) {
+    renderTrackLoading();
+  } else {
+    renderTracks(tracks);
+  }
+
+  renderButtons(elements.subgenres, genre.subgenres ?? []);
+  renderButtons(elements.similar, genre.similar ?? []);
+  renderButtons(elements.fusion, genre.fusion ?? []);
+}
+
+function renderTrackLoading() {
+  elements.trackList.innerHTML =
+    '<li class="empty-state">Spotify에서 대표 트랙을 불러오는 중입니다.</li>';
 }
 
 function renderTracks(tracks) {
@@ -326,8 +391,7 @@ function renderTracks(tracks) {
   }
 
   tracks.forEach((track, index) => {
-    const trackKey = makeTrackKey(track);
-    const saved = state.spotify.likedTrackKeys.has(trackKey);
+    const saved = state.spotify.likedTrackKeys.has(makeTrackKey(track));
     const item = document.createElement('li');
 
     item.innerHTML = `
@@ -342,9 +406,8 @@ function renderTracks(tracks) {
       </button>
     `;
 
-    const action = item.querySelector('.track-action');
-    action.addEventListener('click', () => {
-      void likeTrack(track, action);
+    item.querySelector('.track-action').addEventListener('click', () => {
+      void likeTrack(track, item.querySelector('.track-action'));
     });
 
     elements.trackList.appendChild(item);
@@ -370,7 +433,9 @@ function renderButtons(container, ids) {
     button.type = 'button';
     button.className = 'pill-btn';
     button.textContent = genre.name;
-    button.addEventListener('click', () => showGenre(genre.id));
+    button.addEventListener('click', () => {
+      void showGenre(genre.id);
+    });
     container.appendChild(button);
   });
 }
@@ -393,7 +458,7 @@ function renderEmptyGenre() {
   elements.fusion.innerHTML = '<div class="empty-state">표시할 결과가 없습니다.</div>';
 }
 
-function showRandomGenre() {
+async function showRandomGenre() {
   if (state.filteredGenres.length === 0) {
     return;
   }
@@ -401,14 +466,14 @@ function showRandomGenre() {
   const randomGenre =
     state.filteredGenres[Math.floor(Math.random() * state.filteredGenres.length)];
 
-  showGenre(randomGenre.id);
+  await showGenre(randomGenre.id);
 }
 
 function focusHome() {
   window.scrollTo({ top: 0, behavior: 'smooth' });
 
   if (state.filteredGenres.length > 0) {
-    showGenre(state.filteredGenres[0].id);
+    void showGenre(state.filteredGenres[0].id);
   }
 }
 
@@ -441,18 +506,6 @@ function updateThemeUI() {
   }
 }
 
-function makeDuration(index) {
-  const minutes = 3 + (index % 3);
-  const seconds = 10 + index * 17;
-  return `${String(minutes).padStart(2, '0')}:${String(seconds % 60).padStart(2, '0')}`;
-}
-
-function addClick(element, handler) {
-  if (element) {
-    element.addEventListener('click', handler);
-  }
-}
-
 function setActiveNav(target) {
   [
     elements.navHome,
@@ -463,6 +516,65 @@ function setActiveNav(target) {
   ].forEach(button => {
     button?.classList.toggle('is-current', button === target);
   });
+}
+
+function addClick(element, handler) {
+  if (element) {
+    element.addEventListener('click', handler);
+  }
+}
+
+function makeDuration(index) {
+  const minutes = 3 + (index % 3);
+  const seconds = 10 + index * 17;
+  return `${String(minutes).padStart(2, '0')}:${String(seconds % 60).padStart(2, '0')}`;
+}
+
+function ensureGenreStub(name) {
+  const id = slugify(name);
+  const existing = state.genres.find(item => item.id === id);
+
+  if (existing) {
+    return existing.id;
+  }
+
+  const genre = {
+    id,
+    name,
+    description: `${name} 관련 Spotify 장르입니다.`,
+    subgenres: [],
+    similar: [],
+    fusion: [],
+    tracks: [],
+    spotifyBacked: true,
+  };
+
+  state.genres.push(genre);
+  return genre.id;
+}
+
+function slugify(value) {
+  return value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+}
+
+function makeTrackKey(track) {
+  return `${track.title}::${track.artist}`.toLowerCase();
+}
+
+function makeTrackKeyFromSpotify(track) {
+  const artist = track.artists?.[0]?.name ?? '';
+  return `${track.name}::${artist}`.toLowerCase();
+}
+
+async function initializeSpotify() {
+  hydrateSpotifyToken();
+  await handleSpotifyCallback();
+
+  if (state.spotify.accessToken) {
+    await syncSpotifyData();
+  } else {
+    renderSpotifyState();
+  }
 }
 
 async function handlePlaylistNav() {
@@ -501,21 +613,21 @@ async function submitPlaylistForm() {
     return;
   }
 
-  const submitButton = elements.playlistSubmit;
-  submitButton.disabled = true;
-  submitButton.textContent = 'Creating...';
+  const name = elements.playlistName.value.trim();
+  if (!name) {
+    return;
+  }
+
+  elements.playlistSubmit.disabled = true;
+  elements.playlistSubmit.textContent = 'Creating...';
 
   try {
-    const name = elements.playlistName.value.trim();
-    const description = elements.playlistDescription.value.trim();
-    const isPrivate = elements.playlistPrivate.checked;
-
     const playlist = await spotifyRequest('/me/playlists', {
       method: 'POST',
       body: JSON.stringify({
         name,
-        description,
-        public: !isPrivate,
+        description: elements.playlistDescription.value.trim(),
+        public: !elements.playlistPrivate.checked,
       }),
     });
 
@@ -535,8 +647,8 @@ async function submitPlaylistForm() {
   } catch (error) {
     updateSpotifyMessage(error.message);
   } finally {
-    submitButton.disabled = false;
-    submitButton.textContent = 'Create';
+    elements.playlistSubmit.disabled = false;
+    elements.playlistSubmit.textContent = 'Create';
   }
 }
 
@@ -560,13 +672,12 @@ async function likeTrack(track, button) {
     });
 
     state.spotify.likedTrackKeys.add(makeTrackKey(track));
-    button.textContent = 'Liked';
-    button.classList.add('is-saved');
     await syncLikedTracks();
   } catch (error) {
     updateSpotifyMessage(error.message);
   } finally {
     button.disabled = false;
+    renderTracksForCurrentGenre();
   }
 }
 
@@ -589,7 +700,6 @@ async function syncSpotifyData() {
     state.spotify.likedTrackKeys = new Set(
       state.spotify.likedTracks.map(track => makeTrackKeyFromSpotify(track)),
     );
-
     renderSpotifyState();
     renderTracksForCurrentGenre();
   } catch (error) {
@@ -602,17 +712,12 @@ async function syncLikedTracks() {
     return;
   }
 
-  try {
-    const liked = await spotifyRequest('/me/tracks?limit=8');
-    state.spotify.likedTracks = (liked.items ?? []).map(item => item.track).filter(Boolean);
-    state.spotify.likedTrackKeys = new Set(
-      state.spotify.likedTracks.map(track => makeTrackKeyFromSpotify(track)),
-    );
-    renderLikedTracks();
-    renderTracksForCurrentGenre();
-  } catch (error) {
-    updateSpotifyMessage(error.message);
-  }
+  const liked = await spotifyRequest('/me/tracks?limit=8');
+  state.spotify.likedTracks = (liked.items ?? []).map(item => item.track).filter(Boolean);
+  state.spotify.likedTrackKeys = new Set(
+    state.spotify.likedTracks.map(track => makeTrackKeyFromSpotify(track)),
+  );
+  renderLikedTracks();
 }
 
 function renderTracksForCurrentGenre() {
@@ -621,9 +726,8 @@ function renderTracksForCurrentGenre() {
   }
 
   const genre = state.genres.find(item => item.id === state.currentGenreId);
-
   if (genre) {
-    renderTracks(genre.tracks);
+    applyGenreToUI(genre);
   }
 }
 
@@ -632,31 +736,19 @@ function renderSpotifyState() {
   renderPlaylistList();
   renderLikedTracks();
   updateProfileSlot();
+
   elements.spotifyRefreshButton.disabled = !state.spotify.accessToken;
-
-  if (!state.spotify.configured) {
-    elements.spotifyAuthButton.textContent = 'Setup Needed';
-    elements.spotifyRefreshButton.disabled = true;
-    return;
-  }
-
   elements.spotifyAuthButton.textContent = state.spotify.accessToken
     ? 'Refresh Library'
     : 'Connect Spotify';
 }
 
 function renderProfileCard() {
-  if (!state.spotify.configured) {
-    updateSpotifyMessage(
-      'spotify-config.js 파일에 Spotify Client ID를 넣어야 연결할 수 있습니다.',
-    );
-    return;
-  }
-
   if (!state.spotify.profile) {
-    updateSpotifyMessage(
-      'Spotify에 로그인하면 프로필과 플레이리스트를 여기서 불러옵니다.',
-    );
+    const message = state.spotify.configured
+      ? 'Spotify에 로그인하면 프로필과 플레이리스트를 여기서 불러옵니다.'
+      : 'Spotify 로그인 기능을 쓰려면 spotify-config.js에 Client ID를 넣어주세요.';
+    updateSpotifyMessage(message);
     return;
   }
 
@@ -696,11 +788,11 @@ function renderPlaylistList() {
   state.spotify.playlists.forEach(playlist => {
     const item = document.createElement('article');
     item.className = 'playlist-item';
-    const trackTotal = playlist.items?.total ?? playlist.tracks?.total ?? 0;
+    const total = playlist.items?.total ?? playlist.tracks?.total ?? 0;
 
     item.innerHTML = `
       <strong>${playlist.name}</strong>
-      <span>${trackTotal} tracks</span>
+      <span>${total} tracks</span>
       <a class="playlist-link" href="${playlist.external_urls?.spotify ?? '#'}" target="_blank" rel="noreferrer">
         Open in Spotify
       </a>
@@ -729,7 +821,6 @@ function renderLikedTracks() {
     const artist = track.artists?.map(item => item.name).join(', ') ?? 'Unknown Artist';
     const item = document.createElement('article');
     item.className = 'liked-track-item';
-
     item.innerHTML = `
       <strong>${track.name}</strong>
       <span>${artist}</span>
@@ -737,16 +828,13 @@ function renderLikedTracks() {
         Open in Spotify
       </a>
     `;
-
     elements.likedTrackList.appendChild(item);
   });
 }
 
 function updateProfileSlot() {
   const imageUrl = state.spotify.profile?.images?.[0]?.url;
-  const displayName = state.spotify.profile?.display_name;
-
-  elements.profileSlot.title = displayName ?? 'Spotify 로그인';
+  elements.profileSlot.title = state.spotify.profile?.display_name ?? 'Spotify 로그인';
   elements.profileAvatar.style.backgroundImage = imageUrl ? `url("${imageUrl}")` : '';
   elements.profileAvatar.classList.toggle('has-image', Boolean(imageUrl));
 }
@@ -757,18 +845,18 @@ function updateSpotifyMessage(message) {
 
 async function ensureSpotifyReady(promptLogin) {
   if (!state.spotify.configured) {
-    updateSpotifyMessage(
-      'spotify-config.js 파일에 Spotify Client ID를 넣은 뒤 다시 시도해주세요.',
-    );
-    return false;
-  }
-
-  if (!state.spotify.accessToken && promptLogin) {
-    await loginToSpotify();
+    if (promptLogin) {
+      updateSpotifyMessage(
+        'spotify-config.js 파일에 Spotify Client ID를 넣은 뒤 다시 시도해주세요.',
+      );
+    }
     return false;
   }
 
   if (!state.spotify.accessToken) {
+    if (promptLogin) {
+      await loginToSpotify();
+    }
     return false;
   }
 
@@ -803,6 +891,15 @@ async function loginToSpotify() {
   localStorage.setItem(SPOTIFY_STORAGE_KEYS.verifier, verifier);
   localStorage.setItem(SPOTIFY_STORAGE_KEYS.state, stateValue);
   window.location.assign(`https://accounts.spotify.com/authorize?${params.toString()}`);
+}
+
+async function initializeSpotify() {
+  hydrateSpotifyToken();
+  await handleSpotifyCallback();
+
+  if (state.spotify.accessToken) {
+    await syncSpotifyData();
+  }
 }
 
 async function handleSpotifyCallback() {
@@ -850,11 +947,10 @@ async function handleSpotifyCallback() {
     return;
   }
 
-  const token = await response.json();
-  saveSpotifyToken(token);
-  clearSpotifyQueryParams();
+  saveSpotifyToken(await response.json());
   localStorage.removeItem(SPOTIFY_STORAGE_KEYS.verifier);
   localStorage.removeItem(SPOTIFY_STORAGE_KEYS.state);
+  clearSpotifyQueryParams();
 }
 
 function hydrateSpotifyToken() {
@@ -895,8 +991,7 @@ async function refreshSpotifyToken() {
     throw new Error('Spotify 토큰을 갱신하지 못했습니다.');
   }
 
-  const token = await response.json();
-  saveSpotifyToken(token);
+  saveSpotifyToken(await response.json());
 }
 
 function saveSpotifyToken(token) {
@@ -915,8 +1010,6 @@ function saveSpotifyToken(token) {
 }
 
 async function spotifyRequest(path, init = {}) {
-  await ensureSpotifyReady(false);
-
   const response = await fetch(`https://api.spotify.com/v1${path}`, {
     ...init,
     headers: {
@@ -939,41 +1032,30 @@ async function spotifyRequest(path, init = {}) {
 }
 
 async function resolveTrackUri(track) {
-  const trackKey = makeTrackKey(track);
+  if (track.spotifyUri) {
+    return track.spotifyUri;
+  }
 
-  if (state.spotify.trackUriCache.has(trackKey)) {
-    return state.spotify.trackUriCache.get(trackKey);
+  const key = makeTrackKey(track);
+  if (state.spotify.trackUriCache.has(key)) {
+    return state.spotify.trackUriCache.get(key);
   }
 
   const query = encodeURIComponent(`track:${track.title} artist:${track.artist}`);
   const result = await spotifyRequest(`/search?q=${query}&type=track&limit=1`);
   const uri = result?.tracks?.items?.[0]?.uri ?? null;
-
-  state.spotify.trackUriCache.set(trackKey, uri);
+  state.spotify.trackUriCache.set(key, uri);
   return uri;
 }
 
 async function getCurrentGenreSpotifyUris() {
   const genre = state.genres.find(item => item.id === state.currentGenreId);
-
   if (!genre) {
     return [];
   }
 
-  const candidates = await Promise.all(
-    genre.tracks.slice(0, 5).map(track => resolveTrackUri(track)),
-  );
-
-  return candidates.filter(Boolean);
-}
-
-function makeTrackKey(track) {
-  return `${track.title}::${track.artist}`.toLowerCase();
-}
-
-function makeTrackKeyFromSpotify(track) {
-  const artist = track.artists?.[0]?.name ?? '';
-  return `${track.name}::${artist}`.toLowerCase();
+  const uris = await Promise.all((genre.tracks ?? []).slice(0, 5).map(resolveTrackUri));
+  return uris.filter(Boolean);
 }
 
 function getProfileInitial() {
@@ -1011,8 +1093,7 @@ function createRandomString(length) {
 }
 
 async function generateCodeChallenge(verifier) {
-  const encoder = new TextEncoder();
-  const data = encoder.encode(verifier);
+  const data = new TextEncoder().encode(verifier);
   const digest = await crypto.subtle.digest('SHA-256', data);
   const bytes = new Uint8Array(digest);
   const base64 = btoa(String.fromCharCode(...bytes));
