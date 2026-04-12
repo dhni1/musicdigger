@@ -298,7 +298,7 @@ async function loadGenres() {
 }
 
 async function fetchBackendGenres() {
-  const response = await fetch('/api/genres');
+  const response = await fetch(`${window.APP_CONFIG.backendBaseUrl}/api/genres`);
 
   if (!response.ok) {
     throw new Error('backend unavailable');
@@ -309,7 +309,7 @@ async function fetchBackendGenres() {
 }
 
 async function fetchGenreDetails(genreId) {
-  const response = await fetch(`/api/genre-details?genre=${encodeURIComponent(genreId)}`);
+  const response = await fetch(`${window.APP_CONFIG.backendBaseUrl}/api/genre-details?genre=${encodeURIComponent(genreId)}`);
 
   if (!response.ok) {
     throw new Error('genre details unavailable');
