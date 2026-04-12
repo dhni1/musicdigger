@@ -5,5 +5,5 @@ window.SPOTIFY_CONFIG = {
   clientId: '8b186528e63742b38537cf84c9464731',
   // 예시: 'http://127.0.0.1:8000/index.html'
   // 비워두면 현재 페이지 주소를 redirect URI로 사용합니다.
-  redirectUri: '',
+  redirectUri: 'https://musicdigger.vercel.app',
 };

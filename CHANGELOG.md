@@ -38,3 +38,6 @@
 
 ## v0.4.0
 - backend
+
+## v0.4.1
+- frontend
