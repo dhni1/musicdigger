@@ -4,114 +4,260 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>MUSICDIGGER</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;700&display=swap"
+    rel="stylesheet"
+  >
   <link rel="stylesheet" href="design.css">
 </head>
 <body class="theme-dark">
-  <header class="topbar">
-    <div class="topbar-left">
-      <button
-        id="menu-toggle"
-        class="menu-toggle"
-        type="button"
-        aria-label="메뉴 열기"
-        aria-expanded="false"
-        aria-controls="menu-panel"
-      >
-        <span></span>
-        <span></span>
-        <span></span>
-      </button>
-      <h1 class="brand">MUSICDIGGER</h1>
-    </div>
+  <div class="background-layer" aria-hidden="true">
+    <div class="ambient ambient-purple"></div>
+    <div class="ambient ambient-cyan"></div>
+    <div class="grid-glow"></div>
+  </div>
 
-    <div class="topbar-search">
-      <label class="sr-only" for="genre-search">장르 검색</label>
-      <input
-        id="genre-search"
-        type="search"
-        placeholder="장르, 설명, 대표 곡을 검색해보세요"
-        autocomplete="off"
-      >
-    </div>
+  <div class="app-shell">
+    <aside class="dock panel-surface">
+      <div class="dock-brand">
+        <p class="dock-overline">Your Digital Sanctuary</p>
+        <h1>MUSICDIGGER</h1>
+      </div>
 
-    <div class="topbar-right">
-      <span id="theme-badge" class="theme-badge">Dark First</span>
-    </div>
+      <nav class="dock-nav" aria-label="기본 탐색">
+        <button class="dock-link is-current" type="button">Home</button>
+        <button class="dock-link" type="button">Library</button>
+        <button class="dock-link" type="button">Playlists</button>
+        <button class="dock-link" type="button">Liked Tracks</button>
+        <button class="dock-link" type="button">Search</button>
+      </nav>
 
-    <div id="menu-panel" class="menu-panel" aria-hidden="true">
-      <button id="menu-home" type="button">홈으로</button>
-      <button id="menu-random" type="button">랜덤 장르</button>
-      <button id="menu-theme" type="button">라이트 모드로 보기</button>
-    </div>
-  </header>
+      <button id="sidebar-random" class="dock-cta" type="button">Random Dig</button>
 
-  <main class="page-shell">
-    <section class="hero-panel panel">
-      <p class="eyebrow">Discover Beyond The Obvious</p>
-      <div class="hero-copy">
-        <div>
-          <h2 id="genre-title">장르를 선택해보세요</h2>
-          <p id="genre-desc">
-            MUSICDIGGER는 장르를 따라가며 비슷한 결을 발견하는 탐색형 음악 아카이브입니다.
-          </p>
+      <div class="dock-footer">
+        <p class="dock-overline">Curated</p>
+        <button class="dock-mini" type="button">Trending Tags</button>
+        <button class="dock-mini" type="button">Vinyl Hub</button>
+      </div>
+    </aside>
+
+    <div class="main-shell">
+      <header class="topbar">
+        <div class="topbar-left">
+          <button
+            id="menu-toggle"
+            class="menu-toggle"
+            type="button"
+            aria-label="메뉴 열기"
+            aria-expanded="false"
+            aria-controls="menu-panel"
+          >
+            <span></span>
+            <span></span>
+            <span></span>
+          </button>
+          <div class="brand-block">
+            <span class="brand-chip">Dark UI</span>
+            <strong class="brand">MUSICDIGGER</strong>
+          </div>
         </div>
-        <div class="hero-meta">
-          <div class="meta-card">
-            <span class="meta-label">현재 테마</span>
-            <strong id="theme-status">Dark Mode</strong>
+
+        <div class="topbar-search">
+          <label class="sr-only" for="genre-search">장르 검색</label>
+          <span class="search-icon" aria-hidden="true"></span>
+          <input
+            id="genre-search"
+            type="search"
+            placeholder="Search genres, moods, and standout tracks"
+            autocomplete="off"
+          >
+        </div>
+
+        <div class="topbar-right">
+          <span id="theme-badge" class="theme-badge">Dark First</span>
+        </div>
+
+        <div id="menu-panel" class="menu-panel" aria-hidden="true">
+          <button id="menu-home" type="button">Home Focus</button>
+          <button id="menu-random" type="button">Random Genre</button>
+          <button id="menu-search" type="button">Focus Search</button>
+          <button id="menu-theme" type="button">Light Preview</button>
+        </div>
+      </header>
+
+      <main class="page-shell">
+        <section class="hero panel-surface">
+          <div class="hero-backdrop" aria-hidden="true">
+            <div class="hero-orb"></div>
+            <div class="hero-rings"></div>
           </div>
-          <div class="meta-card">
-            <span class="meta-label">탐색 가능한 장르</span>
-            <strong id="genre-count">0</strong>
+
+          <div class="hero-copy">
+            <p class="eyebrow">Discover Beyond The Obvious</p>
+            <h2 id="genre-title">장르를 선택해보세요</h2>
+            <p id="genre-desc" class="hero-description">
+              MUSICDIGGER는 장르를 따라가며 비슷한 결을 발견하는 탐색형 음악 아카이브입니다.
+            </p>
+
+            <div class="hero-actions">
+              <button id="hero-random" class="primary-button" type="button">Start Random Dig</button>
+              <button id="hero-theme" class="secondary-button" type="button">Toggle Theme</button>
+            </div>
+
+            <div class="hero-flags">
+              <span id="hero-tag" class="hero-flag">Genre Focus</span>
+              <span id="hero-search-status" class="hero-flag muted">All Results</span>
+            </div>
           </div>
+
+          <div class="hero-stats">
+            <article class="hero-stat-card">
+              <span>Theme</span>
+              <strong id="theme-status">Dark Mode</strong>
+            </article>
+            <article class="hero-stat-card">
+              <span>Genres</span>
+              <strong id="genre-count">0</strong>
+            </article>
+            <article class="hero-stat-card">
+              <span>Tracks</span>
+              <strong id="track-count">0</strong>
+            </article>
+            <article class="hero-stat-card">
+              <span>Connections</span>
+              <strong id="relation-count">0</strong>
+            </article>
+          </div>
+        </section>
+
+        <section class="content-grid">
+          <section class="panel-surface browse-panel">
+            <div class="section-heading">
+              <div>
+                <p class="section-kicker">Trending Now</p>
+                <h3>Genre Library</h3>
+              </div>
+              <span id="search-status" class="section-meta">전체 보기</span>
+            </div>
+
+            <div id="genre-list" class="genre-grid"></div>
+          </section>
+
+          <section class="panel-surface detail-panel">
+            <div class="section-heading">
+              <div>
+                <p class="section-kicker">Now Playing</p>
+                <h3>Representative Tracks</h3>
+              </div>
+              <span id="current-genre-chip" class="section-meta accent">No Genre</span>
+            </div>
+
+            <div class="spotlight-card">
+              <div class="spotlight-art" aria-hidden="true">
+                <div class="art-core"></div>
+              </div>
+              <div class="spotlight-copy">
+                <span class="spotlight-label">Selected Sound</span>
+                <strong id="player-track-title">Select a genre</strong>
+                <p id="player-track-artist">Track information will appear here.</p>
+              </div>
+            </div>
+
+            <ul id="track-list" class="track-list"></ul>
+          </section>
+
+          <aside class="panel-surface side-panel">
+            <section class="side-block sonic-block">
+              <div class="section-heading tight">
+                <div>
+                  <p class="section-kicker">Sonic Profile</p>
+                  <h3>Waveform</h3>
+                </div>
+                <span class="section-meta accent">Hi-Fi</span>
+              </div>
+
+              <div class="waveform" aria-hidden="true">
+                <span class="wave-bar h-32"></span>
+                <span class="wave-bar h-44"></span>
+                <span class="wave-bar h-56"></span>
+                <span class="wave-bar h-38"></span>
+                <span class="wave-bar h-52"></span>
+                <span class="wave-bar h-72 active"></span>
+                <span class="wave-bar h-84 active"></span>
+                <span class="wave-bar h-64 active"></span>
+                <span class="wave-bar h-46 cyan"></span>
+                <span class="wave-bar h-58"></span>
+                <span class="wave-bar h-74"></span>
+                <span class="wave-bar h-48"></span>
+                <span class="wave-bar h-36"></span>
+                <span class="wave-bar h-50"></span>
+                <span class="wave-bar h-62"></span>
+                <span class="wave-bar h-42"></span>
+              </div>
+            </section>
+
+            <section class="side-block">
+              <div class="section-heading tight">
+                <div>
+                  <p class="section-kicker">Connections</p>
+                  <h3>Subgenres</h3>
+                </div>
+              </div>
+              <div id="subgenres" class="pill-group"></div>
+            </section>
+
+            <section class="side-block">
+              <div class="section-heading tight">
+                <div>
+                  <p class="section-kicker">Connections</p>
+                  <h3>Similar</h3>
+                </div>
+              </div>
+              <div id="similar" class="pill-group"></div>
+            </section>
+
+            <section class="side-block">
+              <div class="section-heading tight">
+                <div>
+                  <p class="section-kicker">Connections</p>
+                  <h3>Fusion</h3>
+                </div>
+              </div>
+              <div id="fusion" class="pill-group"></div>
+            </section>
+          </aside>
+        </section>
+      </main>
+
+      <div class="player-bar panel-surface">
+        <div class="player-track">
+          <div class="player-thumb" aria-hidden="true"></div>
+          <div>
+            <strong id="player-bar-title">Select a genre</strong>
+            <p id="player-bar-subtitle">MUSICDIGGER queue</p>
+          </div>
+        </div>
+
+        <div class="player-controls" aria-label="플레이어 컨트롤">
+          <button type="button">Shuffle</button>
+          <button type="button">Prev</button>
+          <button class="play-button" type="button">Play</button>
+          <button type="button">Next</button>
+          <button type="button">Repeat</button>
+        </div>
+
+        <div class="player-progress">
+          <span>1:24</span>
+          <div class="progress-line" aria-hidden="true">
+            <div class="progress-fill"></div>
+          </div>
+          <span>4:32</span>
         </div>
       </div>
-    </section>
-
-    <section class="content-grid">
-      <aside class="panel genre-panel">
-        <div class="panel-heading">
-          <h3>Genre Library</h3>
-          <span id="search-status">전체 보기</span>
-        </div>
-        <div id="genre-list" class="genre-list"></div>
-      </aside>
-
-      <section class="panel detail-panel">
-        <div class="panel-heading">
-          <h3>Representative Tracks</h3>
-          <span>선택한 장르의 핵심 트랙</span>
-        </div>
-        <ul id="track-list" class="track-list"></ul>
-      </section>
-
-      <aside class="panel relation-panel">
-        <section class="relation-block">
-          <div class="panel-heading">
-            <h3>Subgenres</h3>
-            <span>파생 흐름</span>
-          </div>
-          <div id="subgenres" class="pill-group"></div>
-        </section>
-
-        <section class="relation-block">
-          <div class="panel-heading">
-            <h3>Similar</h3>
-            <span>결이 닮은 장르</span>
-          </div>
-          <div id="similar" class="pill-group"></div>
-        </section>
-
-        <section class="relation-block">
-          <div class="panel-heading">
-            <h3>Fusion</h3>
-            <span>섞이며 생긴 변주</span>
-          </div>
-          <div id="fusion" class="pill-group"></div>
-        </section>
-      </aside>
-    </section>
-  </main>
+    </div>
+  </div>
 
   <script src="script.js"></script>
 </body>

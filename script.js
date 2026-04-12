@@ -15,7 +15,12 @@ const elements = {
   similar: document.getElementById('similar'),
   fusion: document.getElementById('fusion'),
   genreCount: document.getElementById('genre-count'),
+  trackCount: document.getElementById('track-count'),
+  relationCount: document.getElementById('relation-count'),
   searchStatus: document.getElementById('search-status'),
+  heroSearchStatus: document.getElementById('hero-search-status'),
+  heroTag: document.getElementById('hero-tag'),
+  currentGenreChip: document.getElementById('current-genre-chip'),
   themeBadge: document.getElementById('theme-badge'),
   themeStatus: document.getElementById('theme-status'),
   searchInput: document.getElementById('genre-search'),
@@ -23,15 +28,23 @@ const elements = {
   menuPanel: document.getElementById('menu-panel'),
   menuHome: document.getElementById('menu-home'),
   menuRandom: document.getElementById('menu-random'),
+  menuSearch: document.getElementById('menu-search'),
   menuTheme: document.getElementById('menu-theme'),
+  heroRandom: document.getElementById('hero-random'),
+  heroTheme: document.getElementById('hero-theme'),
+  sidebarRandom: document.getElementById('sidebar-random'),
+  playerTrackTitle: document.getElementById('player-track-title'),
+  playerTrackArtist: document.getElementById('player-track-artist'),
+  playerBarTitle: document.getElementById('player-bar-title'),
+  playerBarSubtitle: document.getElementById('player-bar-subtitle'),
 };
 
 initialize();
 
 function initialize() {
   bindEvents();
-  loadGenres();
   updateThemeUI();
+  loadGenres();
 }
 
 function bindEvents() {
@@ -45,32 +58,28 @@ function bindEvents() {
   });
 
   elements.menuHome.addEventListener('click', () => {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-
-    if (state.filteredGenres.length > 0) {
-      showGenre(state.filteredGenres[0].id);
-    }
-
+    focusHome();
     setMenuOpen(false);
   });
 
   elements.menuRandom.addEventListener('click', () => {
-    if (state.filteredGenres.length === 0) {
-      return;
-    }
+    showRandomGenre();
+    setMenuOpen(false);
+  });
 
-    const randomGenre =
-      state.filteredGenres[Math.floor(Math.random() * state.filteredGenres.length)];
-
-    showGenre(randomGenre.id);
+  elements.menuSearch.addEventListener('click', () => {
+    elements.searchInput.focus();
     setMenuOpen(false);
   });
 
   elements.menuTheme.addEventListener('click', () => {
-    state.isDarkMode = !state.isDarkMode;
-    updateThemeUI();
+    toggleTheme();
     setMenuOpen(false);
   });
+
+  elements.heroRandom.addEventListener('click', showRandomGenre);
+  elements.sidebarRandom.addEventListener('click', showRandomGenre);
+  elements.heroTheme.addEventListener('click', toggleTheme);
 
   document.addEventListener('click', event => {
     const clickedInsideMenu = elements.menuPanel.contains(event.target);
@@ -90,6 +99,7 @@ function loadGenres() {
       state.filteredGenres = [...state.genres];
 
       elements.genreCount.textContent = String(state.genres.length);
+      updateSearchStatus('');
       renderGenreList();
 
       if (state.filteredGenres.length > 0) {
@@ -106,16 +116,15 @@ function applySearch(query) {
   const keyword = query.trim().toLowerCase();
 
   state.filteredGenres = state.genres.filter(genre => {
-    const tracks = genre.tracks.map(track => `${track.title} ${track.artist}`).join(' ');
-    const searchableText = `${genre.name} ${genre.description} ${tracks}`.toLowerCase();
+    const trackText = genre.tracks
+      .map(track => `${track.title} ${track.artist}`)
+      .join(' ')
+      .toLowerCase();
 
-    return searchableText.includes(keyword);
+    return `${genre.name} ${genre.description} ${trackText}`.toLowerCase().includes(keyword);
   });
 
-  elements.searchStatus.textContent = keyword
-    ? `${state.filteredGenres.length}개 결과`
-    : '전체 보기';
-
+  updateSearchStatus(keyword);
   renderGenreList();
 
   if (state.filteredGenres.length === 0) {
@@ -132,27 +141,37 @@ function applySearch(query) {
   }
 }
 
+function updateSearchStatus(keyword) {
+  const message = keyword ? `${state.filteredGenres.length} Results` : 'All Results';
+  elements.searchStatus.textContent = message;
+  elements.heroSearchStatus.textContent = message;
+}
+
 function renderGenreList() {
   elements.genreList.innerHTML = '';
 
   if (state.filteredGenres.length === 0) {
     elements.genreList.innerHTML =
-      '<div class="empty-state">검색 결과가 없습니다. 다른 키워드로 찾아보세요.</div>';
+      '<div class="empty-state">검색 결과가 없습니다. 다른 키워드로 다시 찾아보세요.</div>';
     return;
   }
 
-  state.filteredGenres.forEach(genre => {
+  state.filteredGenres.forEach((genre, index) => {
     const button = document.createElement('button');
     button.type = 'button';
-    button.className = 'genre-btn';
+    button.className = 'genre-card';
 
     if (genre.id === state.currentGenreId) {
       button.classList.add('is-active');
     }
 
     button.innerHTML = `
-      <strong>${genre.name}</strong>
-      <small>${genre.description}</small>
+      <div class="genre-card-content">
+        <span class="genre-index">0${index + 1}</span>
+        <h4>${genre.name}</h4>
+        <p>${genre.description}</p>
+        <span class="genre-meta">${genre.tracks.length} tracks ready</span>
+      </div>
     `;
 
     button.addEventListener('click', () => showGenre(genre.id));
@@ -168,8 +187,25 @@ function showGenre(id) {
   }
 
   state.currentGenreId = genre.id;
+
+  const relationTotal =
+    genre.subgenres.length + genre.similar.length + genre.fusion.length;
+  const leadTrack = genre.tracks[0];
+
   elements.genreTitle.textContent = genre.name;
   elements.genreDesc.textContent = genre.description;
+  elements.heroTag.textContent = `${genre.name} Focus`;
+  elements.currentGenreChip.textContent = genre.name;
+  elements.trackCount.textContent = String(genre.tracks.length);
+  elements.relationCount.textContent = String(relationTotal);
+  elements.playerTrackTitle.textContent = leadTrack ? leadTrack.title : 'No track available';
+  elements.playerTrackArtist.textContent = leadTrack
+    ? `${leadTrack.artist} · ${genre.name}`
+    : 'Track information will appear here.';
+  elements.playerBarTitle.textContent = leadTrack ? leadTrack.title : genre.name;
+  elements.playerBarSubtitle.textContent = leadTrack
+    ? `${leadTrack.artist} · ${genre.name}`
+    : 'MUSICDIGGER queue';
 
   renderGenreList();
   renderTracks(genre.tracks);
@@ -183,16 +219,21 @@ function renderTracks(tracks) {
 
   if (!tracks.length) {
     elements.trackList.innerHTML =
-      '<li class="empty-state">표시할 대표 곡이 아직 없습니다.</li>';
+      '<li class="empty-state">대표 트랙이 아직 등록되지 않았습니다.</li>';
     return;
   }
 
-  tracks.forEach(track => {
+  tracks.forEach((track, index) => {
     const item = document.createElement('li');
     item.innerHTML = `
-      <span class="track-title">${track.title}</span>
-      <span class="track-artist">${track.artist}</span>
+      <span class="track-order">${String(index + 1).padStart(2, '0')}</span>
+      <div>
+        <span class="track-title">${track.title}</span>
+        <span class="track-artist">${track.artist}</span>
+      </div>
+      <span class="track-duration">${makeDuration(index)}</span>
     `;
+
     elements.trackList.appendChild(item);
   });
 }
@@ -224,16 +265,43 @@ function renderButtons(container, ids) {
 function renderEmptyGenre() {
   state.currentGenreId = null;
   elements.genreTitle.textContent = '검색 결과가 없습니다';
-  elements.genreDesc.textContent =
-    '장르명, 설명, 대표 곡 제목으로 다시 검색해보세요.';
-  elements.trackList.innerHTML =
-    '<li class="empty-state">표시할 결과가 없습니다.</li>';
-  elements.subgenres.innerHTML =
-    '<div class="empty-state">표시할 결과가 없습니다.</div>';
-  elements.similar.innerHTML =
-    '<div class="empty-state">표시할 결과가 없습니다.</div>';
-  elements.fusion.innerHTML =
-    '<div class="empty-state">표시할 결과가 없습니다.</div>';
+  elements.genreDesc.textContent = '다른 키워드로 장르, 분위기, 트랙 이름을 다시 찾아보세요.';
+  elements.heroTag.textContent = 'Search Empty';
+  elements.currentGenreChip.textContent = 'No Match';
+  elements.trackCount.textContent = '0';
+  elements.relationCount.textContent = '0';
+  elements.playerTrackTitle.textContent = 'No track available';
+  elements.playerTrackArtist.textContent = 'Track information will appear here.';
+  elements.playerBarTitle.textContent = 'No results';
+  elements.playerBarSubtitle.textContent = 'Try another search';
+  elements.trackList.innerHTML = '<li class="empty-state">표시할 트랙이 없습니다.</li>';
+  elements.subgenres.innerHTML = '<div class="empty-state">표시할 결과가 없습니다.</div>';
+  elements.similar.innerHTML = '<div class="empty-state">표시할 결과가 없습니다.</div>';
+  elements.fusion.innerHTML = '<div class="empty-state">표시할 결과가 없습니다.</div>';
+}
+
+function showRandomGenre() {
+  if (state.filteredGenres.length === 0) {
+    return;
+  }
+
+  const randomGenre =
+    state.filteredGenres[Math.floor(Math.random() * state.filteredGenres.length)];
+
+  showGenre(randomGenre.id);
+}
+
+function focusHome() {
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+
+  if (state.filteredGenres.length > 0) {
+    showGenre(state.filteredGenres[0].id);
+  }
+}
+
+function toggleTheme() {
+  state.isDarkMode = !state.isDarkMode;
+  updateThemeUI();
 }
 
 function setMenuOpen(isOpen) {
@@ -251,7 +319,11 @@ function updateThemeUI() {
 
   elements.themeBadge.textContent = state.isDarkMode ? 'Dark First' : 'Light Preview';
   elements.themeStatus.textContent = state.isDarkMode ? 'Dark Mode' : 'Light Mode';
-  elements.menuTheme.textContent = state.isDarkMode
-    ? '라이트 모드로 보기'
-    : '다크 모드로 보기';
+  elements.menuTheme.textContent = state.isDarkMode ? 'Light Preview' : 'Dark Preview';
+}
+
+function makeDuration(index) {
+  const minutes = 3 + (index % 3);
+  const seconds = 10 + index * 17;
+  return `${String(minutes).padStart(2, '0')}:${String(seconds % 60).padStart(2, '0')}`;
 }
