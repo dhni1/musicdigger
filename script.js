@@ -125,6 +125,7 @@ const elements = {
   homeView: document.getElementById('home-view'),
   libraryView: document.getElementById('library-view'),
   profileView: document.getElementById('profile-view'),
+  settingsView: document.getElementById('settings-view'),
   genreList: document.getElementById('genre-list'),
   genreToggle: document.getElementById('genre-toggle'),
   genreTitle: document.getElementById('genre-title'),
@@ -144,7 +145,6 @@ const elements = {
   menuToggle: document.getElementById('menu-toggle'),
   menuPanel: document.getElementById('menu-panel'),
   menuSettings: document.getElementById('menu-settings'),
-  heroTheme: document.getElementById('hero-theme'),
   sidebarRandom: document.getElementById('sidebar-random'),
   playerTrackTitle: document.getElementById('player-track-title'),
   playerTrackArtist: document.getElementById('player-track-artist'),
@@ -168,7 +168,11 @@ const elements = {
   profileSummary: document.getElementById('profile-summary'),
   profileSettingsBlock: document.getElementById('profile-settings-block'),
   profileThemeToggle: document.getElementById('profile-theme-toggle'),
+  profileMoreSettings: document.getElementById('profile-more-settings'),
   profileSettingsNote: document.getElementById('profile-settings-note'),
+  settingsThemeToggle: document.getElementById('settings-theme-toggle'),
+  settingsOpenProfile: document.getElementById('settings-open-profile'),
+  settingsOpenHome: document.getElementById('settings-open-home'),
   playlistModal: document.getElementById('playlist-modal'),
   playlistModalClose: document.getElementById('playlist-modal-close'),
   playlistForm: document.getElementById('playlist-form'),
@@ -193,15 +197,21 @@ function bindEvents() {
   });
 
   addClick(elements.menuSettings, () => {
-    openProfileSettings();
+    openSettingsView();
     setMenuOpen(false);
   });
 
   addClick(elements.sidebarRandom, () => {
     void showRandomGenre();
   });
-  addClick(elements.heroTheme, toggleTheme);
   addClick(elements.profileThemeToggle, toggleTheme);
+  addClick(elements.profileMoreSettings, openSettingsView);
+  addClick(elements.settingsThemeToggle, toggleTheme);
+  addClick(elements.settingsOpenProfile, openProfileView);
+  addClick(elements.settingsOpenHome, () => {
+    focusHome();
+    setActiveNav(elements.navHome);
+  });
   addClick(elements.navHome, () => {
     focusHome();
     setActiveNav(elements.navHome);
@@ -725,6 +735,7 @@ function showView(view) {
     ['home', elements.homeView],
     ['library', elements.libraryView],
     ['profile', elements.profileView],
+    ['settings', elements.settingsView],
   ].forEach(([name, element]) => {
     element?.classList.toggle('is-active', name === view);
   });
@@ -748,14 +759,9 @@ function openProfileView() {
   setActiveNav(elements.navProfile);
 }
 
-function openProfileSettings() {
-  openProfileView();
-
-  if (elements.profileSettingsBlock) {
-    window.requestAnimationFrame(() => {
-      focusSection(elements.profileSettingsBlock);
-    });
-  }
+function openSettingsView() {
+  showView('settings');
+  setActiveNav(null);
 }
 
 function toggleTheme() {
@@ -776,11 +782,11 @@ function updateThemeUI() {
   elements.body.classList.remove(oldThemeClass);
   elements.body.classList.add(themeClass);
 
-  if (elements.heroTheme) {
-    elements.heroTheme.textContent = state.isDarkMode ? 'Light Mode' : 'Dark Mode';
-  }
   if (elements.profileThemeToggle) {
     elements.profileThemeToggle.textContent = state.isDarkMode ? 'Light Mode' : 'Dark Mode';
+  }
+  if (elements.settingsThemeToggle) {
+    elements.settingsThemeToggle.textContent = state.isDarkMode ? 'Light Mode' : 'Dark Mode';
   }
 }
 

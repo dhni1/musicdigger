@@ -428,7 +428,8 @@ body.theme-light .topbar {
 }
 
 .library-view,
-.profile-view {
+.profile-view,
+.settings-view {
   margin-top: 12px;
 }
 
@@ -466,15 +467,10 @@ body.theme-light .topbar {
   line-height: 1.65;
 }
 
-.hero-actions,
 .hero-flags {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
-}
-
-.hero-actions {
-  margin-top: 16px;
 }
 
 .hero-flags {
@@ -957,7 +953,9 @@ body.theme-light .spotlight-art {
 }
 
 .profile-hero,
-.profile-block {
+.profile-block,
+.settings-hero,
+.settings-block {
   padding: 14px;
 }
 
@@ -968,6 +966,13 @@ body.theme-light .spotlight-art {
 .profile-grid {
   display: grid;
   grid-template-columns: minmax(280px, 1.1fr) minmax(220px, 0.9fr) minmax(220px, 0.9fr);
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.settings-grid {
+  display: grid;
+  grid-template-columns: minmax(280px, 1fr) minmax(220px, 0.9fr);
   gap: 12px;
   margin-top: 12px;
 }
@@ -1165,6 +1170,10 @@ body.theme-light .spotlight-art {
   .profile-grid {
     grid-template-columns: 1fr;
   }
+
+  .settings-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 @media (max-width: 940px) {
@@ -1211,6 +1220,8 @@ body.theme-light .spotlight-art {
   .side-panel,
   .profile-hero,
   .profile-block,
+  .settings-hero,
+  .settings-block,
   .player-bar {
     padding: 12px;
   }

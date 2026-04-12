@@ -14,6 +14,8 @@ PORT = int(os.environ.get("PORT", "8000"))
 SPOTIFY_CLIENT_ID = os.environ.get("SPOTIFY_CLIENT_ID", "")
 SPOTIFY_CLIENT_SECRET = os.environ.get("SPOTIFY_CLIENT_SECRET", "")
 SPOTIFY_MARKET = os.environ.get("SPOTIFY_MARKET", "US")
+TRACKS_PER_GENRE = 8
+SEARCH_LIMIT = 50
 
 
 class SpotifyCatalog:
@@ -62,12 +64,9 @@ class SpotifyCatalog:
 
         if self.configured():
             try:
-                tracks = self._recommend_tracks_for_genre(seed_genres)
+                tracks = self._popular_tracks_for_genre(seed_genres, search_terms)
             except RuntimeError:
-                try:
-                    tracks = self._search_tracks_for_genre(search_terms)
-                except RuntimeError:
-                    tracks = []
+                tracks = []
 
         if not tracks and local_genre:
             tracks = local_genre.get("tracks", [])
@@ -127,20 +126,44 @@ class SpotifyCatalog:
         }
         return data
 
+    def _popular_tracks_for_genre(self, seed_genres, search_terms):
+        ranked_tracks = []
+
+        try:
+            ranked_tracks = self._search_tracks_for_genre(search_terms)
+        except RuntimeError:
+            ranked_tracks = []
+
+        if len(ranked_tracks) >= TRACKS_PER_GENRE:
+            return ranked_tracks[:TRACKS_PER_GENRE]
+
+        recommended_tracks = []
+
+        try:
+            recommended_tracks = self._recommend_tracks_for_genre(seed_genres)
+        except RuntimeError:
+            recommended_tracks = []
+
+        merged = merge_tracks(ranked_tracks, recommended_tracks)
+        return merged[:TRACKS_PER_GENRE]
+
     def _recommend_tracks_for_genre(self, seed_genres):
         seed_values = ",".join(seed_genres[:5])
         data = self._spotify_get(
             "/recommendations",
             {
-                "limit": "8",
+                "limit": str(TRACKS_PER_GENRE),
                 "market": SPOTIFY_MARKET,
                 "seed_genres": seed_values,
             },
         )
         items = data.get("tracks", [])
-        return [map_track(item) for item in items]
+        tracks = [map_track(item) for item in items]
+        return rank_tracks(tracks)
 
     def _search_tracks_for_genre(self, search_terms):
+        candidates = []
+
         for term in search_terms:
             if not term:
                 continue
@@ -151,14 +174,14 @@ class SpotifyCatalog:
                 {
                     "q": query,
                     "type": "track",
-                    "limit": "8",
+                    "limit": str(SEARCH_LIMIT),
                     "market": SPOTIFY_MARKET,
                 },
             )
             items = data.get("tracks", {}).get("items", [])
 
             if items:
-                return [map_track(item) for item in items]
+                candidates.extend(map_track(item) for item in items)
 
         for term in search_terms:
             if not term:
@@ -169,16 +192,16 @@ class SpotifyCatalog:
                 {
                     "q": term,
                     "type": "track",
-                    "limit": "8",
+                    "limit": str(SEARCH_LIMIT),
                     "market": SPOTIFY_MARKET,
                 },
             )
             items = fallback.get("tracks", {}).get("items", [])
 
             if items:
-                return [map_track(item) for item in items]
+                candidates.extend(map_track(item) for item in items)
 
-        return []
+        return rank_tracks(candidates)[:TRACKS_PER_GENRE]
 
     def _spotify_get(self, path, params=None):
         token = self._get_token()
@@ -310,7 +333,45 @@ def map_track(item):
         "album": item.get("album", {}).get("name", ""),
         "spotifyUri": item.get("uri"),
         "spotifyUrl": item.get("external_urls", {}).get("spotify"),
+        "popularity": item.get("popularity", 0),
     }
+
+
+def rank_tracks(tracks):
+    unique = merge_tracks(tracks, [])
+    return sorted(
+        unique,
+        key=lambda track: (
+            int(track.get("popularity", 0) or 0),
+            track.get("title", ""),
+            track.get("artist", ""),
+        ),
+        reverse=True,
+    )
+
+
+def merge_tracks(primary_tracks, secondary_tracks):
+    merged = []
+    seen = set()
+
+    for track in [*primary_tracks, *secondary_tracks]:
+        key = make_track_identity(track)
+        if not key or key in seen:
+            continue
+        seen.add(key)
+        merged.append(track)
+
+    return merged
+
+
+def make_track_identity(track):
+    title = normalize_genre_name(track.get("title", ""))
+    artist = normalize_genre_name(track.get("artist", ""))
+
+    if not title and not artist:
+        return ""
+
+    return f"{title}::{artist}"
 
 
 def load_local_genres(spotify_backed):

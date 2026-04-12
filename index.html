@@ -91,10 +91,6 @@
                 MUSICDIGGER는 장르를 따라가며 비슷한 결을 발견하는 탐색형 음악 아카이브입니다.
               </p>
 
-              <div class="hero-actions">
-                <button id="hero-theme" class="secondary-button" type="button">Light Mode</button>
-              </div>
-
               <div class="hero-flags">
                 <span id="hero-tag" class="hero-flag">Genre Focus</span>
                 <span id="hero-search-status" class="hero-flag muted">All Genres</span>
@@ -296,9 +292,66 @@
                 <button id="profile-theme-toggle" class="secondary-button" type="button">
                   Light Mode
                 </button>
+                <button
+                  id="profile-more-settings"
+                  class="secondary-button ghost-button"
+                  type="button"
+                >
+                  More Settings
+                </button>
                 <div id="profile-settings-note" class="empty-state">
                   테마 전환과 계정 연결 상태를 이 화면에서 확인할 수 있습니다.
                 </div>
+              </div>
+            </section>
+          </div>
+        </section>
+
+        <section id="settings-view" class="app-view settings-view">
+          <section class="panel-surface settings-hero">
+            <div class="section-heading">
+              <div>
+                <p class="section-kicker">Preferences</p>
+                <h3>Settings</h3>
+              </div>
+            </div>
+            <p class="hero-description profile-copy">
+              앱 표시 방식과 탐색 환경을 여기서 조정할 수 있습니다.
+            </p>
+          </section>
+
+          <div class="settings-grid">
+            <section class="panel-surface settings-block">
+              <div class="section-heading tight">
+                <div>
+                  <p class="section-kicker">Appearance</p>
+                  <h3>Theme</h3>
+                </div>
+              </div>
+              <div class="profile-settings">
+                <button id="settings-theme-toggle" class="secondary-button" type="button">
+                  Light Mode
+                </button>
+                <div class="empty-state">
+                  라이트 모드와 다크 모드를 전환해 현재 탐색 화면에 바로 반영할 수 있습니다.
+                </div>
+              </div>
+            </section>
+
+            <section class="panel-surface settings-block">
+              <div class="section-heading tight">
+                <div>
+                  <p class="section-kicker">Navigation</p>
+                  <h3>Quick Access</h3>
+                </div>
+              </div>
+              <div class="profile-settings">
+                <button id="settings-open-profile" class="secondary-button ghost-button" type="button">
+                  Back To Profile
+                </button>
+                <button id="settings-open-home" class="secondary-button ghost-button" type="button">
+                  Back To Home
+                </button>
               </div>
             </section>
           </div>
