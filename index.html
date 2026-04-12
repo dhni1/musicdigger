@@ -2,40 +2,117 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8">
-  <title>Music Digging</title>
-  <link rel="stylesheet" href="style.css">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MUSICDIGGER</title>
+  <link rel="stylesheet" href="design.css">
 </head>
-<body>
+<body class="theme-dark">
+  <header class="topbar">
+    <div class="topbar-left">
+      <button
+        id="menu-toggle"
+        class="menu-toggle"
+        type="button"
+        aria-label="메뉴 열기"
+        aria-expanded="false"
+        aria-controls="menu-panel"
+      >
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+      <h1 class="brand">MUSICDIGGER</h1>
+    </div>
 
-<div class="container">
-  <!-- 왼쪽: 장르 목록 -->
-  <div class="sidebar">
-    <h2>장르</h2>
-    <div id="genre-list"></div>
-  </div>
+    <div class="topbar-search">
+      <label class="sr-only" for="genre-search">장르 검색</label>
+      <input
+        id="genre-search"
+        type="search"
+        placeholder="장르, 설명, 대표 곡을 검색해보세요"
+        autocomplete="off"
+      >
+    </div>
 
-  <!-- 가운데: 장르 정보 -->
-  <div class="main">
-    <h2 id="genre-title">장르를 선택하세요</h2>
-    <p id="genre-desc"></p>
+    <div class="topbar-right">
+      <span id="theme-badge" class="theme-badge">Dark First</span>
+    </div>
 
-    <h3>대표 곡</h3>
-    <ul id="track-list"></ul>
-  </div>
+    <div id="menu-panel" class="menu-panel" aria-hidden="true">
+      <button id="menu-home" type="button">홈으로</button>
+      <button id="menu-random" type="button">랜덤 장르</button>
+      <button id="menu-theme" type="button">라이트 모드로 보기</button>
+    </div>
+  </header>
 
-  <!-- 오른쪽: 탐색 -->
-  <div class="side-info">
-    <h3>하위 장르</h3>
-    <div id="subgenres"></div>
+  <main class="page-shell">
+    <section class="hero-panel panel">
+      <p class="eyebrow">Discover Beyond The Obvious</p>
+      <div class="hero-copy">
+        <div>
+          <h2 id="genre-title">장르를 선택해보세요</h2>
+          <p id="genre-desc">
+            MUSICDIGGER는 장르를 따라가며 비슷한 결을 발견하는 탐색형 음악 아카이브입니다.
+          </p>
+        </div>
+        <div class="hero-meta">
+          <div class="meta-card">
+            <span class="meta-label">현재 테마</span>
+            <strong id="theme-status">Dark Mode</strong>
+          </div>
+          <div class="meta-card">
+            <span class="meta-label">탐색 가능한 장르</span>
+            <strong id="genre-count">0</strong>
+          </div>
+        </div>
+      </div>
+    </section>
 
-    <h3>비슷한 장르</h3>
-    <div id="similar"></div>
+    <section class="content-grid">
+      <aside class="panel genre-panel">
+        <div class="panel-heading">
+          <h3>Genre Library</h3>
+          <span id="search-status">전체 보기</span>
+        </div>
+        <div id="genre-list" class="genre-list"></div>
+      </aside>
 
-    <h3>융합 장르</h3>
-    <div id="fusion"></div>
-  </div>
-</div>
+      <section class="panel detail-panel">
+        <div class="panel-heading">
+          <h3>Representative Tracks</h3>
+          <span>선택한 장르의 핵심 트랙</span>
+        </div>
+        <ul id="track-list" class="track-list"></ul>
+      </section>
 
-<script src="script.js"></script>
+      <aside class="panel relation-panel">
+        <section class="relation-block">
+          <div class="panel-heading">
+            <h3>Subgenres</h3>
+            <span>파생 흐름</span>
+          </div>
+          <div id="subgenres" class="pill-group"></div>
+        </section>
+
+        <section class="relation-block">
+          <div class="panel-heading">
+            <h3>Similar</h3>
+            <span>결이 닮은 장르</span>
+          </div>
+          <div id="similar" class="pill-group"></div>
+        </section>
+
+        <section class="relation-block">
+          <div class="panel-heading">
+            <h3>Fusion</h3>
+            <span>섞이며 생긴 변주</span>
+          </div>
+          <div id="fusion" class="pill-group"></div>
+        </section>
+      </aside>
+    </section>
+  </main>
+
+  <script src="script.js"></script>
 </body>
 </html>
