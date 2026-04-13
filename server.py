@@ -16,6 +16,8 @@ SPOTIFY_CLIENT_SECRET = os.environ.get("SPOTIFY_CLIENT_SECRET", "")
 SPOTIFY_MARKET = os.environ.get("SPOTIFY_MARKET", "US")
 TRACKS_PER_GENRE = 8
 SEARCH_LIMIT = 50
+ARTIST_SEARCH_LIMIT = 12
+ARTIST_POOL_SIZE = 12
 
 
 class SpotifyCatalog:
@@ -59,6 +61,7 @@ class SpotifyCatalog:
         local_genre = find_local_genre(genre, spotify_backed=self.configured())
         seed_genres = get_seed_genres(local_genre, genre)
         search_terms = get_search_terms(local_genre, genre)
+        local_tracks = local_genre.get("tracks", []) if local_genre else []
 
         tracks = []
 
@@ -68,8 +71,8 @@ class SpotifyCatalog:
             except RuntimeError:
                 tracks = []
 
-        if not tracks and local_genre:
-            tracks = local_genre.get("tracks", [])
+        if not tracks:
+            tracks = local_tracks[:TRACKS_PER_GENRE]
 
         artist_ids = []
         artist_names = []
@@ -144,7 +147,15 @@ class SpotifyCatalog:
         except RuntimeError:
             recommended_tracks = []
 
+        artist_top_tracks = []
+
+        try:
+            artist_top_tracks = self._artist_top_tracks_for_genre(search_terms, seed_genres)
+        except RuntimeError:
+            artist_top_tracks = []
+
         merged = merge_tracks(ranked_tracks, recommended_tracks)
+        merged = merge_tracks(merged, artist_top_tracks)
         return rank_tracks(merged)[:TRACKS_PER_GENRE]
 
     def _recommend_tracks_for_genre(self, seed_genres):
@@ -202,6 +213,50 @@ class SpotifyCatalog:
                 candidates.extend(map_track(item) for item in items)
 
         return rank_tracks(candidates)[:TRACKS_PER_GENRE]
+
+    def _artist_top_tracks_for_genre(self, search_terms, seed_genres):
+        artist_ids = []
+        targets = build_genre_targets(search_terms, seed_genres)
+
+        for term in search_terms:
+            if not term:
+                continue
+
+            data = self._spotify_get(
+                "/search",
+                {
+                    "q": term,
+                    "type": "artist",
+                    "limit": str(ARTIST_SEARCH_LIMIT),
+                    "market": SPOTIFY_MARKET,
+                },
+            )
+            items = data.get("artists", {}).get("items", [])
+
+            for artist in items:
+                artist_id = artist.get("id")
+                if not artist_id or artist_id in artist_ids:
+                    continue
+                if not artist_matches_genre(artist, targets):
+                    continue
+
+                artist_ids.append(artist_id)
+                if len(artist_ids) >= ARTIST_POOL_SIZE:
+                    break
+
+            if len(artist_ids) >= ARTIST_POOL_SIZE:
+                break
+
+        tracks = []
+
+        for artist_id in artist_ids:
+            data = self._spotify_get(
+                f"/artists/{artist_id}/top-tracks",
+                {"market": SPOTIFY_MARKET},
+            )
+            tracks.extend(map_track(item) for item in data.get("tracks", []))
+
+        return rank_tracks(tracks)
 
     def _spotify_get(self, path, params=None):
         token = self._get_token()
@@ -500,6 +555,19 @@ def get_search_terms(local_genre, fallback_value):
     return terms
 
 
+def build_genre_targets(search_terms, seed_genres):
+    targets = []
+    seen = set()
+
+    for candidate in [*search_terms, *seed_genres]:
+        normalized = normalize_genre_name(format_search_label(candidate))
+        if normalized and normalized not in seen:
+            targets.append(normalized)
+            seen.add(normalized)
+
+    return targets
+
+
 def genre_to_seed(value):
     return normalize_genre_name(value).replace(" ", "-")
 
@@ -514,6 +582,24 @@ def format_genre_name(name):
 
 def normalize_genre_name(name):
     return re.sub(r"[^a-z0-9]+", " ", str(name or "").lower()).strip()
+
+
+def artist_matches_genre(artist, targets):
+    artist_genres = [normalize_genre_name(item) for item in artist.get("genres", [])]
+
+    if not artist_genres or not targets:
+        return False
+
+    for artist_genre in artist_genres:
+        for target in targets:
+            if (
+                artist_genre == target
+                or target in artist_genre
+                or artist_genre in target
+            ):
+                return True
+
+    return False
 
 
 def build_description(genre, artist_names, tracks):

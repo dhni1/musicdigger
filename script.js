@@ -32,6 +32,12 @@ const BUILTIN_GENRES = [
     tracks: [
       { title: 'SICKO MODE', artist: 'Travis Scott' },
       { title: 'HUMBLE.', artist: 'Kendrick Lamar' },
+      { title: "God's Plan", artist: 'Drake' },
+      { title: 'In Da Club', artist: '50 Cent' },
+      { title: 'Lose Yourself', artist: 'Eminem' },
+      { title: 'Stronger', artist: 'Kanye West' },
+      { title: 'Empire State Of Mind', artist: 'JAY-Z feat. Alicia Keys' },
+      { title: 'Hot In Herre', artist: 'Nelly' },
     ],
   },
   {
@@ -46,6 +52,10 @@ const BUILTIN_GENRES = [
       { title: 'Luv(sic.) pt3', artist: 'Nujabes' },
       { title: 'Aruarian Dance', artist: 'Nujabes' },
       { title: 'Rebirth of Slick (Cool Like Dat)', artist: 'Digable Planets' },
+      { title: 'Electric Relaxation', artist: 'A Tribe Called Quest' },
+      { title: 'Award Tour', artist: 'A Tribe Called Quest' },
+      { title: "Runnin'", artist: 'The Pharcyde' },
+      { title: 'Passing Me By', artist: 'The Pharcyde' },
     ],
   },
   {
@@ -58,6 +68,12 @@ const BUILTIN_GENRES = [
     tracks: [
       { title: 'Mask Off', artist: 'Future' },
       { title: 'goosebumps', artist: 'Travis Scott' },
+      { title: 'Bad and Boujee', artist: 'Migos feat. Lil Uzi Vert' },
+      { title: 'XO TOUR Llif3', artist: 'Lil Uzi Vert' },
+      { title: 'Life Is Good', artist: 'Future feat. Drake' },
+      { title: 'pick up the phone', artist: 'Young Thug & Travis Scott feat. Quavo' },
+      { title: 'Drip Too Hard', artist: 'Lil Baby & Gunna' },
+      { title: 'FE!N', artist: 'Travis Scott feat. Playboi Carti' },
     ],
   },
   {
@@ -70,6 +86,12 @@ const BUILTIN_GENRES = [
     tracks: [
       { title: 'N.Y. State of Mind', artist: 'Nas' },
       { title: 'Mass Appeal', artist: 'Gang Starr' },
+      { title: 'Shook Ones, Pt. II', artist: 'Mobb Deep' },
+      { title: 'C.R.E.A.M.', artist: 'Wu-Tang Clan' },
+      { title: 'Juicy', artist: 'The Notorious B.I.G.' },
+      { title: 'The World Is Yours', artist: 'Nas' },
+      { title: 'Protect Ya Neck', artist: 'Wu-Tang Clan' },
+      { title: 'It Was A Good Day', artist: 'Ice Cube' },
     ],
   },
   {
@@ -82,6 +104,12 @@ const BUILTIN_GENRES = [
     tracks: [
       { title: 'Blinding Lights', artist: 'The Weeknd' },
       { title: 'Location', artist: 'Khalid' },
+      { title: 'Earned It', artist: 'The Weeknd' },
+      { title: 'We Belong Together', artist: 'Mariah Carey' },
+      { title: 'No Scrubs', artist: 'TLC' },
+      { title: 'Say My Name', artist: "Destiny's Child" },
+      { title: 'Adorn', artist: 'Miguel' },
+      { title: 'U Remind Me', artist: 'Usher' },
     ],
   },
   {
@@ -94,6 +122,12 @@ const BUILTIN_GENRES = [
     tracks: [
       { title: 'affection', artist: 'Jinsang' },
       { title: 'snowman', artist: 'WYS' },
+      { title: 'day 7', artist: 'potsu' },
+      { title: 'I wish it would never stop snowing', artist: 'sleepdealer' },
+      { title: 'Luv Letter', artist: 'Jinsang' },
+      { title: 'warm nights', artist: 'xander.' },
+      { title: 'Monday Loop', artist: 'Tomppabeats' },
+      { title: 'glow', artist: 'bsd.u' },
     ],
   },
 ];

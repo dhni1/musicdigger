@@ -12,7 +12,13 @@
       "fusion": ["rap-rock"],
       "tracks": [
         { "title": "SICKO MODE", "artist": "Travis Scott" },
-        { "title": "HUMBLE.", "artist": "Kendrick Lamar" }
+        { "title": "HUMBLE.", "artist": "Kendrick Lamar" },
+        { "title": "God's Plan", "artist": "Drake" },
+        { "title": "In Da Club", "artist": "50 Cent" },
+        { "title": "Lose Yourself", "artist": "Eminem" },
+        { "title": "Stronger", "artist": "Kanye West" },
+        { "title": "Empire State Of Mind", "artist": "JAY-Z feat. Alicia Keys" },
+        { "title": "Hot In Herre", "artist": "Nelly" }
       ]
     },
     {
@@ -29,7 +35,11 @@
         { "title": "Feather", "artist": "Nujabes" },
         { "title": "Luv(sic.) pt3", "artist": "Nujabes" },
         { "title": "Aruarian Dance", "artist": "Nujabes" },
-        { "title": "Rebirth of Slick (Cool Like Dat)", "artist": "Digable Planets" }
+        { "title": "Rebirth of Slick (Cool Like Dat)", "artist": "Digable Planets" },
+        { "title": "Electric Relaxation", "artist": "A Tribe Called Quest" },
+        { "title": "Award Tour", "artist": "A Tribe Called Quest" },
+        { "title": "Runnin'", "artist": "The Pharcyde" },
+        { "title": "Passing Me By", "artist": "The Pharcyde" }
       ]
     },
     {
@@ -44,7 +54,13 @@
       "fusion": [],
       "tracks": [
         { "title": "Mask Off", "artist": "Future" },
-        { "title": "goosebumps", "artist": "Travis Scott" }
+        { "title": "goosebumps", "artist": "Travis Scott" },
+        { "title": "Bad and Boujee", "artist": "Migos feat. Lil Uzi Vert" },
+        { "title": "XO TOUR Llif3", "artist": "Lil Uzi Vert" },
+        { "title": "Life Is Good", "artist": "Future feat. Drake" },
+        { "title": "pick up the phone", "artist": "Young Thug & Travis Scott feat. Quavo" },
+        { "title": "Drip Too Hard", "artist": "Lil Baby & Gunna" },
+        { "title": "FE!N", "artist": "Travis Scott feat. Playboi Carti" }
       ]
     },
     {
@@ -59,7 +75,13 @@
       "fusion": [],
       "tracks": [
         { "title": "N.Y. State of Mind", "artist": "Nas" },
-        { "title": "Mass Appeal", "artist": "Gang Starr" }
+        { "title": "Mass Appeal", "artist": "Gang Starr" },
+        { "title": "Shook Ones, Pt. II", "artist": "Mobb Deep" },
+        { "title": "C.R.E.A.M.", "artist": "Wu-Tang Clan" },
+        { "title": "Juicy", "artist": "The Notorious B.I.G." },
+        { "title": "The World Is Yours", "artist": "Nas" },
+        { "title": "Protect Ya Neck", "artist": "Wu-Tang Clan" },
+        { "title": "It Was A Good Day", "artist": "Ice Cube" }
       ]
     },
     {
@@ -74,7 +96,13 @@
       "fusion": [],
       "tracks": [
         { "title": "Location", "artist": "Khalid" },
-        { "title": "Earned It", "artist": "The Weeknd" }
+        { "title": "Earned It", "artist": "The Weeknd" },
+        { "title": "Blinding Lights", "artist": "The Weeknd" },
+        { "title": "We Belong Together", "artist": "Mariah Carey" },
+        { "title": "No Scrubs", "artist": "TLC" },
+        { "title": "Say My Name", "artist": "Destiny's Child" },
+        { "title": "Adorn", "artist": "Miguel" },
+        { "title": "U Remind Me", "artist": "Usher" }
       ]
     },
     {
@@ -89,7 +117,13 @@
       "fusion": [],
       "tracks": [
         { "title": "affection", "artist": "Jinsang" },
-        { "title": "snowman", "artist": "WYS" }
+        { "title": "snowman", "artist": "WYS" },
+        { "title": "day 7", "artist": "potsu" },
+        { "title": "I wish it would never stop snowing", "artist": "sleepdealer" },
+        { "title": "Luv Letter", "artist": "Jinsang" },
+        { "title": "warm nights", "artist": "xander." },
+        { "title": "Monday Loop", "artist": "Tomppabeats" },
+        { "title": "glow", "artist": "bsd.u" }
       ]
     },
     {
@@ -104,7 +138,13 @@
       "fusion": [],
       "tracks": [
         { "title": "Levitating", "artist": "Dua Lipa" },
-        { "title": "Style", "artist": "Taylor Swift" }
+        { "title": "Style", "artist": "Taylor Swift" },
+        { "title": "Shape of You", "artist": "Ed Sheeran" },
+        { "title": "As It Was", "artist": "Harry Styles" },
+        { "title": "bad guy", "artist": "Billie Eilish" },
+        { "title": "Shake It Off", "artist": "Taylor Swift" },
+        { "title": "Firework", "artist": "Katy Perry" },
+        { "title": "Rolling in the Deep", "artist": "Adele" }
       ]
     },
     {
@@ -119,7 +159,13 @@
       "fusion": [],
       "tracks": [
         { "title": "The Less I Know The Better", "artist": "Tame Impala" },
-        { "title": "Space Song", "artist": "Beach House" }
+        { "title": "Space Song", "artist": "Beach House" },
+        { "title": "Sweater Weather", "artist": "The Neighbourhood" },
+        { "title": "Cigarette Daydreams", "artist": "Cage The Elephant" },
+        { "title": "Electric Feel", "artist": "MGMT" },
+        { "title": "Dog Days Are Over", "artist": "Florence + The Machine" },
+        { "title": "Archie, Marry Me", "artist": "Alvvays" },
+        { "title": "Home", "artist": "Edward Sharpe & The Magnetic Zeros" }
       ]
     },
     {
@@ -134,7 +180,13 @@
       "fusion": [],
       "tracks": [
         { "title": "Do I Wanna Know?", "artist": "Arctic Monkeys" },
-        { "title": "Creep", "artist": "Radiohead" }
+        { "title": "Creep", "artist": "Radiohead" },
+        { "title": "Mr. Brightside", "artist": "The Killers" },
+        { "title": "Seven Nation Army", "artist": "The White Stripes" },
+        { "title": "Take Me Out", "artist": "Franz Ferdinand" },
+        { "title": "Boulevard of Broken Dreams", "artist": "Green Day" },
+        { "title": "Somebody Told Me", "artist": "The Killers" },
+        { "title": "Feel Good Inc.", "artist": "Gorillaz" }
       ]
     },
     {
@@ -149,7 +201,13 @@
       "fusion": ["rap-rock"],
       "tracks": [
         { "title": "Smells Like Teen Spirit", "artist": "Nirvana" },
-        { "title": "Mr. Brightside", "artist": "The Killers" }
+        { "title": "Mr. Brightside", "artist": "The Killers" },
+        { "title": "Bohemian Rhapsody", "artist": "Queen" },
+        { "title": "Sweet Child O' Mine", "artist": "Guns N' Roses" },
+        { "title": "Back In Black", "artist": "AC/DC" },
+        { "title": "Don't Stop Believin'", "artist": "Journey" },
+        { "title": "Hotel California", "artist": "Eagles" },
+        { "title": "We Will Rock You", "artist": "Queen" }
       ]
     },
     {
@@ -164,7 +222,13 @@
       "fusion": [],
       "tracks": [
         { "title": "So What", "artist": "Miles Davis" },
-        { "title": "Take Five", "artist": "The Dave Brubeck Quartet" }
+        { "title": "Take Five", "artist": "The Dave Brubeck Quartet" },
+        { "title": "My Favorite Things", "artist": "John Coltrane" },
+        { "title": "Round Midnight", "artist": "Thelonious Monk" },
+        { "title": "Moanin'", "artist": "Art Blakey & The Jazz Messengers" },
+        { "title": "Sing, Sing, Sing", "artist": "Benny Goodman" },
+        { "title": "In A Sentimental Mood", "artist": "Duke Ellington & John Coltrane" },
+        { "title": "Blue in Green", "artist": "Miles Davis" }
       ]
     },
     {
@@ -179,7 +243,13 @@
       "fusion": [],
       "tracks": [
         { "title": "Untitled (How Does It Feel)", "artist": "D'Angelo" },
-        { "title": "Ain't No Sunshine", "artist": "Bill Withers" }
+        { "title": "Ain't No Sunshine", "artist": "Bill Withers" },
+        { "title": "Let's Stay Together", "artist": "Al Green" },
+        { "title": "Respect", "artist": "Aretha Franklin" },
+        { "title": "Superstition", "artist": "Stevie Wonder" },
+        { "title": "(Sittin' On) The Dock of the Bay", "artist": "Otis Redding" },
+        { "title": "What's Going On", "artist": "Marvin Gaye" },
+        { "title": "I Heard It Through The Grapevine", "artist": "Marvin Gaye" }
       ]
     },
     {
@@ -194,7 +264,13 @@
       "fusion": [],
       "tracks": [
         { "title": "Strobe", "artist": "deadmau5" },
-        { "title": "Midnight City", "artist": "M83" }
+        { "title": "Midnight City", "artist": "M83" },
+        { "title": "One More Time", "artist": "Daft Punk" },
+        { "title": "Levels", "artist": "Avicii" },
+        { "title": "Clarity", "artist": "Zedd feat. Foxes" },
+        { "title": "Animals", "artist": "Martin Garrix" },
+        { "title": "Scary Monsters and Nice Sprites", "artist": "Skrillex" },
+        { "title": "Opus", "artist": "Eric Prydz" }
       ]
     },
     {
@@ -209,7 +285,13 @@
       "fusion": [],
       "tracks": [
         { "title": "Turn Me On", "artist": "Riton x Oliver Heldens" },
-        { "title": "Cola", "artist": "CamelPhat & Elderbrook" }
+        { "title": "Cola", "artist": "CamelPhat & Elderbrook" },
+        { "title": "Show Me Love", "artist": "Robin S." },
+        { "title": "Intoxicated", "artist": "Martin Solveig & GTA" },
+        { "title": "This Girl", "artist": "Kungs vs Cookin' On 3 Burners" },
+        { "title": "You Don't Know Me", "artist": "Jax Jones feat. RAYE" },
+        { "title": "Piece Of Your Heart", "artist": "MEDUZA feat. Goodboys" },
+        { "title": "Finally", "artist": "Kings Of Tomorrow feat. Julie McKnight" }
       ]
     },
     {
@@ -224,7 +306,13 @@
       "fusion": [],
       "tracks": [
         { "title": "Spastik", "artist": "Plastikman" },
-        { "title": "Your Mind", "artist": "Adam Beyer & Bart Skils" }
+        { "title": "Your Mind", "artist": "Adam Beyer & Bart Skils" },
+        { "title": "The Bells", "artist": "Jeff Mills" },
+        { "title": "Strings of Life", "artist": "Rhythim Is Rhythim" },
+        { "title": "Energy Flash", "artist": "Joey Beltram" },
+        { "title": "Higher State Of Consciousness", "artist": "Josh Wink" },
+        { "title": "Age Of Love", "artist": "Charlotte de Witte & Enrico Sangiuliano" },
+        { "title": "Children", "artist": "Robert Miles" }
       ]
     },
     {
@@ -239,7 +327,13 @@
       "fusion": [],
       "tracks": [
         { "title": "An Ending (Ascent)", "artist": "Brian Eno" },
-        { "title": "Weird Fishes/Arpeggi", "artist": "Lusine" }
+        { "title": "Weird Fishes/Arpeggi", "artist": "Lusine" },
+        { "title": "Weightless", "artist": "Marconi Union" },
+        { "title": "Xtal", "artist": "Aphex Twin" },
+        { "title": "#3", "artist": "Aphex Twin" },
+        { "title": "Near Light", "artist": "Ólafur Arnalds" },
+        { "title": "Thursday Afternoon", "artist": "Brian Eno" },
+        { "title": "A Walk", "artist": "Tycho" }
       ]
     },
     {
@@ -256,7 +350,11 @@
         { "title": "Supernova", "artist": "aespa" },
         { "title": "Super Shy", "artist": "NewJeans" },
         { "title": "Love Dive", "artist": "IVE" },
-        { "title": "Into The New World", "artist": "Girls' Generation" }
+        { "title": "Into The New World", "artist": "Girls' Generation" },
+        { "title": "DDU-DU DDU-DU", "artist": "BLACKPINK" },
+        { "title": "Dynamite", "artist": "BTS" },
+        { "title": "Gee", "artist": "Girls' Generation" },
+        { "title": "Gangnam Style", "artist": "PSY" }
       ]
     },
     {
@@ -271,7 +369,13 @@
       "fusion": [],
       "tracks": [
         { "title": "Basket Case", "artist": "Green Day" },
-        { "title": "Blitzkrieg Bop", "artist": "Ramones" }
+        { "title": "Blitzkrieg Bop", "artist": "Ramones" },
+        { "title": "American Idiot", "artist": "Green Day" },
+        { "title": "London Calling", "artist": "The Clash" },
+        { "title": "Should I Stay or Should I Go", "artist": "The Clash" },
+        { "title": "All The Small Things", "artist": "blink-182" },
+        { "title": "Anarchy In The U.K.", "artist": "Sex Pistols" },
+        { "title": "Holiday In Cambodia", "artist": "Dead Kennedys" }
       ]
     },
     {
@@ -286,7 +390,13 @@
       "fusion": [],
       "tracks": [
         { "title": "Master of Puppets", "artist": "Metallica" },
-        { "title": "Chop Suey!", "artist": "System Of A Down" }
+        { "title": "Chop Suey!", "artist": "System Of A Down" },
+        { "title": "Enter Sandman", "artist": "Metallica" },
+        { "title": "Crazy Train", "artist": "Ozzy Osbourne" },
+        { "title": "Paranoid", "artist": "Black Sabbath" },
+        { "title": "Toxicity", "artist": "System Of A Down" },
+        { "title": "Ace of Spades", "artist": "Motörhead" },
+        { "title": "The Trooper", "artist": "Iron Maiden" }
       ]
     },
     {
@@ -301,7 +411,13 @@
       "fusion": [],
       "tracks": [
         { "title": "Don't Start Now", "artist": "Dua Lipa" },
-        { "title": "Titanium", "artist": "David Guetta feat. Sia" }
+        { "title": "Titanium", "artist": "David Guetta feat. Sia" },
+        { "title": "Wake Me Up", "artist": "Avicii" },
+        { "title": "We Found Love", "artist": "Rihanna feat. Calvin Harris" },
+        { "title": "One Kiss", "artist": "Calvin Harris & Dua Lipa" },
+        { "title": "Can't Get You Out Of My Head", "artist": "Kylie Minogue" },
+        { "title": "I Gotta Feeling", "artist": "The Black Eyed Peas" },
+        { "title": "Rather Be", "artist": "Clean Bandit feat. Jess Glynne" }
       ]
     },
     {
@@ -316,7 +432,13 @@
       "fusion": [],
       "tracks": [
         { "title": "Shutdown", "artist": "Skepta" },
-        { "title": "That's Not Me", "artist": "Skepta" }
+        { "title": "That's Not Me", "artist": "Skepta feat. Jme" },
+        { "title": "Man's Not Hot", "artist": "Big Shaq" },
+        { "title": "Konnichiwa", "artist": "Skepta" },
+        { "title": "German Whip", "artist": "Meridian Dan" },
+        { "title": "Too Many Man", "artist": "Boy Better Know" },
+        { "title": "Fix Up, Look Sharp", "artist": "Dizzee Rascal" },
+        { "title": "Pow (Forward)", "artist": "Lethal Bizzle" }
       ]
     },
     {
@@ -331,7 +453,13 @@
       "fusion": [],
       "tracks": [
         { "title": "Numb / Encore", "artist": "JAY-Z & Linkin Park" },
-        { "title": "Bulls on Parade", "artist": "Rage Against The Machine" }
+        { "title": "Bulls on Parade", "artist": "Rage Against The Machine" },
+        { "title": "In the End", "artist": "Linkin Park" },
+        { "title": "Rollin' (Air Raid Vehicle)", "artist": "Limp Bizkit" },
+        { "title": "Bring The Noise", "artist": "Public Enemy & Anthrax" },
+        { "title": "Last Resort", "artist": "Papa Roach" },
+        { "title": "Remember The Name", "artist": "Fort Minor" },
+        { "title": "Faith", "artist": "Limp Bizkit" }
       ]
     },
     {
@@ -346,7 +474,13 @@
       "fusion": [],
       "tracks": [
         { "title": "Welcome to the Party", "artist": "Pop Smoke" },
-        { "title": "Body", "artist": "Tion Wayne & Russ Millions" }
+        { "title": "Body", "artist": "Tion Wayne & Russ Millions" },
+        { "title": "Dior", "artist": "Pop Smoke" },
+        { "title": "KEISHA & BECKY", "artist": "Russ Millions x Tion Wayne" },
+        { "title": "War", "artist": "Pop Smoke feat. Lil Tjay" },
+        { "title": "No Suburban", "artist": "Sheff G" },
+        { "title": "Know Better", "artist": "Headie One" },
+        { "title": "Doja", "artist": "Central Cee" }
       ]
     }
   ]
