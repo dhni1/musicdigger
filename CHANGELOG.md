@@ -100,7 +100,3 @@
 - 장르별 대표 곡 선정 시 Spotify popularity 기준으로 상위 8곡이 더 정확히 앞에 오도록 정렬 로직 보강
 - 검색 결과와 추천 결과를 합친 뒤 다시 popularity 기준으로 재정렬하도록 수정
 - `Representative Tracks` 섹션명을 `Representative Major Tracks`로 변경
-
-## v0.5.6
-- `Subgenres`, `Similar`, `Fusion` 연결 카드가 내용과 상관없이 비슷한 크기로 유지되도록 높이 고정 스타일 추가
-- 빈 상태 박스와 장르 옵션 영역도 카드 내부에서 일정한 높이를 유지하도록 정리
