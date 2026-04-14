@@ -22,6 +22,9 @@ const spotifyConfig = {
 const DEFAULT_VISIBLE_GENRES = 4;
 const BACKEND_REQUEST_TIMEOUT_MS = 1800;
 const MAX_MAP_PREVIEW_TRACKS = 4;
+const MAP_SURFACE_WIDTH = 1800;
+const MAP_SURFACE_HEIGHT = 1280;
+const MAP_MIN_NODE_GAP = 16;
 
 const MAP_FAMILIES = [
   {
@@ -186,6 +189,11 @@ const state = {
   isDarkMode: true,
   searchQuery: '',
   usingBackendGenres: false,
+  mapLayoutById: new Map(),
+  mapViewportReady: {
+    main: false,
+    modal: false,
+  },
   spotify: {
     configured: isSpotifyConfigured(),
     accessToken: null,
@@ -260,6 +268,7 @@ const elements = {
   playlistPrivate: document.getElementById('playlist-private'),
   playlistSubmit: document.getElementById('playlist-submit'),
   mapCanvas: document.getElementById('genre-map-canvas'),
+  mapSurface: document.getElementById('genre-map-surface'),
   mapVisibleCount: document.getElementById('map-visible-count'),
   mapConnectionCount: document.getElementById('map-connection-count'),
   mapSelectionBadge: document.getElementById('map-selection-badge'),
@@ -268,6 +277,11 @@ const elements = {
   mapSelectionLinks: document.getElementById('map-selection-links'),
   mapSelectionTracks: document.getElementById('map-selection-tracks'),
   mapOpenHome: document.getElementById('map-open-home'),
+  mapOpenModal: document.getElementById('map-open-modal'),
+  mapModal: document.getElementById('map-modal'),
+  mapModalClose: document.getElementById('map-modal-close'),
+  mapModalCanvas: document.getElementById('genre-map-modal-canvas'),
+  mapModalSurface: document.getElementById('genre-map-modal-surface'),
 };
 
 void initialize();
@@ -319,6 +333,8 @@ function bindEvents() {
     focusHome();
     setActiveNav(elements.navHome);
   });
+  addClick(elements.mapOpenModal, openMapModal);
+  addClick(elements.mapModalClose, closeMapModal);
   addClick(elements.spotifyAuthButton, () => {
     void handleSpotifyAuthButton();
   });
@@ -336,6 +352,14 @@ function bindEvents() {
       closePlaylistModal();
     }
   });
+  addClick(elements.mapModal, event => {
+    if (event.target.dataset.closeMapModal === 'true') {
+      closeMapModal();
+    }
+  });
+
+  bindMapViewport(elements.mapCanvas, 'main');
+  bindMapViewport(elements.mapModalCanvas, 'modal');
 
   elements.searchInput.addEventListener('input', event => {
     const nextView = state.currentView === 'map' ? 'map' : 'home';
@@ -657,51 +681,65 @@ function renderGenreList() {
 }
 
 function renderGenreMap() {
-  if (!elements.mapCanvas) {
+  if (!elements.mapCanvas || !elements.mapSurface) {
     return;
   }
 
   const visibleGenres = [...state.filteredGenres];
   elements.mapVisibleCount.textContent = String(visibleGenres.length);
   elements.mapConnectionCount.textContent = String(countVisibleMapConnections(visibleGenres));
-  elements.mapCanvas.innerHTML = '';
 
   if (visibleGenres.length === 0) {
-    elements.mapCanvas.innerHTML =
-      '<div class="empty-state">검색 결과가 없어 맵을 그릴 수 없습니다. 다른 장르 이름으로 다시 시도해보세요.</div>';
+    renderEmptyMapSurface(elements.mapSurface);
+    if (elements.mapModalSurface) {
+      renderEmptyMapSurface(elements.mapModalSurface);
+    }
+    state.mapLayoutById = new Map();
     return;
   }
 
   const layout = buildMapLayout(visibleGenres);
-  const layoutById = new Map(layout.map(item => [item.genre.id, item]));
-  const activeLayout = state.currentGenreId ? layoutById.get(state.currentGenreId) : null;
+  state.mapLayoutById = new Map(layout.map(item => [item.genre.id, item]));
+  renderMapSurface(elements.mapSurface, layout, 'main');
+
+  if (elements.mapModalSurface) {
+    renderMapSurface(elements.mapModalSurface, layout, 'modal');
+  }
+}
+
+function renderMapSurface(surface, layout, viewportKey) {
+  surface.innerHTML = '';
+  surface.style.width = `${MAP_SURFACE_WIDTH}px`;
+  surface.style.height = `${MAP_SURFACE_HEIGHT}px`;
+
+  const activeLayout = state.currentGenreId ? state.mapLayoutById.get(state.currentGenreId) : null;
   const activeConnections = new Set(activeLayout ? getMapConnectionIds(activeLayout.genre) : []);
 
   const connectionLayer = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-  connectionLayer.setAttribute('viewBox', '0 0 100 100');
+  connectionLayer.setAttribute('viewBox', `0 0 ${MAP_SURFACE_WIDTH} ${MAP_SURFACE_HEIGHT}`);
   connectionLayer.setAttribute('preserveAspectRatio', 'none');
   connectionLayer.classList.add('map-connection-layer');
 
   if (activeLayout) {
     getMapConnectionIds(activeLayout.genre).forEach(targetId => {
-      const target = layoutById.get(targetId);
+      const target = state.mapLayoutById.get(targetId);
 
       if (!target) {
         return;
       }
 
       const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-      line.setAttribute('x1', activeLayout.x.toFixed(2));
-      line.setAttribute('y1', activeLayout.y.toFixed(2));
-      line.setAttribute('x2', target.x.toFixed(2));
-      line.setAttribute('y2', target.y.toFixed(2));
+      line.setAttribute('x1', String(activeLayout.x));
+      line.setAttribute('y1', String(activeLayout.y));
+      line.setAttribute('x2', String(target.x));
+      line.setAttribute('y2', String(target.y));
       line.classList.add('map-connection-line');
       line.style.setProperty('--line-color', target.family.color);
       connectionLayer.appendChild(line);
     });
   }
 
-  elements.mapCanvas.appendChild(connectionLayer);
+  surface.appendChild(connectionLayer);
 
   MAP_FAMILIES.forEach(family => {
     if (!layout.some(item => item.family.id === family.id)) {
@@ -711,9 +749,9 @@ function renderGenreMap() {
     const label = document.createElement('div');
     label.className = 'map-cluster-label';
     label.textContent = family.label;
-    label.style.left = `${family.centerX}%`;
-    label.style.top = `${family.centerY}%`;
-    elements.mapCanvas.appendChild(label);
+    label.style.left = `${Math.round((family.centerX / 100) * MAP_SURFACE_WIDTH)}px`;
+    label.style.top = `${Math.round((family.centerY / 100) * MAP_SURFACE_HEIGHT)}px`;
+    surface.appendChild(label);
   });
 
   layout.forEach(item => {
@@ -722,8 +760,8 @@ function renderGenreMap() {
     button.type = 'button';
     button.className = 'map-node';
     button.textContent = item.genre.name;
-    button.style.left = `${item.x}%`;
-    button.style.top = `${item.y}%`;
+    button.style.left = `${item.x}px`;
+    button.style.top = `${item.y}px`;
     button.style.fontSize = `${item.size}rem`;
     button.style.setProperty('--map-node-color', item.family.color);
     button.title = `${item.genre.name} · ${item.family.label} · ${relationCount} links`;
@@ -740,8 +778,17 @@ function renderGenreMap() {
       void showGenre(item.genre.id);
     });
 
-    elements.mapCanvas.appendChild(button);
+    surface.appendChild(button);
   });
+
+  ensureMapViewportReady(viewportKey);
+}
+
+function renderEmptyMapSurface(surface) {
+  surface.innerHTML =
+    '<div class="empty-state map-empty-state">검색 결과가 없어 맵을 그릴 수 없습니다. 다른 장르 이름으로 다시 시도해보세요.</div>';
+  surface.style.width = '100%';
+  surface.style.height = '100%';
 }
 
 function renderMapSelection(genre) {
@@ -750,7 +797,7 @@ function renderMapSelection(genre) {
   }
 
   if (!genre) {
-    elements.mapSelectionBadge.textContent = 'No Genre';
+    elements.mapSelectionBadge.textContent = 'Music Map';
     elements.mapSelectionTitle.textContent = 'Select a genre';
     elements.mapSelectionDesc.textContent =
       '맵의 장르 이름을 누르면 이 영역에 설명, 연결된 장르, 대표곡이 표시됩니다.';
@@ -764,11 +811,10 @@ function renderMapSelection(genre) {
     return;
   }
 
-  const family = detectMapFamily(genre);
   const connectionIds = getMapConnectionIds(genre);
   const previewTracks = (genre.tracks ?? []).slice(0, MAX_MAP_PREVIEW_TRACKS);
 
-  elements.mapSelectionBadge.textContent = `${family.label} Zone`;
+  elements.mapSelectionBadge.textContent = 'Music Map';
   elements.mapSelectionTitle.textContent = genre.name;
   elements.mapSelectionDesc.textContent =
     genre.description ?? `${genre.name} 장르 설명이 아직 없습니다.`;
@@ -838,38 +884,99 @@ function buildMapLayout(genres) {
     });
 
     items.forEach((item, index) => {
-      const hash = hashString(item.genre.id);
-      const ring = Math.floor(index / 4);
-      const slot = index % 4;
-      const angle = ((hash % 360) + ring * 31 + slot * 83) * (Math.PI / 180);
-      const radius = 6 + ring * 9 + slot * 2.5;
-      const x = clamp(
-        family.centerX + Math.cos(angle) * radius + (((hash >> 5) % 5) - 2),
-        7,
-        93,
-      );
-      const y = clamp(
-        family.centerY + Math.sin(angle) * (radius * 0.82) + (((hash >> 9) % 7) - 3),
-        9,
-        91,
-      );
       const size = clamp(
         0.92 + getGenreWeight(item.genre) * 0.045 + Math.max(0, 14 - item.genre.name.length) * 0.012,
         0.92,
         1.72,
       );
+      const position = findOpenMapPosition(item.genre, family, size, layout, index);
 
       layout.push({
         genre: item.genre,
         family,
-        x,
-        y,
+        x: position.x,
+        y: position.y,
         size,
+        width: position.width,
+        height: position.height,
       });
     });
   });
 
   return layout;
+}
+
+function findOpenMapPosition(genre, family, size, existingLayout, index) {
+  const centerX = (family.centerX / 100) * MAP_SURFACE_WIDTH;
+  const centerY = (family.centerY / 100) * MAP_SURFACE_HEIGHT;
+  const hash = hashString(genre.id);
+  const width = estimateMapNodeWidth(genre.name, size);
+  const height = estimateMapNodeHeight(size);
+  const baseAngle = (hash % 360) * (Math.PI / 180);
+
+  for (let attempt = 0; attempt < 220; attempt += 1) {
+    const ring = Math.floor(attempt / 10);
+    const slot = attempt % 10;
+    const angle = baseAngle + ring * 0.38 + slot * 0.62 + index * 0.09;
+    const radiusX = 54 + ring * 48 + (hash % 19);
+    const radiusY = 42 + ring * 38 + ((hash >> 4) % 21);
+    const candidateX = clamp(
+      centerX + Math.cos(angle) * radiusX,
+      width / 2 + 24,
+      MAP_SURFACE_WIDTH - width / 2 - 24,
+    );
+    const candidateY = clamp(
+      centerY + Math.sin(angle) * radiusY,
+      height / 2 + 28,
+      MAP_SURFACE_HEIGHT - height / 2 - 28,
+    );
+    const candidateBox = {
+      left: candidateX - width / 2 - MAP_MIN_NODE_GAP,
+      right: candidateX + width / 2 + MAP_MIN_NODE_GAP,
+      top: candidateY - height / 2 - MAP_MIN_NODE_GAP,
+      bottom: candidateY + height / 2 + MAP_MIN_NODE_GAP,
+    };
+
+    const overlaps = existingLayout.some(item => {
+      const box = {
+        left: item.x - item.width / 2 - MAP_MIN_NODE_GAP,
+        right: item.x + item.width / 2 + MAP_MIN_NODE_GAP,
+        top: item.y - item.height / 2 - MAP_MIN_NODE_GAP,
+        bottom: item.y + item.height / 2 + MAP_MIN_NODE_GAP,
+      };
+
+      return !(
+        candidateBox.right < box.left ||
+        candidateBox.left > box.right ||
+        candidateBox.bottom < box.top ||
+        candidateBox.top > box.bottom
+      );
+    });
+
+    if (!overlaps) {
+      return {
+        x: Math.round(candidateX),
+        y: Math.round(candidateY),
+        width,
+        height,
+      };
+    }
+  }
+
+  return {
+    x: clamp(centerX + index * 18, width / 2 + 24, MAP_SURFACE_WIDTH - width / 2 - 24),
+    y: clamp(centerY + index * 14, height / 2 + 28, MAP_SURFACE_HEIGHT - height / 2 - 28),
+    width,
+    height,
+  };
+}
+
+function estimateMapNodeWidth(label, size) {
+  return Math.max(56, label.length * size * 10.5 + 18);
+}
+
+function estimateMapNodeHeight(size) {
+  return Math.max(24, size * 25);
 }
 
 function detectMapFamily(genre) {
@@ -938,6 +1045,122 @@ function hashString(value) {
 
 function clamp(value, min, max) {
   return Math.min(max, Math.max(min, value));
+}
+
+function bindMapViewport(viewport, key) {
+  if (!viewport) {
+    return;
+  }
+
+  let isDragging = false;
+  let startX = 0;
+  let startY = 0;
+  let startLeft = 0;
+  let startTop = 0;
+
+  viewport.addEventListener('pointerdown', event => {
+    if (event.target.closest('.map-node')) {
+      return;
+    }
+
+    isDragging = true;
+    startX = event.clientX;
+    startY = event.clientY;
+    startLeft = viewport.scrollLeft;
+    startTop = viewport.scrollTop;
+    viewport.classList.add('is-dragging');
+    viewport.setPointerCapture(event.pointerId);
+  });
+
+  viewport.addEventListener('pointermove', event => {
+    if (!isDragging) {
+      return;
+    }
+
+    viewport.scrollLeft = startLeft - (event.clientX - startX);
+    viewport.scrollTop = startTop - (event.clientY - startY);
+  });
+
+  const stopDragging = event => {
+    if (!isDragging) {
+      return;
+    }
+
+    isDragging = false;
+    viewport.classList.remove('is-dragging');
+
+    if (event?.pointerId !== undefined && viewport.hasPointerCapture(event.pointerId)) {
+      viewport.releasePointerCapture(event.pointerId);
+    }
+  };
+
+  viewport.addEventListener('pointerup', stopDragging);
+  viewport.addEventListener('pointercancel', stopDragging);
+  viewport.addEventListener('mouseleave', stopDragging);
+  viewport.dataset.mapViewportKey = key;
+}
+
+function ensureMapViewportReady(key) {
+  const viewport = key === 'modal' ? elements.mapModalCanvas : elements.mapCanvas;
+
+  if (!viewport || state.mapViewportReady[key]) {
+    return;
+  }
+
+  state.mapViewportReady[key] = true;
+  window.requestAnimationFrame(() => {
+    viewport.scrollLeft = Math.max(0, (viewport.scrollWidth - viewport.clientWidth) / 2);
+    viewport.scrollTop = Math.max(0, (viewport.scrollHeight - viewport.clientHeight) / 2);
+
+    if (state.currentGenreId) {
+      centerViewportOnGenre(viewport, state.currentGenreId);
+    }
+  });
+}
+
+function centerViewportOnGenre(viewport, genreId) {
+  const item = state.mapLayoutById.get(genreId);
+
+  if (!viewport || !item) {
+    return;
+  }
+
+  viewport.scrollLeft = clamp(
+    item.x - viewport.clientWidth / 2,
+    0,
+    Math.max(0, viewport.scrollWidth - viewport.clientWidth),
+  );
+  viewport.scrollTop = clamp(
+    item.y - viewport.clientHeight / 2,
+    0,
+    Math.max(0, viewport.scrollHeight - viewport.clientHeight),
+  );
+}
+
+function openMapModal() {
+  if (!elements.mapModal) {
+    return;
+  }
+
+  elements.mapModal.classList.add('is-open');
+  elements.mapModal.setAttribute('aria-hidden', 'false');
+  renderGenreMap();
+  window.requestAnimationFrame(() => {
+    if (state.currentGenreId) {
+      centerViewportOnGenre(elements.mapModalCanvas, state.currentGenreId);
+    } else {
+      ensureMapViewportReady('modal');
+    }
+  });
+}
+
+function closeMapModal() {
+  if (!elements.mapModal) {
+    return;
+  }
+
+  elements.mapModal.classList.remove('is-open');
+  elements.mapModal.setAttribute('aria-hidden', 'true');
 }
 
 async function showGenre(id) {
@@ -1154,6 +1377,13 @@ function openMapView() {
 
   if (!state.currentGenreId && state.filteredGenres.length > 0) {
     void showGenre(state.filteredGenres[0].id);
+    return;
+  }
+
+  if (state.currentGenreId) {
+    window.requestAnimationFrame(() => {
+      centerViewportOnGenre(elements.mapCanvas, state.currentGenreId);
+    });
   }
 }
 

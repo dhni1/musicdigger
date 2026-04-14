@@ -194,7 +194,7 @@
                 <p class="section-kicker">Genre Atlas</p>
                 <h3>Map</h3>
               </div>
-              <span id="map-selection-badge" class="section-meta accent">No Genre</span>
+              <span id="map-selection-badge" class="section-meta accent">Music Map</span>
             </div>
             <p class="hero-description profile-copy">
               장르 이름을 지도처럼 넓게 펼쳐서 탐색할 수 있는 뷰입니다. 가까운 결의 장르들은
@@ -224,9 +224,13 @@
                   <p class="section-kicker">Every Genre Nearby</p>
                   <h3>Noise Map</h3>
                 </div>
-                <span class="section-meta">Click any label</span>
+                <button id="map-open-modal" class="secondary-button ghost-button" type="button">
+                  Open Full Map
+                </button>
               </div>
-              <div id="genre-map-canvas" class="genre-map-canvas" aria-label="장르 맵"></div>
+              <div id="genre-map-canvas" class="genre-map-canvas" aria-label="장르 맵">
+                <div id="genre-map-surface" class="genre-map-surface"></div>
+              </div>
             </section>
 
             <aside class="panel-surface map-inspector">
@@ -503,6 +507,22 @@
           <button id="playlist-submit" class="primary-button" type="submit">Create</button>
         </div>
       </form>
+    </section>
+  </div>
+
+  <div id="map-modal" class="modal-shell map-modal-shell" aria-hidden="true">
+    <div class="modal-backdrop" data-close-map-modal="true"></div>
+    <section class="modal-card panel-surface map-modal-card" role="dialog" aria-modal="true" aria-labelledby="map-modal-title">
+      <div class="section-heading tight">
+        <div>
+          <p class="section-kicker">Genre Atlas</p>
+          <h3 id="map-modal-title">Music Map</h3>
+        </div>
+        <button id="map-modal-close" class="modal-close" type="button" aria-label="닫기">Close</button>
+      </div>
+      <div id="genre-map-modal-canvas" class="genre-map-canvas genre-map-canvas-modal" aria-label="확대된 장르 맵">
+        <div id="genre-map-modal-surface" class="genre-map-surface"></div>
+      </div>
     </section>
   </div>
   <script src="script.js"></script>

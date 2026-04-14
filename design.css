@@ -1015,9 +1015,23 @@ body.theme-light .spotlight-art {
 .genre-map-canvas {
   position: relative;
   min-height: 680px;
-  overflow: hidden;
+  overflow: auto;
   border: 1px solid var(--line);
   border-radius: var(--radius-sm);
+  background: var(--bg-panel);
+  cursor: grab;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable both-edges;
+}
+
+.genre-map-canvas.is-dragging {
+  cursor: grabbing;
+}
+
+.genre-map-surface {
+  position: relative;
+  min-width: 100%;
+  min-height: 100%;
   background:
     radial-gradient(circle at 18% 24%, rgba(255, 140, 105, 0.13), transparent 22%),
     radial-gradient(circle at 49% 18%, rgba(49, 199, 234, 0.12), transparent 20%),
@@ -1028,7 +1042,7 @@ body.theme-light .spotlight-art {
     var(--bg-panel-2);
 }
 
-.genre-map-canvas::before {
+.genre-map-surface::before {
   content: "";
   position: absolute;
   inset: 0;
@@ -1040,7 +1054,7 @@ body.theme-light .spotlight-art {
   pointer-events: none;
 }
 
-body.theme-light .genre-map-canvas {
+body.theme-light .genre-map-surface {
   background:
     radial-gradient(circle at 18% 24%, rgba(255, 140, 105, 0.16), transparent 22%),
     radial-gradient(circle at 49% 18%, rgba(49, 199, 234, 0.14), transparent 20%),
@@ -1051,11 +1065,18 @@ body.theme-light .genre-map-canvas {
     #eef3fa;
 }
 
-body.theme-light .genre-map-canvas::before {
+body.theme-light .genre-map-surface::before {
   background:
     linear-gradient(rgba(18, 23, 34, 0.06) 1px, transparent 1px),
     linear-gradient(90deg, rgba(18, 23, 34, 0.05) 1px, transparent 1px);
   background-size: 100% 72px, 72px 100%;
+}
+
+.map-empty-state {
+  min-height: 100%;
+  height: 100%;
+  border: 0;
+  border-radius: 0;
 }
 
 .map-connection-layer {
@@ -1171,6 +1192,22 @@ body.theme-light .map-node {
 .map-track-item span {
   color: var(--text-soft);
   font-size: 0.82rem;
+}
+
+.map-modal-shell {
+  z-index: 80;
+}
+
+.map-modal-card {
+  width: min(1440px, calc(100% - 32px));
+  margin-top: 3vh;
+  padding: 16px;
+}
+
+.genre-map-canvas-modal {
+  min-height: calc(100vh - 170px);
+  max-height: calc(100vh - 170px);
+  margin-top: 12px;
 }
 
 .profile-detail-stack {
@@ -1447,6 +1484,11 @@ body.theme-light .map-node {
 
   .genre-map-canvas {
     min-height: 520px;
+  }
+
+  .genre-map-canvas-modal {
+    min-height: calc(100vh - 132px);
+    max-height: calc(100vh - 132px);
   }
 
   .spotlight-card {
