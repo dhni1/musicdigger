@@ -840,7 +840,9 @@ function renderMapSelection(genre) {
   }
 
   if (!genre) {
-    elements.mapSelectionBadge.textContent = 'Music Map';
+    if (elements.mapSelectionBadge) {
+      elements.mapSelectionBadge.textContent = 'Music Map';
+    }
     elements.mapSelectionTitle.textContent = 'Select a genre';
     elements.mapSelectionDesc.textContent =
       '맵의 장르 이름을 누르면 이 영역에 설명, 연결된 장르, 대표곡이 표시됩니다.';
@@ -857,7 +859,9 @@ function renderMapSelection(genre) {
   const connectionIds = getMapConnectionIds(genre);
   const previewTracks = (genre.tracks ?? []).slice(0, MAX_MAP_PREVIEW_TRACKS);
 
-  elements.mapSelectionBadge.textContent = 'Music Map';
+  if (elements.mapSelectionBadge) {
+    elements.mapSelectionBadge.textContent = 'Music Map';
+  }
   elements.mapSelectionTitle.textContent = genre.name;
   elements.mapSelectionDesc.textContent =
     genre.description ?? `${genre.name} 장르 설명이 아직 없습니다.`;
