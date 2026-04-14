@@ -25,6 +25,7 @@
     <aside class="dock panel-surface">
       <nav class="dock-nav" aria-label="기본 탐색">
         <button id="nav-home" class="dock-link is-current" type="button">Home</button>
+        <button id="nav-map" class="dock-link" type="button">Map</button>
         <button id="nav-library" class="dock-link" type="button">Library</button>
         <button id="nav-playlists" class="dock-link" type="button">Playlists</button>
       </nav>
@@ -184,6 +185,89 @@
               </section>
             </aside>
           </section>
+        </section>
+
+        <section id="map-view" class="app-view map-view">
+          <section class="panel-surface map-hero">
+            <div class="section-heading">
+              <div>
+                <p class="section-kicker">Genre Atlas</p>
+                <h3>Map</h3>
+              </div>
+              <span id="map-selection-badge" class="section-meta accent">No Genre</span>
+            </div>
+            <p class="hero-description profile-copy">
+              장르 이름을 지도처럼 넓게 펼쳐서 탐색할 수 있는 뷰입니다. 가까운 결의 장르들은
+              비슷한 구역에 모이고, 현재 선택한 장르와 연결된 흐름은 맵 안에서 더 선명하게 보입니다.
+            </p>
+
+            <div class="map-stat-row">
+              <article class="hero-stat-card">
+                <span>Visible</span>
+                <strong id="map-visible-count">0</strong>
+              </article>
+              <article class="hero-stat-card">
+                <span>Connections</span>
+                <strong id="map-connection-count">0</strong>
+              </article>
+              <article class="hero-stat-card">
+                <span>Mode</span>
+                <strong>Scan</strong>
+              </article>
+            </div>
+          </section>
+
+          <div class="map-grid">
+            <section class="panel-surface map-panel">
+              <div class="section-heading">
+                <div>
+                  <p class="section-kicker">Every Genre Nearby</p>
+                  <h3>Noise Map</h3>
+                </div>
+                <span class="section-meta">Click any label</span>
+              </div>
+              <div id="genre-map-canvas" class="genre-map-canvas" aria-label="장르 맵"></div>
+            </section>
+
+            <aside class="panel-surface map-inspector">
+              <div class="section-heading tight">
+                <div>
+                  <p class="section-kicker">Selected Sound</p>
+                  <h3 id="map-selection-title">Select a genre</h3>
+                </div>
+              </div>
+
+              <p id="map-selection-desc" class="hero-description map-selection-copy">
+                맵의 장르 이름을 누르면 이 영역에 설명, 연결된 장르, 대표곡이 표시됩니다.
+              </p>
+
+              <section class="map-inspector-block">
+                <div class="section-heading tight">
+                  <div>
+                    <p class="section-kicker">Connections</p>
+                    <h3>Nearby Links</h3>
+                  </div>
+                </div>
+                <div id="map-selection-links" class="pill-group map-selection-links">
+                  <div class="empty-state">연결된 장르가 여기에 표시됩니다.</div>
+                </div>
+              </section>
+
+              <section class="map-inspector-block">
+                <div class="section-heading tight">
+                  <div>
+                    <p class="section-kicker">Preview</p>
+                    <h3>Major Tracks</h3>
+                  </div>
+                </div>
+                <ul id="map-selection-tracks" class="map-track-preview">
+                  <li class="empty-state">대표곡 미리보기가 여기에 표시됩니다.</li>
+                </ul>
+              </section>
+
+              <button id="map-open-home" class="secondary-button" type="button">Open In Home</button>
+            </aside>
+          </div>
         </section>
 
         <section id="library-view" class="app-view library-view">
