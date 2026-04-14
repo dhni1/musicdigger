@@ -25,6 +25,9 @@ const MAX_MAP_PREVIEW_TRACKS = 4;
 const MAP_SURFACE_WIDTH = 1800;
 const MAP_SURFACE_HEIGHT = 1280;
 const MAP_MIN_NODE_GAP = 16;
+const MAP_ZOOM_STEP = 0.2;
+const MAP_MIN_ZOOM = 0.7;
+const MAP_MAX_ZOOM = 2.2;
 
 const MAP_FAMILIES = [
   {
@@ -190,6 +193,10 @@ const state = {
   searchQuery: '',
   usingBackendGenres: false,
   mapLayoutById: new Map(),
+  mapZoom: {
+    main: 1,
+    modal: 1,
+  },
   mapViewportReady: {
     main: false,
     modal: false,
@@ -277,11 +284,19 @@ const elements = {
   mapSelectionLinks: document.getElementById('map-selection-links'),
   mapSelectionTracks: document.getElementById('map-selection-tracks'),
   mapOpenHome: document.getElementById('map-open-home'),
+  mapZoomIn: document.getElementById('map-zoom-in'),
+  mapZoomOut: document.getElementById('map-zoom-out'),
+  mapZoomReset: document.getElementById('map-zoom-reset'),
+  mapZoomLevel: document.getElementById('map-zoom-level'),
   mapOpenModal: document.getElementById('map-open-modal'),
   mapModal: document.getElementById('map-modal'),
   mapModalClose: document.getElementById('map-modal-close'),
   mapModalCanvas: document.getElementById('genre-map-modal-canvas'),
   mapModalSurface: document.getElementById('genre-map-modal-surface'),
+  mapModalZoomIn: document.getElementById('map-modal-zoom-in'),
+  mapModalZoomOut: document.getElementById('map-modal-zoom-out'),
+  mapModalZoomReset: document.getElementById('map-modal-zoom-reset'),
+  mapModalZoomLevel: document.getElementById('map-modal-zoom-level'),
 };
 
 void initialize();
@@ -333,8 +348,26 @@ function bindEvents() {
     focusHome();
     setActiveNav(elements.navHome);
   });
+  addClick(elements.mapZoomIn, () => {
+    adjustMapZoom('main', MAP_ZOOM_STEP);
+  });
+  addClick(elements.mapZoomOut, () => {
+    adjustMapZoom('main', -MAP_ZOOM_STEP);
+  });
+  addClick(elements.mapZoomReset, () => {
+    setMapZoom('main', 1);
+  });
   addClick(elements.mapOpenModal, openMapModal);
   addClick(elements.mapModalClose, closeMapModal);
+  addClick(elements.mapModalZoomIn, () => {
+    adjustMapZoom('modal', MAP_ZOOM_STEP);
+  });
+  addClick(elements.mapModalZoomOut, () => {
+    adjustMapZoom('modal', -MAP_ZOOM_STEP);
+  });
+  addClick(elements.mapModalZoomReset, () => {
+    setMapZoom('modal', 1);
+  });
   addClick(elements.spotifyAuthButton, () => {
     void handleSpotifyAuthButton();
   });
@@ -708,9 +741,10 @@ function renderGenreMap() {
 }
 
 function renderMapSurface(surface, layout, viewportKey) {
+  const scale = getMapZoom(viewportKey);
   surface.innerHTML = '';
-  surface.style.width = `${MAP_SURFACE_WIDTH}px`;
-  surface.style.height = `${MAP_SURFACE_HEIGHT}px`;
+  surface.style.width = `${Math.round(MAP_SURFACE_WIDTH * scale)}px`;
+  surface.style.height = `${Math.round(MAP_SURFACE_HEIGHT * scale)}px`;
 
   const activeLayout = state.currentGenreId ? state.mapLayoutById.get(state.currentGenreId) : null;
   const activeConnections = new Set(activeLayout ? getMapConnectionIds(activeLayout.genre) : []);
@@ -729,10 +763,10 @@ function renderMapSurface(surface, layout, viewportKey) {
       }
 
       const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-      line.setAttribute('x1', String(activeLayout.x));
-      line.setAttribute('y1', String(activeLayout.y));
-      line.setAttribute('x2', String(target.x));
-      line.setAttribute('y2', String(target.y));
+      line.setAttribute('x1', String(activeLayout.x * scale));
+      line.setAttribute('y1', String(activeLayout.y * scale));
+      line.setAttribute('x2', String(target.x * scale));
+      line.setAttribute('y2', String(target.y * scale));
       line.classList.add('map-connection-line');
       line.style.setProperty('--line-color', target.family.color);
       connectionLayer.appendChild(line);
@@ -749,8 +783,8 @@ function renderMapSurface(surface, layout, viewportKey) {
     const label = document.createElement('div');
     label.className = 'map-cluster-label';
     label.textContent = family.label;
-    label.style.left = `${Math.round((family.centerX / 100) * MAP_SURFACE_WIDTH)}px`;
-    label.style.top = `${Math.round((family.centerY / 100) * MAP_SURFACE_HEIGHT)}px`;
+    label.style.left = `${Math.round((family.centerX / 100) * MAP_SURFACE_WIDTH * scale)}px`;
+    label.style.top = `${Math.round((family.centerY / 100) * MAP_SURFACE_HEIGHT * scale)}px`;
     surface.appendChild(label);
   });
 
@@ -760,9 +794,9 @@ function renderMapSurface(surface, layout, viewportKey) {
     button.type = 'button';
     button.className = 'map-node';
     button.textContent = item.genre.name;
-    button.style.left = `${item.x}px`;
-    button.style.top = `${item.y}px`;
-    button.style.fontSize = `${item.size}rem`;
+    button.style.left = `${Math.round(item.x * scale)}px`;
+    button.style.top = `${Math.round(item.y * scale)}px`;
+    button.style.fontSize = `${(item.size * Math.max(0.9, Math.min(scale, 1.35))).toFixed(3)}rem`;
     button.style.setProperty('--map-node-color', item.family.color);
     button.title = `${item.genre.name} · ${item.family.label} · ${relationCount} links`;
 
@@ -782,6 +816,7 @@ function renderMapSurface(surface, layout, viewportKey) {
   });
 
   ensureMapViewportReady(viewportKey);
+  updateMapZoomUI(viewportKey);
 }
 
 function renderEmptyMapSurface(surface) {
@@ -1047,6 +1082,50 @@ function clamp(value, min, max) {
   return Math.min(max, Math.max(min, value));
 }
 
+function getMapZoom(key) {
+  return state.mapZoom[key] ?? 1;
+}
+
+function adjustMapZoom(key, delta) {
+  setMapZoom(key, getMapZoom(key) + delta);
+}
+
+function setMapZoom(key, nextZoom) {
+  const viewport = key === 'modal' ? elements.mapModalCanvas : elements.mapCanvas;
+  const clampedZoom = clamp(Math.round(nextZoom * 100) / 100, MAP_MIN_ZOOM, MAP_MAX_ZOOM);
+  const previousZoom = getMapZoom(key);
+
+  if (Math.abs(clampedZoom - previousZoom) < 0.001) {
+    updateMapZoomUI(key);
+    return;
+  }
+
+  const centerX = viewport ? viewport.scrollLeft + viewport.clientWidth / 2 : 0;
+  const centerY = viewport ? viewport.scrollTop + viewport.clientHeight / 2 : 0;
+  const ratio = clampedZoom / previousZoom;
+
+  state.mapZoom[key] = clampedZoom;
+  renderGenreMap();
+
+  if (viewport) {
+    window.requestAnimationFrame(() => {
+      viewport.scrollLeft = Math.max(0, centerX * ratio - viewport.clientWidth / 2);
+      viewport.scrollTop = Math.max(0, centerY * ratio - viewport.clientHeight / 2);
+      updateMapZoomUI(key);
+    });
+  } else {
+    updateMapZoomUI(key);
+  }
+}
+
+function updateMapZoomUI(key) {
+  const label = key === 'modal' ? elements.mapModalZoomLevel : elements.mapZoomLevel;
+
+  if (label) {
+    label.textContent = `${Math.round(getMapZoom(key) * 100)}%`;
+  }
+}
+
 function bindMapViewport(viewport, key) {
   if (!viewport) {
     return;
@@ -1097,6 +1176,14 @@ function bindMapViewport(viewport, key) {
   viewport.addEventListener('pointerup', stopDragging);
   viewport.addEventListener('pointercancel', stopDragging);
   viewport.addEventListener('mouseleave', stopDragging);
+  viewport.addEventListener('wheel', event => {
+    if (!event.ctrlKey && !event.metaKey) {
+      return;
+    }
+
+    event.preventDefault();
+    adjustMapZoom(key, event.deltaY < 0 ? MAP_ZOOM_STEP : -MAP_ZOOM_STEP);
+  }, { passive: false });
   viewport.dataset.mapViewportKey = key;
 }
 
@@ -1126,12 +1213,12 @@ function centerViewportOnGenre(viewport, genreId) {
   }
 
   viewport.scrollLeft = clamp(
-    item.x - viewport.clientWidth / 2,
+    item.x * getMapZoom(viewport === elements.mapModalCanvas ? 'modal' : 'main') - viewport.clientWidth / 2,
     0,
     Math.max(0, viewport.scrollWidth - viewport.clientWidth),
   );
   viewport.scrollTop = clamp(
-    item.y - viewport.clientHeight / 2,
+    item.y * getMapZoom(viewport === elements.mapModalCanvas ? 'modal' : 'main') - viewport.clientHeight / 2,
     0,
     Math.max(0, viewport.scrollHeight - viewport.clientHeight),
   );

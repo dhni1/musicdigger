@@ -1012,9 +1012,21 @@ body.theme-light .spotlight-art {
   min-width: 0;
 }
 
+.map-toolbar,
+.map-zoom-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.map-zoom-controls .secondary-button {
+  min-width: 40px;
+}
+
 .genre-map-canvas {
   position: relative;
-  min-height: 680px;
+  min-height: 560px;
   overflow: auto;
   border: 1px solid var(--line);
   border-radius: var(--radius-sm);
@@ -1196,17 +1208,24 @@ body.theme-light .map-node {
 
 .map-modal-shell {
   z-index: 80;
+  inset: 64px 0 0 220px;
 }
 
 .map-modal-card {
-  width: min(1440px, calc(100% - 32px));
-  margin-top: 3vh;
+  width: 100%;
+  height: 100%;
+  margin: 0;
   padding: 16px;
+  border-radius: 0;
+  border-left: 1px solid var(--line);
+  border-top: 1px solid var(--line);
+  border-right: 0;
+  border-bottom: 0;
 }
 
 .genre-map-canvas-modal {
-  min-height: calc(100vh - 170px);
-  max-height: calc(100vh - 170px);
+  min-height: calc(100vh - 64px - 86px);
+  max-height: calc(100vh - 64px - 86px);
   margin-top: 12px;
 }
 
@@ -1411,6 +1430,10 @@ body.theme-light .map-node {
   .map-grid {
     grid-template-columns: 1fr;
   }
+
+  .map-modal-shell {
+    left: 0;
+  }
 }
 
 @media (max-width: 940px) {
@@ -1437,6 +1460,15 @@ body.theme-light .map-node {
 
   .player-progress {
     justify-content: flex-start;
+  }
+
+  .map-modal-shell {
+    top: 132px;
+  }
+
+  .genre-map-canvas-modal {
+    min-height: calc(100vh - 132px - 86px);
+    max-height: calc(100vh - 132px - 86px);
   }
 }
 
@@ -1483,12 +1515,12 @@ body.theme-light .map-node {
   }
 
   .genre-map-canvas {
-    min-height: 520px;
+    min-height: 440px;
   }
 
   .genre-map-canvas-modal {
-    min-height: calc(100vh - 132px);
-    max-height: calc(100vh - 132px);
+    min-height: calc(100vh - 132px - 78px);
+    max-height: calc(100vh - 132px - 78px);
   }
 
   .spotlight-card {

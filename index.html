@@ -224,9 +224,17 @@
                   <p class="section-kicker">Every Genre Nearby</p>
                   <h3>Noise Map</h3>
                 </div>
-                <button id="map-open-modal" class="secondary-button ghost-button" type="button">
-                  Open Full Map
-                </button>
+                <div class="map-toolbar">
+                  <div class="map-zoom-controls" aria-label="맵 확대 축소">
+                    <button id="map-zoom-out" class="secondary-button ghost-button" type="button">-</button>
+                    <span id="map-zoom-level" class="section-meta">100%</span>
+                    <button id="map-zoom-in" class="secondary-button ghost-button" type="button">+</button>
+                    <button id="map-zoom-reset" class="secondary-button ghost-button" type="button">Reset</button>
+                  </div>
+                  <button id="map-open-modal" class="secondary-button ghost-button" type="button">
+                    Open Full Map
+                  </button>
+                </div>
               </div>
               <div id="genre-map-canvas" class="genre-map-canvas" aria-label="장르 맵">
                 <div id="genre-map-surface" class="genre-map-surface"></div>
@@ -518,7 +526,15 @@
           <p class="section-kicker">Genre Atlas</p>
           <h3 id="map-modal-title">Music Map</h3>
         </div>
-        <button id="map-modal-close" class="modal-close" type="button" aria-label="닫기">Close</button>
+        <div class="map-toolbar">
+          <div class="map-zoom-controls" aria-label="확대된 맵 확대 축소">
+            <button id="map-modal-zoom-out" class="secondary-button ghost-button" type="button">-</button>
+            <span id="map-modal-zoom-level" class="section-meta">100%</span>
+            <button id="map-modal-zoom-in" class="secondary-button ghost-button" type="button">+</button>
+            <button id="map-modal-zoom-reset" class="secondary-button ghost-button" type="button">Reset</button>
+          </div>
+          <button id="map-modal-close" class="modal-close" type="button" aria-label="닫기">Close</button>
+        </div>
       </div>
       <div id="genre-map-modal-canvas" class="genre-map-canvas genre-map-canvas-modal" aria-label="확대된 장르 맵">
         <div id="genre-map-modal-surface" class="genre-map-surface"></div>
