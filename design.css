@@ -1330,6 +1330,19 @@ body.theme-light .map-node {
   padding: 14px;
 }
 
+.map-modal-shell .map-modal-card {
+  position: absolute;
+  inset: 0;
+  width: auto;
+  height: auto;
+  margin: 0;
+  padding: 14px;
+}
+
+.map-modal-shell .modal-backdrop {
+  inset: 0;
+}
+
 .modal-close {
   min-height: 34px;
   padding: 0 10px;

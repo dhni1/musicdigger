@@ -141,3 +141,6 @@
 ## v0.6.3
 - full map 크기 조정
 - genre atlas 창 제거
+
+## v0.6.4
+- full map 크기 조정
