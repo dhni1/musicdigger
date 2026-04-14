@@ -11,6 +11,12 @@ import {
   elements,
   state,
 } from '../../shared/context.js';
+import {
+  clearChildren,
+  createElement,
+  createEmptyState,
+  createTextBlock,
+} from '../../shared/dom.js';
 import { clamp, hashString } from '../../shared/utils.js';
 
 function createMapPage({ setActiveNav, showGenre, showView }) {
@@ -47,7 +53,7 @@ function createMapPage({ setActiveNav, showGenre, showView }) {
 
   function renderMapSurface(surface, layout, viewportKey) {
     const scale = getMapZoom(viewportKey);
-    surface.innerHTML = '';
+    clearChildren(surface);
     surface.style.width = `${Math.round(MAP_SURFACE_WIDTH * scale)}px`;
     surface.style.height = `${Math.round(MAP_SURFACE_HEIGHT * scale)}px`;
 
@@ -129,8 +135,12 @@ function createMapPage({ setActiveNav, showGenre, showView }) {
   }
 
   function renderEmptyMapSurface(surface) {
-    surface.innerHTML =
-      '<div class="empty-state map-empty-state">검색 결과가 없어 맵을 그릴 수 없습니다. 다른 장르 이름으로 다시 시도해보세요.</div>';
+    clearChildren(surface);
+    surface.appendChild(
+      createEmptyState('검색 결과가 없어 맵을 그릴 수 없습니다. 다른 장르 이름으로 다시 시도해보세요.', {
+        className: 'empty-state map-empty-state',
+      }),
+    );
     surface.style.width = '100%';
     surface.style.height = '100%';
   }
@@ -147,10 +157,16 @@ function createMapPage({ setActiveNav, showGenre, showView }) {
       elements.mapSelectionTitle.textContent = 'Select a genre';
       elements.mapSelectionDesc.textContent =
         '맵의 장르 이름을 누르면 이 영역에 설명, 연결된 장르, 대표곡이 표시됩니다.';
-      elements.mapSelectionLinks.innerHTML =
-        '<div class="empty-state">연결된 장르가 여기에 표시됩니다.</div>';
-      elements.mapSelectionTracks.innerHTML =
-        '<li class="empty-state">대표곡 미리보기가 여기에 표시됩니다.</li>';
+      clearChildren(elements.mapSelectionLinks);
+      clearChildren(elements.mapSelectionTracks);
+      elements.mapSelectionLinks.appendChild(
+        createEmptyState('연결된 장르가 여기에 표시됩니다.'),
+      );
+      elements.mapSelectionTracks.appendChild(
+        createEmptyState('대표곡 미리보기가 여기에 표시됩니다.', {
+          tagName: 'li',
+        }),
+      );
       if (elements.mapOpenHome) {
         elements.mapOpenHome.disabled = true;
       }
@@ -166,16 +182,17 @@ function createMapPage({ setActiveNav, showGenre, showView }) {
     elements.mapSelectionTitle.textContent = genre.name;
     elements.mapSelectionDesc.textContent =
       genre.description ?? `${genre.name} 장르 설명이 아직 없습니다.`;
-    elements.mapSelectionLinks.innerHTML = '';
-    elements.mapSelectionTracks.innerHTML = '';
+    clearChildren(elements.mapSelectionLinks);
+    clearChildren(elements.mapSelectionTracks);
 
     if (elements.mapOpenHome) {
       elements.mapOpenHome.disabled = false;
     }
 
     if (connectionIds.length === 0) {
-      elements.mapSelectionLinks.innerHTML =
-        '<div class="empty-state">맵에서 표시할 연결 장르가 아직 없습니다.</div>';
+      elements.mapSelectionLinks.appendChild(
+        createEmptyState('맵에서 표시할 연결 장르가 아직 없습니다.'),
+      );
     } else {
       connectionIds.slice(0, 8).forEach(id => {
         const related = state.genres.find(item => item.id === id);
@@ -198,18 +215,19 @@ function createMapPage({ setActiveNav, showGenre, showView }) {
     }
 
     if (previewTracks.length === 0) {
-      elements.mapSelectionTracks.innerHTML =
-        '<li class="empty-state">이 장르에 등록된 대표곡이 아직 없습니다.</li>';
+      elements.mapSelectionTracks.appendChild(
+        createEmptyState('이 장르에 등록된 대표곡이 아직 없습니다.', {
+          tagName: 'li',
+        }),
+      );
       return;
     }
 
     previewTracks.forEach(track => {
       const item = document.createElement('li');
       item.className = 'map-track-item';
-      item.innerHTML = `
-        <strong>${track.title}</strong>
-        <span>${track.artist}</span>
-      `;
+      item.appendChild(createTextBlock('strong', track.title));
+      item.appendChild(createTextBlock('span', track.artist));
       elements.mapSelectionTracks.appendChild(item);
     });
   }

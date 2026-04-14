@@ -5,6 +5,12 @@ import {
   elements,
   state,
 } from '../../shared/context.js';
+import {
+  clearChildren,
+  createElement,
+  createEmptyState,
+  createTextBlock,
+} from '../../shared/dom.js';
 import { makeTrackKey, slugify } from '../../shared/utils.js';
 
 function createHomePage({ likeTrack, renderGenreMap, renderMapSelection, setActiveNav, showView }) {
@@ -270,11 +276,12 @@ function createHomePage({ likeTrack, renderGenreMap, renderMapSelection, setActi
   }
 
   function renderGenreList() {
-    elements.genreList.innerHTML = '';
+    clearChildren(elements.genreList);
 
     if (state.filteredGenres.length === 0) {
-      elements.genreList.innerHTML =
-        '<div class="empty-state">검색된 장르가 없습니다. 다른 장르 이름으로 다시 찾아보세요.</div>';
+      elements.genreList.appendChild(
+        createEmptyState('검색된 장르가 없습니다. 다른 장르 이름으로 다시 찾아보세요.'),
+      );
       return;
     }
 
@@ -288,13 +295,15 @@ function createHomePage({ likeTrack, renderGenreMap, renderMapSelection, setActi
         button.classList.add('is-active');
       }
 
-      button.innerHTML = `
-        <div class="genre-card-content">
-          <span class="genre-index">${String(genreIndex).padStart(2, '0')}</span>
-          <h4>${genre.name}</h4>
-          <p>${genre.description ?? 'Spotify 장르 데이터를 불러오는 중입니다.'}</p>
-        </div>
-      `;
+      const content = createElement('div', { className: 'genre-card-content' });
+      content.appendChild(
+        createTextBlock('span', String(genreIndex).padStart(2, '0'), 'genre-index'),
+      );
+      content.appendChild(createTextBlock('h4', genre.name));
+      content.appendChild(
+        createTextBlock('p', genre.description ?? 'Spotify 장르 데이터를 불러오는 중입니다.'),
+      );
+      button.appendChild(content);
 
       button.addEventListener('click', () => {
         showView('home');
@@ -395,8 +404,12 @@ function createHomePage({ likeTrack, renderGenreMap, renderMapSelection, setActi
   }
 
   function renderTrackLoading() {
-    elements.trackList.innerHTML =
-      '<li class="empty-state">Spotify에서 대표 트랙을 불러오는 중입니다.</li>';
+    clearChildren(elements.trackList);
+    elements.trackList.appendChild(
+      createEmptyState('Spotify에서 대표 트랙을 불러오는 중입니다.', {
+        tagName: 'li',
+      }),
+    );
   }
 
   async function fetchWithTimeout(url, timeoutMs) {
@@ -411,31 +424,36 @@ function createHomePage({ likeTrack, renderGenreMap, renderMapSelection, setActi
   }
 
   function renderTracks(tracks) {
-    elements.trackList.innerHTML = '';
+    clearChildren(elements.trackList);
 
     if (!tracks.length) {
-      elements.trackList.innerHTML =
-        '<li class="empty-state">대표 트랙이 아직 등록되지 않았습니다.</li>';
+      elements.trackList.appendChild(
+        createEmptyState('대표 트랙이 아직 등록되지 않았습니다.', {
+          tagName: 'li',
+        }),
+      );
       return;
     }
 
     tracks.forEach((track, index) => {
       const saved = state.spotify.likedTrackKeys.has(makeTrackKey(track));
       const item = document.createElement('li');
+      const info = createElement('div');
+      const actionButton = createElement('button', {
+        className: `track-action${saved ? ' is-saved' : ''}`,
+        text: saved ? 'Liked' : 'Like',
+      });
+      actionButton.type = 'button';
 
-      item.innerHTML = `
-        <span class="track-order">${String(index + 1).padStart(2, '0')}</span>
-        <div>
-          <span class="track-title">${track.title}</span>
-          <span class="track-artist">${track.artist}</span>
-        </div>
-        <span class="track-duration">${makeDuration(index)}</span>
-        <button class="track-action${saved ? ' is-saved' : ''}" type="button">
-          ${saved ? 'Liked' : 'Like'}
-        </button>
-      `;
+      item.appendChild(
+        createTextBlock('span', String(index + 1).padStart(2, '0'), 'track-order'),
+      );
+      info.appendChild(createTextBlock('span', track.title, 'track-title'));
+      info.appendChild(createTextBlock('span', track.artist, 'track-artist'));
+      item.appendChild(info);
+      item.appendChild(createTextBlock('span', makeDuration(index), 'track-duration'));
+      item.appendChild(actionButton);
 
-      const actionButton = item.querySelector('.track-action');
       actionButton.addEventListener('click', () => {
         void likeTrack(track, actionButton);
       });
@@ -445,10 +463,10 @@ function createHomePage({ likeTrack, renderGenreMap, renderMapSelection, setActi
   }
 
   function renderButtons(container, ids) {
-    container.innerHTML = '';
+    clearChildren(container);
 
     if (!ids.length) {
-      container.innerHTML = '<div class="empty-state">연결된 장르가 아직 없습니다.</div>';
+      container.appendChild(createEmptyState('연결된 장르가 아직 없습니다.'));
       return;
     }
 
@@ -484,10 +502,18 @@ function createHomePage({ likeTrack, renderGenreMap, renderMapSelection, setActi
     elements.playerTrackArtist.textContent = 'Track information will appear here.';
     elements.playerBarTitle.textContent = 'No results';
     elements.playerBarSubtitle.textContent = 'Try another search';
-    elements.trackList.innerHTML = '<li class="empty-state">표시할 트랙이 없습니다.</li>';
-    elements.subgenres.innerHTML = '<div class="empty-state">표시할 결과가 없습니다.</div>';
-    elements.similar.innerHTML = '<div class="empty-state">표시할 결과가 없습니다.</div>';
-    elements.fusion.innerHTML = '<div class="empty-state">표시할 결과가 없습니다.</div>';
+    clearChildren(elements.trackList);
+    elements.trackList.appendChild(
+      createEmptyState('표시할 트랙이 없습니다.', {
+        tagName: 'li',
+      }),
+    );
+    clearChildren(elements.subgenres);
+    clearChildren(elements.similar);
+    clearChildren(elements.fusion);
+    elements.subgenres.appendChild(createEmptyState('표시할 결과가 없습니다.'));
+    elements.similar.appendChild(createEmptyState('표시할 결과가 없습니다.'));
+    elements.fusion.appendChild(createEmptyState('표시할 결과가 없습니다.'));
     renderMapSelection(null);
     renderGenreMap();
   }

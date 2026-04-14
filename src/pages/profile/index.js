@@ -1,3 +1,11 @@
+import {
+  clearChildren,
+  createElement,
+  createEmptyState,
+  sanitizeHttpUrl,
+  createTextBlock,
+} from '../../shared/dom.js';
+
 function renderProfileCard({ elements, getProfileInitial, state, updateSpotifyMessage }) {
   if (!state.spotify.profile) {
     const message = state.spotify.configured
@@ -10,7 +18,7 @@ function renderProfileCard({ elements, getProfileInitial, state, updateSpotifyMe
   const imageUrl = state.spotify.profile.images?.[0]?.url;
   const product = state.spotify.profile.product ?? 'spotify';
   const followers = state.spotify.profile.followers?.total ?? 0;
-  const compactMarkup = buildCompactProfileMarkup({
+  const compactCard = buildCompactProfileCard({
     displayName: state.spotify.profile.display_name,
     getProfileInitial,
     imageUrl,
@@ -18,42 +26,55 @@ function renderProfileCard({ elements, getProfileInitial, state, updateSpotifyMe
   });
 
   if (elements.spotifyProfileCard) {
-    elements.spotifyProfileCard.innerHTML = compactMarkup;
+    clearChildren(elements.spotifyProfileCard);
+    elements.spotifyProfileCard.appendChild(compactCard.cloneNode(true));
   }
 
   if (elements.profileScreenCard) {
-    elements.profileScreenCard.innerHTML = `
-      <div class="profile-detail-stack">
-        ${compactMarkup}
-        <div class="profile-detail-grid">
-          <article class="detail-chip">
-            <span>Plan</span>
-            <strong>${product}</strong>
-          </article>
-          <article class="detail-chip">
-            <span>Followers</span>
-            <strong>${followers}</strong>
-          </article>
-        </div>
-      </div>
-    `;
+    const detailStack = createElement('div', { className: 'profile-detail-stack' });
+    const detailGrid = createElement('div', { className: 'profile-detail-grid' });
+
+    detailGrid.appendChild(
+      createDetailChip('Plan', product),
+    );
+    detailGrid.appendChild(
+      createDetailChip('Followers', String(followers)),
+    );
+
+    clearChildren(elements.profileScreenCard);
+    detailStack.appendChild(compactCard);
+    detailStack.appendChild(detailGrid);
+    elements.profileScreenCard.appendChild(detailStack);
   }
 }
 
-function buildCompactProfileMarkup({ displayName, getProfileInitial, imageUrl, product }) {
-  return `
-    <div class="spotify-profile">
-      ${
-        imageUrl
-          ? `<img class="spotify-profile-image" src="${imageUrl}" alt="Spotify profile">`
-          : `<div class="spotify-profile-fallback">${getProfileInitial()}</div>`
-      }
-      <div>
-        <strong>${displayName ?? 'Spotify User'}</strong>
-        <p>${product} account connected</p>
-      </div>
-    </div>
-  `;
+function buildCompactProfileCard({ displayName, getProfileInitial, imageUrl, product }) {
+  const profile = createElement('div', { className: 'spotify-profile' });
+  const safeImageUrl = sanitizeHttpUrl(imageUrl);
+  const media = safeImageUrl
+    ? createElement('img', {
+        className: 'spotify-profile-image',
+        attributes: {
+          src: safeImageUrl,
+          alt: 'Spotify profile',
+        },
+      })
+    : createTextBlock('div', getProfileInitial(), 'spotify-profile-fallback');
+  const textWrap = createElement('div');
+
+  textWrap.appendChild(createTextBlock('strong', displayName ?? 'Spotify User'));
+  textWrap.appendChild(createTextBlock('p', `${product} account connected`));
+
+  profile.appendChild(media);
+  profile.appendChild(textWrap);
+  return profile;
+}
+
+function createDetailChip(label, value) {
+  const item = createElement('article', { className: 'detail-chip' });
+  item.appendChild(createTextBlock('span', label));
+  item.appendChild(createTextBlock('strong', value));
+  return item;
 }
 
 function renderProfileSummary({ elements, getCurrentGenreName, state }) {
@@ -61,29 +82,33 @@ function renderProfileSummary({ elements, getCurrentGenreName, state }) {
     return;
   }
 
+  clearChildren(elements.profileSummary);
+
   if (!state.spotify.accessToken) {
-    elements.profileSummary.innerHTML = `
-      <div class="empty-state">
-        Spotify를 연결하면 플레이리스트 수와 좋아요한 곡 수를 이 화면에서 바로 확인할 수 있습니다.
-      </div>
-    `;
+    elements.profileSummary.appendChild(
+      createEmptyState(
+        'Spotify를 연결하면 플레이리스트 수와 좋아요한 곡 수를 이 화면에서 바로 확인할 수 있습니다.',
+      ),
+    );
     return;
   }
 
-  elements.profileSummary.innerHTML = `
-    <article class="summary-card">
-      <span>Playlists</span>
-      <strong>${state.spotify.playlists.length}</strong>
-    </article>
-    <article class="summary-card">
-      <span>Liked Tracks</span>
-      <strong>${state.spotify.likedTracks.length}</strong>
-    </article>
-    <article class="summary-card">
-      <span>Current Focus</span>
-      <strong>${getCurrentGenreName()}</strong>
-    </article>
-  `;
+  elements.profileSummary.appendChild(
+    createSummaryCard('Playlists', String(state.spotify.playlists.length)),
+  );
+  elements.profileSummary.appendChild(
+    createSummaryCard('Liked Tracks', String(state.spotify.likedTracks.length)),
+  );
+  elements.profileSummary.appendChild(
+    createSummaryCard('Current Focus', getCurrentGenreName()),
+  );
+}
+
+function createSummaryCard(label, value) {
+  const item = createElement('article', { className: 'summary-card' });
+  item.appendChild(createTextBlock('span', label));
+  item.appendChild(createTextBlock('strong', value));
+  return item;
 }
 
 function updateProfileSlot({ elements, state }) {
@@ -93,8 +118,9 @@ function updateProfileSlot({ elements, state }) {
 
   const imageUrl = state.spotify.profile?.images?.[0]?.url;
   elements.profileSlot.title = state.spotify.profile?.display_name ?? '프로필 화면 열기';
-  elements.profileAvatar.style.backgroundImage = imageUrl ? `url("${imageUrl}")` : '';
-  elements.profileAvatar.classList.toggle('has-image', Boolean(imageUrl));
+  const safeImageUrl = sanitizeHttpUrl(imageUrl);
+  elements.profileAvatar.style.backgroundImage = safeImageUrl ? `url("${safeImageUrl}")` : '';
+  elements.profileAvatar.classList.toggle('has-image', Boolean(safeImageUrl));
 }
 
 export { renderProfileCard, renderProfileSummary, updateProfileSlot };

@@ -4,6 +4,7 @@ import {
   elements,
   state,
 } from '../../shared/context.js';
+import { clearChildren, createEmptyState } from '../../shared/dom.js';
 import {
   createRandomString,
   makeTrackKey,
@@ -28,6 +29,7 @@ function createSpotifyService({
     redirectUri: window.SPOTIFY_CONFIG?.redirectUri ?? getDefaultRedirectUri(),
     scopes: window.SPOTIFY_CONFIG?.scopes ?? SPOTIFY_SCOPES,
   };
+  const storage = window.sessionStorage;
 
   state.spotify.configured = isSpotifyConfigured(spotifyConfig);
 
@@ -223,9 +225,14 @@ function createSpotifyService({
   }
 
   function updateSpotifyMessage(message) {
-    elements.spotifyProfileCard.innerHTML = `<div class="empty-state">${message}</div>`;
+    if (elements.spotifyProfileCard) {
+      clearChildren(elements.spotifyProfileCard);
+      elements.spotifyProfileCard.appendChild(createEmptyState(message));
+    }
+
     if (elements.profileScreenCard) {
-      elements.profileScreenCard.innerHTML = `<div class="empty-state">${message}</div>`;
+      clearChildren(elements.profileScreenCard);
+      elements.profileScreenCard.appendChild(createEmptyState(message));
     }
   }
 
@@ -274,8 +281,8 @@ function createSpotifyService({
       scope: spotifyConfig.scopes.join(' '),
     });
 
-    localStorage.setItem(SPOTIFY_STORAGE_KEYS.verifier, verifier);
-    localStorage.setItem(SPOTIFY_STORAGE_KEYS.state, stateValue);
+    storage.setItem(SPOTIFY_STORAGE_KEYS.verifier, verifier);
+    storage.setItem(SPOTIFY_STORAGE_KEYS.state, stateValue);
     window.location.assign(`https://accounts.spotify.com/authorize?${params.toString()}`);
   }
 
@@ -295,8 +302,8 @@ function createSpotifyService({
       return;
     }
 
-    const expectedState = localStorage.getItem(SPOTIFY_STORAGE_KEYS.state);
-    const verifier = localStorage.getItem(SPOTIFY_STORAGE_KEYS.verifier);
+    const expectedState = storage.getItem(SPOTIFY_STORAGE_KEYS.state);
+    const verifier = storage.getItem(SPOTIFY_STORAGE_KEYS.verifier);
 
     if (!expectedState || expectedState !== returnedState || !verifier) {
       updateSpotifyMessage('Spotify 인증 상태를 확인하지 못했습니다. 다시 로그인해주세요.');
@@ -325,13 +332,13 @@ function createSpotifyService({
     }
 
     saveSpotifyToken(await response.json());
-    localStorage.removeItem(SPOTIFY_STORAGE_KEYS.verifier);
-    localStorage.removeItem(SPOTIFY_STORAGE_KEYS.state);
+    storage.removeItem(SPOTIFY_STORAGE_KEYS.verifier);
+    storage.removeItem(SPOTIFY_STORAGE_KEYS.state);
     clearSpotifyQueryParams();
   }
 
   function hydrateSpotifyToken() {
-    const raw = localStorage.getItem(SPOTIFY_STORAGE_KEYS.token);
+    const raw = storage.getItem(SPOTIFY_STORAGE_KEYS.token);
 
     if (!raw) {
       return;
@@ -343,7 +350,7 @@ function createSpotifyService({
       state.spotify.refreshToken = token.refreshToken ?? null;
       state.spotify.expiresAt = token.expiresAt ?? 0;
     } catch {
-      localStorage.removeItem(SPOTIFY_STORAGE_KEYS.token);
+      storage.removeItem(SPOTIFY_STORAGE_KEYS.token);
     }
   }
 
@@ -376,7 +383,7 @@ function createSpotifyService({
     state.spotify.refreshToken = token.refresh_token ?? state.spotify.refreshToken;
     state.spotify.expiresAt = Date.now() + (token.expires_in ?? 0) * 1000;
 
-    localStorage.setItem(
+    storage.setItem(
       SPOTIFY_STORAGE_KEYS.token,
       JSON.stringify({
         accessToken: state.spotify.accessToken,

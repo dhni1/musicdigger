@@ -153,3 +153,14 @@
 
 ## v0.7.0
 - css, javascript 페이지별로 분리
+- css, javascript 페이지별로 분리
+
+## v0.7.1
+- `script.js`, `design.css`는 엔트리만 남기고 `src/`, `styles/` 기준으로 구조를 정리
+- `home`, `map`, `library`, `profile` 화면 로직을 페이지별 모듈로 분리
+- 동적 렌더링에서 `innerHTML` 사용을 제거하고 DOM API 기반으로 보안 보강
+- Spotify 클라이언트 토큰 저장소를 `localStorage`에서 `sessionStorage`로 변경
+- 백엔드에서 저장소 루트 전체가 노출되지 않도록 정적 파일 서빙 범위를 제한
+- `/api/genre-details` 입력값 검증, 캐시 상한, rate limiting, CORS 제한 추가
+- CSP, `X-Frame-Options`, `X-Content-Type-Options` 등 기본 보안 헤더 추가
+- `README.md`에 현재 폴더 구조와 보안 관련 변경사항 반영

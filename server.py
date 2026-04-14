@@ -3,6 +3,7 @@ from pathlib import Path
 from urllib import error, parse, request
 import base64
 import json
+import mimetypes
 import os
 import re
 import time
@@ -18,6 +19,28 @@ TRACKS_PER_GENRE = 8
 SEARCH_LIMIT = 50
 ARTIST_SEARCH_LIMIT = 12
 ARTIST_POOL_SIZE = 12
+GENRE_DETAIL_CACHE_TTL = 1800
+GENRE_DETAIL_CACHE_MAX_ITEMS = 256
+GENRE_QUERY_MAX_LENGTH = 80
+RATE_LIMIT_WINDOW_SECONDS = 60
+RATE_LIMIT_MAX_REQUESTS = 120
+ALLOWED_ORIGINS = {
+    origin.strip()
+    for origin in os.environ.get(
+        "ALLOWED_ORIGINS",
+        "https://musicdigger.vercel.app,http://127.0.0.1:8000,http://localhost:8000",
+    ).split(",")
+    if origin.strip()
+}
+PUBLIC_ROOT_FILES = {
+    "index.html",
+    "design.css",
+    "script.js",
+    "config.js",
+    "spotify-config.js",
+}
+PUBLIC_PREFIXES = ("src/", "styles/", "data/")
+GENRE_QUERY_RE = re.compile(r"^[a-zA-Z0-9][a-zA-Z0-9 &'(),./-]{0,79}$")
 
 
 class SpotifyCatalog:
@@ -42,9 +65,10 @@ class SpotifyCatalog:
 
     def get_genre_details(self, genre):
         cache_key = genre.lower()
+        self._prune_genre_detail_cache()
         cached = self._genre_detail_cache.get(cache_key)
 
-        if cached and time.time() - cached["time"] < 1800:
+        if cached and time.time() - cached["time"] < GENRE_DETAIL_CACHE_TTL:
             return cached["data"]
 
         local_genre = find_local_genre(genre, spotify_backed=self.configured())
@@ -117,6 +141,29 @@ class SpotifyCatalog:
             "data": data,
         }
         return data
+
+    def _prune_genre_detail_cache(self):
+        now = time.time()
+        expired_keys = [
+            key
+            for key, cached in self._genre_detail_cache.items()
+            if now - cached["time"] >= GENRE_DETAIL_CACHE_TTL
+        ]
+
+        for key in expired_keys:
+            self._genre_detail_cache.pop(key, None)
+
+        if len(self._genre_detail_cache) <= GENRE_DETAIL_CACHE_MAX_ITEMS:
+            return
+
+        overflow = len(self._genre_detail_cache) - GENRE_DETAIL_CACHE_MAX_ITEMS
+        oldest_keys = sorted(
+            self._genre_detail_cache,
+            key=lambda key: self._genre_detail_cache[key]["time"],
+        )[:overflow]
+
+        for key in oldest_keys:
+            self._genre_detail_cache.pop(key, None)
 
     def _popular_tracks_for_genre(self, seed_genres, search_terms):
         ranked_tracks = []
@@ -311,6 +358,7 @@ class SpotifyCatalog:
 
 
 catalog = SpotifyCatalog()
+RATE_LIMIT_BUCKETS = {}
 
 
 class Handler(SimpleHTTPRequestHandler):
@@ -320,6 +368,10 @@ class Handler(SimpleHTTPRequestHandler):
     def do_GET(self):
         parsed = parse.urlparse(self.path)
 
+        if parsed.path.startswith("/api/"):
+            if not self._allow_rate_limited_request():
+                return self._send_json(429, {"error": "Too many requests. Please try again later."})
+
         if parsed.path == "/api/genres":
             self._handle_genres()
             return
@@ -328,14 +380,42 @@ class Handler(SimpleHTTPRequestHandler):
             self._handle_genre_details(parsed.query)
             return
 
-        super().do_GET()
+        self._serve_public_asset(parsed.path)
 
     def do_OPTIONS(self):
-        self.send_response(200)
-        self.send_header('Access-Control-Allow-Origin', '*')
-        self.send_header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
-        self.send_header('Access-Control-Allow-Headers', 'Content-Type')
+        if not self.path.startswith("/api/"):
+            self.send_response(204)
+            self.end_headers()
+            return
+
+        self.send_response(204)
+        self._apply_cors_headers()
         self.end_headers()
+
+    def end_headers(self):
+        self.send_header("X-Content-Type-Options", "nosniff")
+        self.send_header("X-Frame-Options", "DENY")
+        self.send_header("Referrer-Policy", "strict-origin-when-cross-origin")
+        self.send_header(
+            "Permissions-Policy",
+            "camera=(), microphone=(), geolocation=()",
+        )
+        self.send_header(
+            "Content-Security-Policy",
+            (
+                "default-src 'self'; "
+                "base-uri 'self'; "
+                "object-src 'none'; "
+                "frame-ancestors 'none'; "
+                "img-src 'self' https: data: blob:; "
+                "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
+                "font-src 'self' https://fonts.gstatic.com data:; "
+                "script-src 'self'; "
+                "connect-src 'self' https://api.spotify.com https://accounts.spotify.com "
+                "https://musicdigger.onrender.com http://127.0.0.1:8000 http://localhost:8000"
+            ),
+        )
+        super().end_headers()
 
     def _handle_genres(self):
         try:
@@ -358,6 +438,9 @@ class Handler(SimpleHTTPRequestHandler):
         if not genre:
             return self._send_json(400, {"error": "genre query parameter is required."})
 
+        if not self._is_valid_genre_query(genre):
+            return self._send_json(400, {"error": "genre query parameter is invalid."})
+
         try:
             detail = catalog.get_genre_details(genre)
         except RuntimeError as exc:
@@ -370,11 +453,93 @@ class Handler(SimpleHTTPRequestHandler):
         self.send_response(status)
         self.send_header("Content-Type", "application/json; charset=utf-8")
         self.send_header("Content-Length", str(len(data)))
-        self.send_header('Access-Control-Allow-Origin', '*')
-        self.send_header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
-        self.send_header('Access-Control-Allow-Headers', 'Content-Type')
+        self._apply_cors_headers()
         self.end_headers()
         self.wfile.write(data)
+
+    def _apply_cors_headers(self):
+        origin = self.headers.get("Origin")
+        if origin and origin in ALLOWED_ORIGINS:
+            self.send_header("Access-Control-Allow-Origin", origin)
+            self.send_header("Vary", "Origin")
+
+        self.send_header("Access-Control-Allow-Methods", "GET, OPTIONS")
+        self.send_header("Access-Control-Allow-Headers", "Content-Type")
+
+    def _allow_rate_limited_request(self):
+        now = time.time()
+        client_ip = self.client_address[0]
+        requests = RATE_LIMIT_BUCKETS.get(client_ip, [])
+        recent = [timestamp for timestamp in requests if now - timestamp < RATE_LIMIT_WINDOW_SECONDS]
+
+        if len(recent) >= RATE_LIMIT_MAX_REQUESTS:
+            RATE_LIMIT_BUCKETS[client_ip] = recent
+            return False
+
+        recent.append(now)
+        RATE_LIMIT_BUCKETS[client_ip] = recent
+        return True
+
+    def _is_valid_genre_query(self, genre):
+        if len(genre) > GENRE_QUERY_MAX_LENGTH:
+            return False
+
+        return bool(GENRE_QUERY_RE.fullmatch(genre))
+
+    def _serve_public_asset(self, request_path):
+        asset_path = resolve_public_asset_path(request_path)
+
+        if asset_path is None:
+            self.send_error(404)
+            return
+
+        try:
+            data = asset_path.read_bytes()
+        except OSError:
+            self.send_error(404)
+            return
+
+        content_type, _ = mimetypes.guess_type(str(asset_path))
+        self.send_response(200)
+        self.send_header(
+            "Content-Type",
+            content_type or "application/octet-stream",
+        )
+        self.send_header("Content-Length", str(len(data)))
+        self.end_headers()
+        self.wfile.write(data)
+
+
+def resolve_public_asset_path(request_path):
+    normalized_path = parse.unquote(request_path or "/")
+
+    if normalized_path in {"", "/"}:
+        relative_path = "index.html"
+    else:
+        relative_path = normalized_path.lstrip("/")
+
+    if relative_path.endswith("/"):
+        return None
+
+    if not is_public_asset(relative_path):
+        return None
+
+    asset_path = (ROOT / relative_path).resolve()
+
+    if ROOT != asset_path and ROOT not in asset_path.parents:
+        return None
+
+    if not asset_path.is_file():
+        return None
+
+    return asset_path
+
+
+def is_public_asset(relative_path):
+    if relative_path in PUBLIC_ROOT_FILES:
+        return True
+
+    return any(relative_path.startswith(prefix) for prefix in PUBLIC_PREFIXES)
 
 
 def map_track(item):
