@@ -987,24 +987,15 @@ body.theme-light .spotlight-art {
   margin-top: 12px;
 }
 
-.map-hero,
 .map-panel,
 .map-inspector {
   padding: 14px;
-}
-
-.map-stat-row {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 8px;
-  margin-top: 12px;
 }
 
 .map-grid {
   display: grid;
   grid-template-columns: minmax(0, 1.6fr) minmax(280px, 0.84fr);
   gap: 12px;
-  margin-top: 12px;
 }
 
 .map-panel,
@@ -1212,10 +1203,12 @@ body.theme-light .map-node {
 }
 
 .map-modal-card {
+  display: flex;
+  flex-direction: column;
   width: 100%;
   height: 100%;
   margin: 0;
-  padding: 16px;
+  padding: 14px;
   border-radius: 0;
   border-left: 1px solid var(--line);
   border-top: 1px solid var(--line);
@@ -1224,8 +1217,9 @@ body.theme-light .map-node {
 }
 
 .genre-map-canvas-modal {
-  min-height: calc(100vh - 64px - 86px);
-  max-height: calc(100vh - 64px - 86px);
+  flex: 1 1 auto;
+  min-height: 0;
+  max-height: none;
   margin-top: 12px;
 }
 
@@ -1450,10 +1444,6 @@ body.theme-light .map-node {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
-  .map-stat-row {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-
   .player-bar {
     grid-template-columns: 1fr;
   }
@@ -1464,11 +1454,6 @@ body.theme-light .map-node {
 
   .map-modal-shell {
     top: 132px;
-  }
-
-  .genre-map-canvas-modal {
-    min-height: calc(100vh - 132px - 86px);
-    max-height: calc(100vh - 132px - 86px);
   }
 }
 
@@ -1491,7 +1476,6 @@ body.theme-light .map-node {
   .browse-panel,
   .detail-panel,
   .side-panel,
-  .map-hero,
   .map-panel,
   .map-inspector,
   .profile-hero,
@@ -1506,10 +1490,6 @@ body.theme-light .map-node {
     grid-template-columns: 1fr;
   }
 
-  .map-stat-row {
-    grid-template-columns: 1fr;
-  }
-
   .genre-grid {
     grid-template-columns: 1fr;
   }
@@ -1519,8 +1499,7 @@ body.theme-light .map-node {
   }
 
   .genre-map-canvas-modal {
-    min-height: calc(100vh - 132px - 78px);
-    max-height: calc(100vh - 132px - 78px);
+    margin-top: 10px;
   }
 
   .spotlight-card {

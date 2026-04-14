@@ -137,3 +137,7 @@
 ## v0.6.2
 - full map 크기 조정
 - `UI_TERMS.md` 추가
+
+## v0.6.3
+- full map 크기 조정
+- genre atlas 창 제거

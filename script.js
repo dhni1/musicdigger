@@ -719,8 +719,12 @@ function renderGenreMap() {
   }
 
   const visibleGenres = [...state.filteredGenres];
-  elements.mapVisibleCount.textContent = String(visibleGenres.length);
-  elements.mapConnectionCount.textContent = String(countVisibleMapConnections(visibleGenres));
+  if (elements.mapVisibleCount) {
+    elements.mapVisibleCount.textContent = String(visibleGenres.length);
+  }
+  if (elements.mapConnectionCount) {
+    elements.mapConnectionCount.textContent = String(countVisibleMapConnections(visibleGenres));
+  }
 
   if (visibleGenres.length === 0) {
     renderEmptyMapSurface(elements.mapSurface);
