@@ -1,0 +1,333 @@
+.app-shell {
+  display: grid;
+  grid-template-columns: 220px minmax(0, 1fr);
+  min-height: 100vh;
+}
+
+.panel-surface {
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--bg-panel);
+  box-shadow: none;
+}
+
+.dock {
+  position: sticky;
+  top: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  height: 100vh;
+  padding: 18px 14px;
+  border: 0;
+  border-right: 1px solid var(--line);
+  border-radius: 0;
+  background: var(--bg-sidebar);
+  box-shadow: none;
+}
+
+.brand,
+.section-heading h3,
+.hero h2,
+.player-track strong,
+.genre-card h4 {
+  font-family: "Space Grotesk", sans-serif;
+}
+
+.eyebrow,
+.section-kicker {
+  margin: 0;
+  color: var(--text-dim);
+  font-size: 0.68rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.dock-nav {
+  display: grid;
+  gap: 4px;
+  margin-top: 4px;
+}
+
+.dock-link,
+.dock-mini {
+  display: flex;
+  align-items: center;
+  min-height: 42px;
+  padding: 0 12px;
+  border-radius: 0;
+  color: var(--text-soft);
+  cursor: pointer;
+  transition: background 160ms ease, color 160ms ease;
+}
+
+.dock-link:hover,
+.dock-mini:hover,
+.dock-link:focus-visible,
+.dock-mini:focus-visible {
+  background: var(--bg-panel);
+  color: var(--text-main);
+  outline: none;
+}
+
+.dock-link.is-current,
+.dock-mini.is-current {
+  background: var(--bg-panel);
+  color: var(--accent);
+  border-left: 2px solid var(--accent);
+}
+
+.dock-cta {
+  min-height: 44px;
+  border: 1px solid var(--line-strong);
+  border-radius: 0;
+  background: var(--bg-panel);
+  font-weight: 700;
+  cursor: pointer;
+  transition: border-color 160ms ease, color 160ms ease;
+}
+
+.dock-cta:hover,
+.dock-cta:focus-visible {
+  border-color: var(--accent);
+  color: var(--accent);
+  outline: none;
+}
+
+.dock-footer {
+  margin-top: auto;
+  display: grid;
+  gap: 4px;
+}
+
+.main-shell {
+  min-width: 0;
+  padding: 0 14px 98px;
+  background: var(--bg-main);
+}
+
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  display: grid;
+  grid-template-columns: minmax(180px, 1fr) minmax(260px, 520px) auto;
+  align-items: center;
+  gap: 12px;
+  min-height: 64px;
+  margin: 0 -14px;
+  padding: 10px 14px;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  border-radius: 0;
+  background: rgba(18, 19, 24, 0.96);
+  box-shadow: none;
+}
+
+body.theme-light .topbar {
+  background: rgba(245, 247, 251, 0.96);
+}
+
+.topbar-left,
+.topbar-right {
+  display: flex;
+  align-items: center;
+}
+
+.topbar-left {
+  gap: 10px;
+}
+
+.topbar-right {
+  justify-content: flex-end;
+}
+
+.menu-toggle {
+  display: inline-flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 4px;
+  width: 38px;
+  height: 38px;
+  padding: 0 10px;
+  border: 1px solid var(--line);
+  border-radius: 2px;
+  background: var(--bg-panel);
+  cursor: pointer;
+}
+
+.menu-toggle span {
+  display: block;
+  width: 100%;
+  height: 2px;
+  background: var(--text-main);
+}
+
+.brand {
+  font-size: 1.15rem;
+  letter-spacing: -0.05em;
+}
+
+.topbar-search {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.search-icon {
+  position: absolute;
+  left: 14px;
+  width: 11px;
+  height: 11px;
+  border: 2px solid var(--text-dim);
+  border-radius: 999px;
+}
+
+.search-icon::after {
+  content: "";
+  position: absolute;
+  right: -5px;
+  bottom: -5px;
+  width: 6px;
+  height: 2px;
+  background: var(--text-dim);
+  transform: rotate(45deg);
+}
+
+.topbar-search input {
+  width: 100%;
+  min-height: 40px;
+  padding: 0 14px 0 40px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--bg-panel);
+  color: var(--text-main);
+}
+
+.topbar-search input::placeholder {
+  color: var(--text-dim);
+}
+
+.topbar-search input:focus {
+  outline: none;
+  border-color: var(--accent-2);
+}
+
+.section-meta,
+.hero-flag {
+  display: inline-flex;
+  align-items: center;
+  min-height: 30px;
+  padding: 0 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--bg-panel);
+  color: var(--text-soft);
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.section-meta.accent,
+.hero-flag {
+  color: var(--accent);
+}
+
+.hero-flag.muted {
+  color: var(--text-soft);
+}
+
+.menu-panel {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 14px;
+  display: grid;
+  gap: 6px;
+  width: 200px;
+  padding: 8px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-sm);
+  background: var(--bg-panel);
+  box-shadow: none;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(-6px);
+  transition: opacity 160ms ease, transform 160ms ease;
+}
+
+.menu-panel.is-open {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0);
+}
+
+.menu-panel button {
+  min-height: 40px;
+  padding: 0 12px;
+  border: 1px solid var(--line);
+  border-radius: 2px;
+  text-align: left;
+  background: var(--bg-panel-2);
+  cursor: pointer;
+}
+
+.menu-panel button:hover,
+.menu-panel button:focus-visible {
+  border-color: var(--accent);
+  color: var(--accent);
+  outline: none;
+}
+
+.profile-slot {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 2px;
+  background: var(--bg-panel);
+  cursor: pointer;
+}
+
+.profile-slot:hover,
+.profile-slot:focus-visible {
+  border-color: var(--accent);
+  outline: none;
+}
+
+.profile-avatar {
+  width: 24px;
+  height: 24px;
+  border-radius: 999px;
+  background:
+    linear-gradient(180deg, var(--text-soft) 0 38%, transparent 38%),
+    radial-gradient(circle at 50% 32%, var(--text-soft) 0 26%, transparent 27%);
+  background-color: rgba(255, 255, 255, 0.04);
+}
+
+.profile-avatar.has-image {
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-color: transparent;
+}
+
+.page-shell {
+  margin-top: 12px;
+}
+
+.app-view {
+  display: none;
+}
+
+.app-view.is-active {
+  display: block;
+}
+
+.library-view,
+.map-view,
+.profile-view,
+.settings-view {
+  margin-top: 12px;
+}

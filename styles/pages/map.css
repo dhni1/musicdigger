@@ -1,0 +1,235 @@
+.map-panel,
+.map-inspector {
+  padding: 14px;
+}
+
+.map-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.6fr) minmax(280px, 0.84fr);
+  gap: 12px;
+}
+
+.map-panel,
+.map-inspector {
+  min-width: 0;
+}
+
+.map-toolbar,
+.map-zoom-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.map-zoom-controls .secondary-button {
+  min-width: 40px;
+}
+
+.genre-map-canvas {
+  position: relative;
+  min-height: 560px;
+  overflow: auto;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--bg-panel);
+  cursor: grab;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable both-edges;
+}
+
+.genre-map-canvas.is-dragging {
+  cursor: grabbing;
+}
+
+.genre-map-surface {
+  position: relative;
+  min-width: 100%;
+  min-height: 100%;
+  background:
+    radial-gradient(circle at 18% 24%, rgba(255, 140, 105, 0.13), transparent 22%),
+    radial-gradient(circle at 49% 18%, rgba(49, 199, 234, 0.12), transparent 20%),
+    radial-gradient(circle at 76% 34%, rgba(243, 201, 104, 0.13), transparent 24%),
+    radial-gradient(circle at 32% 74%, rgba(157, 123, 255, 0.11), transparent 24%),
+    radial-gradient(circle at 72% 74%, rgba(115, 214, 168, 0.1), transparent 22%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.015), rgba(255, 255, 255, 0)),
+    var(--bg-panel-2);
+}
+
+.genre-map-surface::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(rgba(255, 255, 255, 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+  background-size: 100% 72px, 72px 100%;
+  opacity: 0.55;
+  pointer-events: none;
+}
+
+body.theme-light .genre-map-surface {
+  background:
+    radial-gradient(circle at 18% 24%, rgba(255, 140, 105, 0.16), transparent 22%),
+    radial-gradient(circle at 49% 18%, rgba(49, 199, 234, 0.14), transparent 20%),
+    radial-gradient(circle at 76% 34%, rgba(243, 201, 104, 0.16), transparent 24%),
+    radial-gradient(circle at 32% 74%, rgba(157, 123, 255, 0.13), transparent 24%),
+    radial-gradient(circle at 72% 74%, rgba(115, 214, 168, 0.14), transparent 22%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.42), rgba(255, 255, 255, 0)),
+    #eef3fa;
+}
+
+body.theme-light .genre-map-surface::before {
+  background:
+    linear-gradient(rgba(18, 23, 34, 0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(18, 23, 34, 0.05) 1px, transparent 1px);
+  background-size: 100% 72px, 72px 100%;
+}
+
+.map-empty-state {
+  min-height: 100%;
+  height: 100%;
+  border: 0;
+  border-radius: 0;
+}
+
+.map-connection-layer {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.map-connection-line {
+  stroke: var(--line-color, var(--accent-2));
+  stroke-width: 0.36;
+  stroke-linecap: round;
+  stroke-opacity: 0.45;
+}
+
+.map-cluster-label {
+  position: absolute;
+  z-index: 2;
+  transform: translate(-50%, -50%);
+  color: var(--text-dim);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  pointer-events: none;
+}
+
+.map-node {
+  position: absolute;
+  z-index: 3;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: rgba(244, 246, 251, 0.7);
+  font-family: "Space Grotesk", sans-serif;
+  font-weight: 700;
+  letter-spacing: -0.04em;
+  white-space: nowrap;
+  cursor: pointer;
+  transform: translate(-50%, -50%);
+  transition: color 160ms ease, transform 160ms ease, opacity 160ms ease;
+  text-shadow: 0 0 18px rgba(12, 13, 16, 0.38);
+}
+
+body.theme-light .map-node {
+  color: rgba(18, 23, 34, 0.7);
+  text-shadow: 0 0 14px rgba(255, 255, 255, 0.62);
+}
+
+.map-node:hover,
+.map-node:focus-visible {
+  color: var(--map-node-color, var(--accent-2));
+  transform: translate(-50%, -50%) scale(1.06);
+  outline: none;
+}
+
+.map-node.is-linked {
+  color: var(--text-main);
+  opacity: 0.96;
+}
+
+.map-node.is-active {
+  color: var(--map-node-color, var(--accent));
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 0.22em;
+}
+
+.map-inspector {
+  display: grid;
+  gap: 12px;
+  align-content: start;
+}
+
+.map-selection-copy {
+  max-width: none;
+  margin-top: 0;
+}
+
+.map-inspector-block {
+  display: grid;
+  gap: 10px;
+}
+
+.map-selection-links {
+  min-height: 86px;
+}
+
+.map-track-preview {
+  display: grid;
+  gap: 8px;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.map-track-item {
+  display: grid;
+  gap: 4px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--bg-panel-2);
+}
+
+.map-track-item strong {
+  font-size: 0.94rem;
+}
+
+.map-track-item span {
+  color: var(--text-soft);
+  font-size: 0.82rem;
+}
+
+.map-modal-shell {
+  z-index: 80;
+  inset: 64px 0 0 220px;
+}
+
+.map-modal-card {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 14px;
+  border-radius: 0;
+  border-left: 1px solid var(--line);
+  border-top: 1px solid var(--line);
+  border-right: 0;
+  border-bottom: 0;
+}
+
+.genre-map-canvas-modal {
+  flex: 1 1 auto;
+  min-height: 0;
+  max-height: none;
+  margin-top: 12px;
+}

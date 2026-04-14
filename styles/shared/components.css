@@ -1,0 +1,314 @@
+.primary-button,
+.secondary-button {
+  min-height: 40px;
+  padding: 0 14px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-sm);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.primary-button {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+.secondary-button {
+  background: var(--bg-panel-2);
+}
+
+.ghost-button {
+  min-height: 32px;
+  padding: 0 12px;
+}
+
+.section-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.section-heading.tight {
+  margin-bottom: 10px;
+}
+
+.section-heading h3 {
+  margin: 4px 0 0;
+  font-size: 1.1rem;
+  letter-spacing: -0.05em;
+}
+
+.section-tools {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.pill-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-content: flex-start;
+  min-height: 96px;
+}
+
+.pill-btn {
+  min-height: 32px;
+  padding: 0 10px;
+  border: 1px solid var(--line);
+  border-radius: 3px;
+  background: var(--bg-panel);
+  cursor: pointer;
+}
+
+.pill-btn:hover,
+.pill-btn:focus-visible {
+  border-color: var(--accent);
+  color: var(--accent);
+  outline: none;
+}
+
+.empty-state {
+  width: 100%;
+  min-height: 96px;
+  padding: 12px;
+  border: 1px dashed var(--line-strong);
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  color: var(--text-soft);
+  line-height: 1.6;
+  font-size: 0.9rem;
+}
+
+.player-bar {
+  position: fixed;
+  right: 14px;
+  bottom: 14px;
+  left: calc(220px + 14px);
+  z-index: 30;
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) auto minmax(200px, 1fr);
+  align-items: center;
+  gap: 14px;
+  min-height: 68px;
+  padding: 10px 14px;
+  border-radius: var(--radius-md);
+}
+
+.player-track,
+.player-controls,
+.player-progress {
+  display: flex;
+  align-items: center;
+}
+
+.player-track {
+  gap: 10px;
+  min-width: 0;
+}
+
+.player-thumb {
+  width: 42px;
+  height: 42px;
+  flex: 0 0 auto;
+  border-radius: var(--radius-sm);
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+}
+
+.player-track strong {
+  display: block;
+  font-size: 0.98rem;
+  letter-spacing: -0.04em;
+}
+
+.player-track p {
+  margin: 3px 0 0;
+  color: var(--text-soft);
+  font-size: 0.82rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.player-controls {
+  justify-content: center;
+  gap: 6px;
+}
+
+.player-controls button {
+  min-height: 34px;
+  padding: 0 10px;
+  border: 1px solid transparent;
+  border-radius: 3px;
+  color: var(--text-soft);
+  cursor: pointer;
+}
+
+.player-controls button:hover,
+.player-controls button:focus-visible {
+  border-color: var(--line-strong);
+  color: var(--text-main);
+  outline: none;
+}
+
+.player-controls .play-button {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: #fff;
+}
+
+.player-progress {
+  justify-content: flex-end;
+  gap: 10px;
+  color: var(--text-soft);
+  font-size: 0.76rem;
+}
+
+.progress-line {
+  position: relative;
+  width: min(100%, 220px);
+  height: 4px;
+  background: var(--line);
+}
+
+.progress-fill {
+  width: 34%;
+  height: 100%;
+  background: var(--accent-2);
+}
+
+.spotify-profile {
+  display: grid;
+  grid-template-columns: 52px minmax(0, 1fr);
+  gap: 12px;
+  align-items: center;
+}
+
+.spotify-profile-image,
+.spotify-profile-fallback {
+  width: 52px;
+  height: 52px;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  object-fit: cover;
+  background: var(--bg-panel);
+}
+
+.spotify-profile-fallback {
+  display: grid;
+  place-items: center;
+  color: var(--text-soft);
+  font-weight: 700;
+}
+
+.spotify-profile strong {
+  display: block;
+  font-size: 0.96rem;
+}
+
+.spotify-profile p {
+  margin: 4px 0 0;
+  color: var(--text-soft);
+  font-size: 0.84rem;
+}
+
+.modal-shell {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: none;
+}
+
+.modal-shell.is-open {
+  display: block;
+}
+
+.modal-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+}
+
+.modal-card {
+  position: relative;
+  width: min(520px, calc(100% - 24px));
+  margin: 10vh auto 0;
+  padding: 14px;
+}
+
+.map-modal-shell .map-modal-card {
+  position: absolute;
+  inset: 0;
+  width: auto;
+  height: auto;
+  margin: 0;
+  padding: 14px;
+}
+
+.map-modal-shell .modal-backdrop {
+  inset: 0;
+}
+
+.modal-close {
+  min-height: 34px;
+  padding: 0 10px;
+  border: 1px solid var(--line);
+  border-radius: 3px;
+  background: var(--bg-panel);
+  cursor: pointer;
+}
+
+.playlist-form {
+  display: grid;
+  gap: 12px;
+}
+
+.field-group {
+  display: grid;
+  gap: 6px;
+}
+
+.field-group span,
+.checkbox-row span,
+.modal-note {
+  color: var(--text-soft);
+  font-size: 0.84rem;
+}
+
+.field-group input,
+.field-group textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 3px;
+  background: var(--bg-panel);
+  color: var(--text-main);
+}
+
+.field-group input:focus,
+.field-group textarea:focus {
+  outline: none;
+  border-color: var(--accent-2);
+}
+
+.checkbox-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.modal-note {
+  margin: 0;
+  line-height: 1.6;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+}

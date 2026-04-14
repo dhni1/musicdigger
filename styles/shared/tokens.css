@@ -1,0 +1,101 @@
+:root {
+  --bg: #0c0d10;
+  --bg-main: #121318;
+  --bg-panel: #17191f;
+  --bg-panel-2: #1c1f27;
+  --bg-sidebar: #0a0b0e;
+  --line: #262a34;
+  --line-strong: #313746;
+  --text-main: #f4f6fb;
+  --text-soft: #a6adbb;
+  --text-dim: #767d8c;
+  --accent: #8f6bff;
+  --accent-2: #24c6e8;
+  --shadow: 0 14px 34px rgba(0, 0, 0, 0.24);
+  --radius-lg: 8px;
+  --radius-md: 6px;
+  --radius-sm: 4px;
+}
+
+body.theme-light {
+  --bg: #eceff4;
+  --bg-main: #f5f7fb;
+  --bg-panel: #ffffff;
+  --bg-panel-2: #f3f5f9;
+  --bg-sidebar: #e4e9f1;
+  --line: #d6dbe5;
+  --line-strong: #c3cad8;
+  --text-main: #121722;
+  --text-soft: #5b6678;
+  --text-dim: #7b8494;
+  --accent: #6a49df;
+  --accent-2: #0f9fbe;
+  --shadow: 0 10px 22px rgba(56, 74, 104, 0.08);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  overflow-x: hidden;
+  background: var(--bg);
+  color: var(--text-main);
+  font-family: "Inter", "Pretendard", "Noto Sans KR", sans-serif;
+}
+
+button,
+input {
+  font: inherit;
+  color: inherit;
+}
+
+button {
+  border: 0;
+  background: transparent;
+}
+
+button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.background-layer {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background:
+    radial-gradient(circle at top right, rgba(143, 107, 255, 0.08), transparent 26%),
+    radial-gradient(circle at bottom left, rgba(36, 198, 232, 0.06), transparent 24%),
+    linear-gradient(180deg, #0f1115 0%, var(--bg) 100%);
+}
+
+body.theme-light .background-layer {
+  background:
+    radial-gradient(circle at top right, rgba(143, 107, 255, 0.08), transparent 24%),
+    radial-gradient(circle at bottom left, rgba(36, 198, 232, 0.06), transparent 22%),
+    linear-gradient(180deg, #f7f9fc 0%, var(--bg) 100%);
+}
+
+.ambient,
+.grid-glow {
+  display: none;
+}
