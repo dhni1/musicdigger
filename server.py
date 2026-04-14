@@ -35,18 +35,7 @@ class SpotifyCatalog:
         if self._genres_cache and time.time() - self._genres_cache_time < 3600:
             return self._genres_cache
 
-        local_genres = load_local_genres(spotify_backed=self.configured())
-        genres = local_genres
-
-        if self.configured():
-            try:
-                data = self._spotify_get("/recommendations/available-genre-seeds")
-                seeds = data.get("genres", [])
-                if seeds:
-                    genres = merge_seed_genres(local_genres, seeds)
-            except RuntimeError:
-                genres = local_genres
-
+        genres = load_local_genres(spotify_backed=self.configured())
         self._genres_cache = genres
         self._genres_cache_time = time.time()
         return genres
@@ -193,6 +182,9 @@ class SpotifyCatalog:
 
             if items:
                 candidates.extend(map_track(item) for item in items)
+                ranked = rank_tracks(candidates)
+                if len(ranked) >= TRACKS_PER_GENRE:
+                    return ranked[:TRACKS_PER_GENRE]
 
         for term in search_terms:
             if not term:
@@ -211,6 +203,9 @@ class SpotifyCatalog:
 
             if items:
                 candidates.extend(map_track(item) for item in items)
+                ranked = rank_tracks(candidates)
+                if len(ranked) >= TRACKS_PER_GENRE:
+                    return ranked[:TRACKS_PER_GENRE]
 
         return rank_tracks(candidates)[:TRACKS_PER_GENRE]
 
@@ -255,6 +250,9 @@ class SpotifyCatalog:
                 {"market": SPOTIFY_MARKET},
             )
             tracks.extend(map_track(item) for item in data.get("tracks", []))
+            ranked = rank_tracks(tracks)
+            if len(ranked) >= TRACKS_PER_GENRE:
+                return ranked[:TRACKS_PER_GENRE]
 
         return rank_tracks(tracks)
 

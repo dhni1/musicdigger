@@ -20,6 +20,7 @@ const spotifyConfig = {
 };
 
 const DEFAULT_VISIBLE_GENRES = 4;
+const BACKEND_REQUEST_TIMEOUT_MS = 1800;
 
 const BUILTIN_GENRES = [
   {
@@ -301,45 +302,89 @@ function bindEvents() {
 
 async function loadGenres() {
   try {
-    const backendGenres = await fetchBackendGenres();
-    state.genres = backendGenres;
-    state.filteredGenres = [...backendGenres];
-    state.usingBackendGenres = true;
+    const bootstrapGenres = await fetchLocalGenres();
+    commitGenreCatalog(bootstrapGenres, { usingBackendGenres: false });
   } catch {
-    try {
-      const response = await fetch('data/genres.json');
-      const data = await response.json();
-      state.genres = data.genres ?? [];
-      state.filteredGenres = [...state.genres];
-      state.usingBackendGenres = false;
-    } catch {
-      state.genres = BUILTIN_GENRES.map(genre => ({
-        ...genre,
-        subgenres: [...genre.subgenres],
-        similar: [...genre.similar],
-        fusion: [...genre.fusion],
-        tracks: genre.tracks.map(track => ({ ...track })),
-      }));
-      state.filteredGenres = [...state.genres];
-      state.usingBackendGenres = false;
-      elements.searchStatus.textContent = 'Offline Fallback';
-      elements.heroSearchStatus.textContent = 'Offline Fallback';
-    }
+    commitGenreCatalog(cloneGenres(BUILTIN_GENRES), {
+      usingBackendGenres: false,
+      statusText: 'Offline Fallback',
+    });
   }
-
-  elements.genreCount.textContent = String(state.genres.length);
-  if (elements.searchStatus.textContent !== 'Offline Fallback') {
-    updateSearchStatus(buildSearchToken(''));
-  }
-  renderGenreList();
 
   if (state.filteredGenres.length > 0) {
-    await showGenre(state.filteredGenres[0].id);
+    void showGenre(state.filteredGenres[0].id);
+  }
+
+  void refreshGenresFromBackend();
+}
+
+async function fetchLocalGenres() {
+  const response = await fetch('data/genres.json');
+
+  if (!response.ok) {
+    throw new Error('local genres unavailable');
+  }
+
+  const data = await response.json();
+  return cloneGenres(data.genres ?? []);
+}
+
+function cloneGenres(genres) {
+  return genres.map(genre => ({
+    ...genre,
+    subgenres: [...(genre.subgenres ?? [])],
+    similar: [...(genre.similar ?? [])],
+    fusion: [...(genre.fusion ?? [])],
+    aliases: [...(genre.aliases ?? [])],
+    spotifySeedGenres: [...(genre.spotifySeedGenres ?? [])],
+    spotifySearchTerms: [...(genre.spotifySearchTerms ?? [])],
+    relatedNames: [...(genre.relatedNames ?? [])],
+    tracks: (genre.tracks ?? []).map(track => ({ ...track })),
+  }));
+}
+
+function commitGenreCatalog(genres, options = {}) {
+  const { usingBackendGenres = false, statusText = '' } = options;
+  state.genres = cloneGenres(genres);
+  state.usingBackendGenres = usingBackendGenres;
+  elements.genreCount.textContent = String(state.genres.length);
+  applySearch(state.searchQuery);
+
+  if (statusText) {
+    elements.searchStatus.hidden = false;
+    elements.searchStatus.textContent = statusText;
+    elements.heroSearchStatus.textContent = statusText;
+    updateGenreToggle(false);
+  }
+}
+
+async function refreshGenresFromBackend() {
+  try {
+    const backendGenres = await fetchBackendGenres();
+    commitGenreCatalog(backendGenres, { usingBackendGenres: true });
+
+    const targetGenreId =
+      state.currentGenreId && state.genres.some(genre => genre.id === state.currentGenreId)
+        ? state.currentGenreId
+        : state.filteredGenres[0]?.id;
+
+    if (targetGenreId) {
+      void showGenre(targetGenreId);
+    }
+  } catch {
+    if (elements.searchStatus.textContent === 'Offline Fallback') {
+      return;
+    }
+
+    updateSearchStatus(buildSearchToken(state.searchQuery));
   }
 }
 
 async function fetchBackendGenres() {
-  const response = await fetch(`${window.APP_CONFIG.backendBaseUrl}/api/genres`);
+  const response = await fetchWithTimeout(
+    `${window.APP_CONFIG.backendBaseUrl}/api/genres`,
+    BACKEND_REQUEST_TIMEOUT_MS
+  );
 
   if (!response.ok) {
     throw new Error('backend unavailable');
@@ -350,7 +395,10 @@ async function fetchBackendGenres() {
 }
 
 async function fetchGenreDetails(genreId) {
-  const response = await fetch(`${window.APP_CONFIG.backendBaseUrl}/api/genre-details?genre=${encodeURIComponent(genreId)}`);
+  const response = await fetchWithTimeout(
+    `${window.APP_CONFIG.backendBaseUrl}/api/genre-details?genre=${encodeURIComponent(genreId)}`,
+    BACKEND_REQUEST_TIMEOUT_MS
+  );
 
   if (!response.ok) {
     throw new Error('genre details unavailable');
@@ -640,7 +688,9 @@ function applyGenreToUI(genre) {
     ? `${leadTrack.artist} · ${genre.name}`
     : 'MUSICDIGGER queue';
 
-  if (genre.detailsLoading) {
+  if (genre.detailsLoading && tracks.length) {
+    renderTracks(tracks);
+  } else if (genre.detailsLoading) {
     renderTrackLoading();
   } else {
     renderTracks(tracks);
@@ -654,6 +704,17 @@ function applyGenreToUI(genre) {
 function renderTrackLoading() {
   elements.trackList.innerHTML =
     '<li class="empty-state">Spotify에서 대표 트랙을 불러오는 중입니다.</li>';
+}
+
+async function fetchWithTimeout(url, timeoutMs) {
+  const controller = new AbortController();
+  const timer = window.setTimeout(() => controller.abort(), timeoutMs);
+
+  try {
+    return await fetch(url, { signal: controller.signal });
+  } finally {
+    window.clearTimeout(timer);
+  }
 }
 
 function renderTracks(tracks) {
