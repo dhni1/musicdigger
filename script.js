@@ -28,6 +28,7 @@ const MAP_MIN_NODE_GAP = 16;
 const MAP_ZOOM_STEP = 0.2;
 const MAP_MIN_ZOOM = 0.7;
 const MAP_MAX_ZOOM = 2.2;
+const MAP_DRAG_THRESHOLD = 6;
 
 const MAP_FAMILIES = [
   {
@@ -810,10 +811,13 @@ function renderMapSurface(surface, layout, viewportKey) {
       button.classList.add('is-linked');
     }
 
-    button.addEventListener('click', () => {
-      showView('map');
-      setActiveNav(elements.navMap);
-      void showGenre(item.genre.id);
+    button.addEventListener('pointerdown', event => {
+      event.stopPropagation();
+    });
+    button.addEventListener('click', event => {
+      event.preventDefault();
+      event.stopPropagation();
+      selectMapGenre(item.genre.id);
     });
 
     surface.appendChild(button);
@@ -1130,12 +1134,19 @@ function updateMapZoomUI(key) {
   }
 }
 
+function selectMapGenre(genreId) {
+  showView('map');
+  setActiveNav(elements.navMap);
+  void showGenre(genreId);
+}
+
 function bindMapViewport(viewport, key) {
   if (!viewport) {
     return;
   }
 
   let isDragging = false;
+  let pendingDrag = false;
   let startX = 0;
   let startY = 0;
   let startLeft = 0;
@@ -1146,29 +1157,43 @@ function bindMapViewport(viewport, key) {
       return;
     }
 
-    isDragging = true;
+    pendingDrag = true;
+    isDragging = false;
     startX = event.clientX;
     startY = event.clientY;
     startLeft = viewport.scrollLeft;
     startTop = viewport.scrollTop;
-    viewport.classList.add('is-dragging');
-    viewport.setPointerCapture(event.pointerId);
   });
 
   viewport.addEventListener('pointermove', event => {
-    if (!isDragging) {
+    if (!pendingDrag && !isDragging) {
       return;
     }
 
-    viewport.scrollLeft = startLeft - (event.clientX - startX);
-    viewport.scrollTop = startTop - (event.clientY - startY);
+    const deltaX = event.clientX - startX;
+    const deltaY = event.clientY - startY;
+
+    if (!isDragging) {
+      if (Math.hypot(deltaX, deltaY) < MAP_DRAG_THRESHOLD) {
+        return;
+      }
+
+      isDragging = true;
+      pendingDrag = false;
+      viewport.classList.add('is-dragging');
+      viewport.setPointerCapture(event.pointerId);
+    }
+
+    viewport.scrollLeft = startLeft - deltaX;
+    viewport.scrollTop = startTop - deltaY;
   });
 
   const stopDragging = event => {
-    if (!isDragging) {
+    if (!isDragging && !pendingDrag) {
       return;
     }
 
+    pendingDrag = false;
     isDragging = false;
     viewport.classList.remove('is-dragging');
 
