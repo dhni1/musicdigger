@@ -172,8 +172,6 @@ const elements = {
   genreCount: document.getElementById('genre-count'),
   trackCount: document.getElementById('track-count'),
   relationCount: document.getElementById('relation-count'),
-  searchStatus: document.getElementById('search-status'),
-  heroSearchStatus: document.getElementById('hero-search-status'),
   heroTag: document.getElementById('hero-tag'),
   currentGenreChip: document.getElementById('current-genre-chip'),
   searchInput: document.getElementById('genre-search'),
@@ -307,7 +305,6 @@ async function loadGenres() {
   } catch {
     commitGenreCatalog(cloneGenres(BUILTIN_GENRES), {
       usingBackendGenres: false,
-      statusText: 'Offline Fallback',
     });
   }
 
@@ -344,18 +341,11 @@ function cloneGenres(genres) {
 }
 
 function commitGenreCatalog(genres, options = {}) {
-  const { usingBackendGenres = false, statusText = '' } = options;
+  const { usingBackendGenres = false } = options;
   state.genres = cloneGenres(genres);
   state.usingBackendGenres = usingBackendGenres;
   elements.genreCount.textContent = String(state.genres.length);
   applySearch(state.searchQuery);
-
-  if (statusText) {
-    elements.searchStatus.hidden = false;
-    elements.searchStatus.textContent = statusText;
-    elements.heroSearchStatus.textContent = statusText;
-    updateGenreToggle(false);
-  }
 }
 
 async function refreshGenresFromBackend() {
@@ -372,10 +362,6 @@ async function refreshGenresFromBackend() {
       void showGenre(targetGenreId);
     }
   } catch {
-    if (elements.searchStatus.textContent === 'Offline Fallback') {
-      return;
-    }
-
     updateSearchStatus(buildSearchToken(state.searchQuery));
   }
 }
@@ -443,12 +429,6 @@ function applySearch(query) {
 
 function updateSearchStatus(keyword) {
   const isSearching = Boolean(keyword.normalized);
-  const heroMessage = isSearching ? `${state.filteredGenres.length}개 결과` : 'All Genres';
-  if (elements.searchStatus) {
-    elements.searchStatus.hidden = !isSearching;
-    elements.searchStatus.textContent = isSearching ? `${state.filteredGenres.length}개 결과` : '';
-  }
-  elements.heroSearchStatus.textContent = heroMessage;
   updateGenreToggle(isSearching);
 }
 
