@@ -35,6 +35,7 @@ spotifyService = createSpotifyService({
   getCurrentGenreName: () => homePage.getCurrentGenreName(),
   openLibraryView,
   renderTracksForCurrentGenre: () => homePage.renderTracksForCurrentGenre(),
+  setActiveNav,
 });
 
 void initialize();
@@ -75,7 +76,7 @@ function bindEvents() {
     openLibraryView(elements.navLibrary);
   });
   addClick(elements.navPlaylists, () => {
-    openLibraryView(elements.navPlaylists, elements.playlistSection, { routeKey: 'playlists' });
+    void spotifyService.openPlaylistComposer();
   });
   addClick(elements.navProfile, openProfileView);
   addClick(elements.profileSlot, openProfileView);
@@ -170,13 +171,6 @@ function applyRouteFromLocation() {
       break;
     case 'library':
       openLibraryView(elements.navLibrary, null, { updateHistory: false });
-      break;
-    case 'playlists':
-      openLibraryView(elements.navPlaylists, elements.playlistSection, {
-        focusBehavior: 'auto',
-        routeKey: 'playlists',
-        updateHistory: false,
-      });
       break;
     case 'profile':
       openProfileView({ updateHistory: false });

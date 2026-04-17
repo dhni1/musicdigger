@@ -167,3 +167,9 @@
 
 ## v0.7.2
 - route fallback 추가
+
+## v0.7.3
+- 홈 화면 히어로 상단 박스를 제거하고 배경 위에 텍스트가 바로 놓이는 형태로 정리
+- 히어로 통계(`Genres`, `Tracks`, `Connections`) 영역을 더 가벼운 스타일로 조정
+- 사이드바 `Playlists`를 URL 이동이 아닌 플레이리스트 생성 모달 진입 방식으로 복원
+- `/feed/playlists` 전용 라우팅과 서버 fallback 제거

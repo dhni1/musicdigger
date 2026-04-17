@@ -1,14 +1,9 @@
 .hero {
   display: grid;
   grid-template-columns: minmax(0, 1.5fr) minmax(240px, 0.85fr);
-  gap: 12px;
-  padding: 18px;
-  overflow: hidden;
-  border-radius: var(--radius-sm);
-}
-
-.hero-backdrop {
-  display: none;
+  gap: 20px;
+  padding: 10px 2px 18px;
+  align-items: end;
 }
 
 .eyebrow {
@@ -26,26 +21,26 @@
 
 .hero-description {
   max-width: 640px;
-  margin: 12px 0 0;
+  margin: 14px 0 0;
   color: var(--text-soft);
-  font-size: 0.95rem;
-  line-height: 1.65;
+  font-size: 1rem;
+  line-height: 1.75;
 }
 
 .hero-flags {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
-  margin-top: 12px;
+  margin-top: 16px;
 }
 
 .hero-stats {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 8px;
+  gap: 14px;
+  align-self: stretch;
 }
 
-.hero-stat-card,
 .side-block,
 .spotlight-card,
 .track-list li,
@@ -55,9 +50,11 @@
 }
 
 .hero-stat-card {
-  min-height: 86px;
-  padding: 12px;
-  border-radius: var(--radius-sm);
+  min-height: 0;
+  padding: 14px 0 0;
+  border-top: 1px solid var(--line);
+  background: transparent;
+  border-radius: 0;
 }
 
 .hero-stat-card span {
@@ -70,9 +67,9 @@
 
 .hero-stat-card strong {
   display: block;
-  margin-top: 10px;
+  margin-top: 8px;
   font-family: "Space Grotesk", sans-serif;
-  font-size: 1.3rem;
+  font-size: 1.45rem;
   letter-spacing: -0.05em;
 }
 

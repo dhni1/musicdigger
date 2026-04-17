@@ -42,7 +42,6 @@ PUBLIC_ROOT_FILES = {
 PUBLIC_PREFIXES = ("src/", "styles/", "data/")
 CLIENT_ROUTES = {
     "/",
-    "/feed/playlists",
     "/library",
     "/map",
     "/profile",

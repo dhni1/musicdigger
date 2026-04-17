@@ -4,7 +4,6 @@ const ROUTE_PATHS = {
   home: '/',
   map: '/map',
   library: '/library',
-  playlists: '/feed/playlists',
   profile: '/profile',
   settings: '/settings',
 };
@@ -74,8 +73,7 @@ function showView(view, options = {}) {
 }
 
 function openLibraryView(navButton = elements.navLibrary, targetSection = null, options = {}) {
-  const routeKey =
-    options.routeKey ?? (navButton === elements.navPlaylists ? 'playlists' : 'library');
+  const routeKey = options.routeKey ?? 'library';
   const updateHistory = options.updateHistory ?? true;
 
   showView('library', {

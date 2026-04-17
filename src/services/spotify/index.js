@@ -22,6 +22,7 @@ function createSpotifyService({
   getCurrentGenreName,
   openLibraryView,
   renderTracksForCurrentGenre,
+  setActiveNav,
 }) {
   const spotifyConfig = {
     clientId: window.SPOTIFY_CONFIG?.clientId ?? '',
@@ -44,6 +45,8 @@ function createSpotifyService({
   }
 
   async function openPlaylistComposer() {
+    setActiveNav(elements.navPlaylists);
+
     if (!(await ensureSpotifyReady(true))) {
       return;
     }
@@ -114,12 +117,7 @@ function createSpotifyService({
 
       closePlaylistModal();
       await syncSpotifyData();
-      const isPlaylistsRoute = state.currentRoute === 'playlists';
-      openLibraryView(
-        isPlaylistsRoute ? elements.navPlaylists : elements.navLibrary,
-        elements.playlistSection,
-        { routeKey: isPlaylistsRoute ? 'playlists' : 'library' },
-      );
+      openLibraryView(elements.navLibrary, elements.playlistSection);
     } catch (error) {
       updateSpotifyMessage(error.message);
     } finally {
