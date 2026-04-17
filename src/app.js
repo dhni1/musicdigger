@@ -58,7 +58,7 @@ function bindEvents() {
   });
   addClick(elements.profileThemeToggle, toggleTheme);
   addClick(elements.profileSpotifyDisconnect, () => {
-    spotifyService.disconnectSpotify();
+    void spotifyService.handleSpotifyAuthButton();
   });
   addClick(elements.profileMoreSettings, openSettingsView);
   addClick(elements.settingsThemeToggle, toggleTheme);
