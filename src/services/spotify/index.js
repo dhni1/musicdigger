@@ -60,6 +60,14 @@ function createSpotifyService({
       return;
     }
 
+    disconnectSpotify();
+  }
+
+  async function handleSpotifyRefreshButton() {
+    if (!state.spotify.accessToken) {
+      return;
+    }
+
     await syncSpotifyData();
   }
 
@@ -235,11 +243,14 @@ function createSpotifyService({
     }
     if (elements.spotifyAuthButton) {
       elements.spotifyAuthButton.textContent = hasAccessToken
-        ? 'Refresh Library'
+        ? 'Disconnect Spotify'
         : 'Connect Spotify';
     }
     if (elements.profileSpotifyDisconnect) {
-      elements.profileSpotifyDisconnect.disabled = !hasAccessToken;
+      elements.profileSpotifyDisconnect.textContent = hasAccessToken
+        ? 'Disconnect Spotify'
+        : 'Connect Spotify';
+      elements.profileSpotifyDisconnect.disabled = false;
     }
     if (elements.profileSettingsNote) {
       elements.profileSettingsNote.textContent = hasAccessToken
@@ -513,6 +524,7 @@ function createSpotifyService({
     closePlaylistModal,
     disconnectSpotify,
     handleSpotifyAuthButton,
+    handleSpotifyRefreshButton,
     initializeSpotify,
     likeTrack,
     openPlaylistComposer,

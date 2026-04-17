@@ -109,7 +109,7 @@ function bindEvents() {
     void spotifyService.handleSpotifyAuthButton();
   });
   addClick(elements.spotifyRefreshButton, () => {
-    void spotifyService.handleSpotifyAuthButton();
+    void spotifyService.handleSpotifyRefreshButton();
   });
   addClick(elements.genreToggle, () => {
     homePage.toggleGenreListExpansion();

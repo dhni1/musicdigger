@@ -132,7 +132,7 @@ function updateThemeUI() {
   }
 
   if (elements.profileSpotifyDisconnect) {
-    elements.profileSpotifyDisconnect.disabled = !state.spotify.accessToken;
+    elements.profileSpotifyDisconnect.disabled = false;
   }
 
   if (elements.settingsThemeToggle) {

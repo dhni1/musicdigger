@@ -210,7 +210,7 @@ body.theme-light .map-node {
 
 .map-modal-shell {
   z-index: 80;
-  inset: 64px 0 0 220px;
+  inset: 64px 0 0 0;
 }
 
 .map-modal-card {
@@ -221,7 +221,7 @@ body.theme-light .map-node {
   margin: 0;
   padding: 14px;
   border-radius: 0;
-  border-left: 1px solid var(--line);
+  border-left: 0;
   border-top: 1px solid var(--line);
   border-right: 0;
   border-bottom: 0;
