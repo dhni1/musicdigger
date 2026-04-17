@@ -20,17 +20,16 @@
     <div class="ambient ambient-cyan"></div>
     <div class="grid-glow"></div>
   </div>
+  <div id="dock-backdrop" class="dock-backdrop" aria-hidden="true"></div>
 
   <div class="app-shell">
-    <aside class="dock panel-surface">
+    <aside id="app-dock" class="dock panel-surface" aria-hidden="true">
       <nav class="dock-nav" aria-label="기본 탐색">
         <button id="nav-home" class="dock-link is-current" type="button">Home</button>
         <button id="nav-map" class="dock-link" type="button">Map</button>
         <button id="nav-library" class="dock-link" type="button">Library</button>
         <button id="nav-playlists" class="dock-link" type="button">Playlists</button>
       </nav>
-
-      <button id="sidebar-random" class="dock-cta" type="button">Random Dig</button>
 
       <div class="dock-footer">
         <button id="nav-profile" class="dock-mini" type="button">Profile</button>
@@ -44,9 +43,9 @@
             id="menu-toggle"
             class="menu-toggle"
             type="button"
-            aria-label="메뉴 열기"
+            aria-label="사이드바 열기"
             aria-expanded="false"
-            aria-controls="menu-panel"
+            aria-controls="app-dock"
           >
             <span></span>
             <span></span>
@@ -55,25 +54,26 @@
           <strong class="brand">MUSICDIGGER</strong>
         </div>
 
-        <div class="topbar-search">
-          <label class="sr-only" for="genre-search">장르 검색</label>
-          <span class="search-icon" aria-hidden="true"></span>
-          <input
-            id="genre-search"
-            type="search"
-            placeholder="Search genres and styles"
-            autocomplete="off"
-          >
+        <div class="topbar-center">
+          <div class="topbar-search">
+            <label class="sr-only" for="genre-search">장르 검색</label>
+            <span class="search-icon" aria-hidden="true"></span>
+            <input
+              id="genre-search"
+              type="search"
+              placeholder="Search genres and styles"
+              autocomplete="off"
+            >
+          </div>
+          <button id="sidebar-random" class="secondary-button ghost-button topbar-random" type="button">
+            Random Dig
+          </button>
         </div>
 
         <div class="topbar-right">
           <button id="profile-slot" class="profile-slot" type="button" aria-label="프로필">
             <span id="profile-avatar" class="profile-avatar" aria-hidden="true"></span>
           </button>
-        </div>
-
-        <div id="menu-panel" class="menu-panel" aria-hidden="true">
-          <button id="menu-settings" type="button">Settings</button>
         </div>
       </header>
 
@@ -358,6 +358,13 @@
               <div class="profile-settings">
                 <button id="profile-theme-toggle" class="secondary-button" type="button">
                   Light Mode
+                </button>
+                <button
+                  id="profile-spotify-disconnect"
+                  class="secondary-button ghost-button"
+                  type="button"
+                >
+                  Disconnect Spotify
                 </button>
                 <button
                   id="profile-more-settings"

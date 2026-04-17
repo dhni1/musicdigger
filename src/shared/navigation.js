@@ -112,9 +112,12 @@ function toggleTheme() {
 }
 
 function setMenuOpen(isOpen) {
-  elements.menuPanel?.classList.toggle('is-open', isOpen);
-  elements.menuPanel?.setAttribute('aria-hidden', String(!isOpen));
+  elements.dock?.classList.toggle('is-open', isOpen);
+  elements.dock?.setAttribute('aria-hidden', String(!isOpen));
+  elements.dockBackdrop?.classList.toggle('is-open', isOpen);
+  elements.dockBackdrop?.setAttribute('aria-hidden', String(!isOpen));
   elements.menuToggle?.setAttribute('aria-expanded', String(isOpen));
+  elements.body?.classList.toggle('is-nav-open', isOpen);
 }
 
 function updateThemeUI() {
@@ -126,6 +129,10 @@ function updateThemeUI() {
 
   if (elements.profileThemeToggle) {
     elements.profileThemeToggle.textContent = state.isDarkMode ? 'Light Mode' : 'Dark Mode';
+  }
+
+  if (elements.profileSpotifyDisconnect) {
+    elements.profileSpotifyDisconnect.disabled = !state.spotify.accessToken;
   }
 
   if (elements.settingsThemeToggle) {

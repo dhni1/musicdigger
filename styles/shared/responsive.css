@@ -1,12 +1,4 @@
 @media (max-width: 1260px) {
-  .app-shell {
-    grid-template-columns: 1fr;
-  }
-
-  .dock {
-    display: none;
-  }
-
   .main-shell {
     padding-bottom: 90px;
   }
@@ -46,6 +38,11 @@
     grid-template-columns: 1fr;
   }
 
+  .topbar-center {
+    justify-self: stretch;
+    width: 100%;
+  }
+
   .topbar-right {
     justify-content: flex-start;
   }
@@ -77,9 +74,17 @@
     padding: 10px;
   }
 
-  .menu-panel {
-    left: 10px;
-    width: calc(100% - 20px);
+  .dock {
+    width: min(300px, calc(100vw - 20px));
+  }
+
+  .topbar-center {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .topbar-random {
+    width: 100%;
   }
 
   .hero,

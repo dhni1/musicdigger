@@ -50,18 +50,16 @@ async function initialize() {
 
 function bindEvents() {
   addClick(elements.menuToggle, () => {
-    setMenuOpen(!elements.menuPanel.classList.contains('is-open'));
-  });
-
-  addClick(elements.menuSettings, () => {
-    openSettingsView();
-    setMenuOpen(false);
+    setMenuOpen(!elements.dock.classList.contains('is-open'));
   });
 
   addClick(elements.sidebarRandom, () => {
     void homePage.showRandomGenre();
   });
   addClick(elements.profileThemeToggle, toggleTheme);
+  addClick(elements.profileSpotifyDisconnect, () => {
+    spotifyService.disconnectSpotify();
+  });
   addClick(elements.profileMoreSettings, openSettingsView);
   addClick(elements.settingsThemeToggle, toggleTheme);
   addClick(elements.settingsOpenProfile, openProfileView);
@@ -76,6 +74,7 @@ function bindEvents() {
     openLibraryView(elements.navLibrary);
   });
   addClick(elements.navPlaylists, () => {
+    setMenuOpen(false);
     void spotifyService.openPlaylistComposer();
   });
   addClick(elements.navProfile, openProfileView);
@@ -128,6 +127,9 @@ function bindEvents() {
       mapPage.closeMapModal();
     }
   });
+  addClick(elements.dockBackdrop, () => {
+    setMenuOpen(false);
+  });
 
   mapPage.bindMapViewport(elements.mapCanvas, 'main');
   mapPage.bindMapViewport(elements.mapModalCanvas, 'modal');
@@ -149,10 +151,16 @@ function bindEvents() {
   }
 
   document.addEventListener('click', event => {
-    const clickedInsideMenu = elements.menuPanel?.contains(event.target);
+    const clickedInsideMenu = elements.dock?.contains(event.target);
     const clickedToggle = elements.menuToggle?.contains(event.target);
 
     if (!clickedInsideMenu && !clickedToggle) {
+      setMenuOpen(false);
+    }
+  });
+
+  document.addEventListener('keydown', event => {
+    if (event.key === 'Escape') {
       setMenuOpen(false);
     }
   });

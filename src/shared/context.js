@@ -213,6 +213,8 @@ const state = {
 
 const elements = {
   body: document.body,
+  dockBackdrop: document.getElementById('dock-backdrop'),
+  dock: document.getElementById('app-dock'),
   homeView: document.getElementById('home-view'),
   mapView: document.getElementById('map-view'),
   libraryView: document.getElementById('library-view'),
@@ -233,8 +235,6 @@ const elements = {
   currentGenreChip: document.getElementById('current-genre-chip'),
   searchInput: document.getElementById('genre-search'),
   menuToggle: document.getElementById('menu-toggle'),
-  menuPanel: document.getElementById('menu-panel'),
-  menuSettings: document.getElementById('menu-settings'),
   sidebarRandom: document.getElementById('sidebar-random'),
   playerTrackTitle: document.getElementById('player-track-title'),
   playerTrackArtist: document.getElementById('player-track-artist'),
@@ -260,6 +260,7 @@ const elements = {
   profileSummary: document.getElementById('profile-summary'),
   profileSettingsBlock: document.getElementById('profile-settings-block'),
   profileThemeToggle: document.getElementById('profile-theme-toggle'),
+  profileSpotifyDisconnect: document.getElementById('profile-spotify-disconnect'),
   profileMoreSettings: document.getElementById('profile-more-settings'),
   profileSettingsNote: document.getElementById('profile-settings-note'),
   settingsThemeToggle: document.getElementById('settings-theme-toggle'),

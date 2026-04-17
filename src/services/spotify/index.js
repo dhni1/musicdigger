@@ -63,6 +63,27 @@ function createSpotifyService({
     await syncSpotifyData();
   }
 
+  function disconnectSpotify() {
+    [
+      SPOTIFY_STORAGE_KEYS.token,
+      SPOTIFY_STORAGE_KEYS.returnPath,
+      SPOTIFY_STORAGE_KEYS.verifier,
+      SPOTIFY_STORAGE_KEYS.state,
+    ].forEach(key => storage.removeItem(key));
+
+    state.spotify.accessToken = null;
+    state.spotify.refreshToken = null;
+    state.spotify.expiresAt = 0;
+    state.spotify.profile = null;
+    state.spotify.playlists = [];
+    state.spotify.likedTracks = [];
+    state.spotify.likedTrackKeys = new Set();
+    state.spotify.trackUriCache = new Map();
+
+    renderSpotifyState();
+    renderTracksForCurrentGenre();
+  }
+
   function openPlaylistModal() {
     if (!elements.playlistModal) {
       return;
@@ -216,6 +237,9 @@ function createSpotifyService({
       elements.spotifyAuthButton.textContent = hasAccessToken
         ? 'Refresh Library'
         : 'Connect Spotify';
+    }
+    if (elements.profileSpotifyDisconnect) {
+      elements.profileSpotifyDisconnect.disabled = !hasAccessToken;
     }
     if (elements.profileSettingsNote) {
       elements.profileSettingsNote.textContent = hasAccessToken
@@ -487,6 +511,7 @@ function createSpotifyService({
 
   return {
     closePlaylistModal,
+    disconnectSpotify,
     handleSpotifyAuthButton,
     initializeSpotify,
     likeTrack,
