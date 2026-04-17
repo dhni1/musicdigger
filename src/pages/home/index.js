@@ -531,8 +531,9 @@ function createHomePage({ likeTrack, renderGenreMap, renderMapSelection, setActi
     await showGenre(randomGenre.id);
   }
 
-  function focusHome() {
-    showView('home');
+  function focusHome(options = {}) {
+    showView('home', options);
+    setActiveNav(elements.navHome);
 
     if (!state.currentGenreId && state.filteredGenres.length > 0) {
       void showGenre(state.filteredGenres[0].id);

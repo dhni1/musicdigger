@@ -3,6 +3,7 @@ import {
   openLibraryView,
   openProfileView,
   openSettingsView,
+  resolveRouteKey,
   setActiveNav,
   setMenuOpen,
   showView,
@@ -34,7 +35,6 @@ spotifyService = createSpotifyService({
   getCurrentGenreName: () => homePage.getCurrentGenreName(),
   openLibraryView,
   renderTracksForCurrentGenre: () => homePage.renderTracksForCurrentGenre(),
-  setActiveNav,
 });
 
 void initialize();
@@ -44,6 +44,7 @@ async function initialize() {
   updateThemeUI();
   spotifyService.renderSpotifyState();
   await Promise.all([homePage.loadGenres(), spotifyService.initializeSpotify()]);
+  applyRouteFromLocation();
 }
 
 function bindEvents() {
@@ -65,24 +66,24 @@ function bindEvents() {
   addClick(elements.settingsOpenProfile, openProfileView);
   addClick(elements.settingsOpenHome, () => {
     homePage.focusHome();
-    setActiveNav(elements.navHome);
   });
   addClick(elements.navHome, () => {
     homePage.focusHome();
-    setActiveNav(elements.navHome);
   });
   addClick(elements.navMap, mapPage.openMapView);
   addClick(elements.navLibrary, () => {
     openLibraryView(elements.navLibrary);
   });
   addClick(elements.navPlaylists, () => {
-    void spotifyService.handlePlaylistNav();
+    openLibraryView(elements.navPlaylists, elements.playlistSection, { routeKey: 'playlists' });
   });
   addClick(elements.navProfile, openProfileView);
   addClick(elements.profileSlot, openProfileView);
+  addClick(elements.playlistCreateButton, () => {
+    void spotifyService.openPlaylistComposer();
+  });
   addClick(elements.mapOpenHome, () => {
     homePage.focusHome();
-    setActiveNav(elements.navHome);
   });
   addClick(elements.mapZoomIn, () => {
     mapPage.adjustMapZoom('main', MAP_ZOOM_STEP);
@@ -154,6 +155,42 @@ function bindEvents() {
       setMenuOpen(false);
     }
   });
+
+  window.addEventListener('popstate', () => {
+    applyRouteFromLocation();
+  });
+}
+
+function applyRouteFromLocation() {
+  const routeKey = resolveRouteKey(window.location.pathname);
+
+  switch (routeKey) {
+    case 'map':
+      mapPage.openMapView({ updateHistory: false });
+      break;
+    case 'library':
+      openLibraryView(elements.navLibrary, null, { updateHistory: false });
+      break;
+    case 'playlists':
+      openLibraryView(elements.navPlaylists, elements.playlistSection, {
+        focusBehavior: 'auto',
+        routeKey: 'playlists',
+        updateHistory: false,
+      });
+      break;
+    case 'profile':
+      openProfileView({ updateHistory: false });
+      break;
+    case 'settings':
+      openSettingsView({ updateHistory: false });
+      break;
+    case 'home':
+      homePage.focusHome({ updateHistory: false });
+      break;
+    default:
+      homePage.focusHome({ replaceHistory: true });
+      break;
+  }
 }
 
 function addClick(element, handler) {

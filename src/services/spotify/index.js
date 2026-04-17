@@ -22,7 +22,6 @@ function createSpotifyService({
   getCurrentGenreName,
   openLibraryView,
   renderTracksForCurrentGenre,
-  setActiveNav,
 }) {
   const spotifyConfig = {
     clientId: window.SPOTIFY_CONFIG?.clientId ?? '',
@@ -44,9 +43,7 @@ function createSpotifyService({
     }
   }
 
-  async function handlePlaylistNav() {
-    setActiveNav(elements.navPlaylists);
-
+  async function openPlaylistComposer() {
     if (!(await ensureSpotifyReady(true))) {
       return;
     }
@@ -117,7 +114,12 @@ function createSpotifyService({
 
       closePlaylistModal();
       await syncSpotifyData();
-      openLibraryView(elements.navLibrary, elements.playlistSection);
+      const isPlaylistsRoute = state.currentRoute === 'playlists';
+      openLibraryView(
+        isPlaylistsRoute ? elements.navPlaylists : elements.navLibrary,
+        elements.playlistSection,
+        { routeKey: isPlaylistsRoute ? 'playlists' : 'library' },
+      );
     } catch (error) {
       updateSpotifyMessage(error.message);
     } finally {
@@ -282,6 +284,7 @@ function createSpotifyService({
     });
 
     storage.setItem(SPOTIFY_STORAGE_KEYS.verifier, verifier);
+    storage.setItem(SPOTIFY_STORAGE_KEYS.returnPath, window.location.pathname);
     storage.setItem(SPOTIFY_STORAGE_KEYS.state, stateValue);
     window.location.assign(`https://accounts.spotify.com/authorize?${params.toString()}`);
   }
@@ -334,7 +337,7 @@ function createSpotifyService({
     saveSpotifyToken(await response.json());
     storage.removeItem(SPOTIFY_STORAGE_KEYS.verifier);
     storage.removeItem(SPOTIFY_STORAGE_KEYS.state);
-    clearSpotifyQueryParams();
+    clearSpotifyQueryParams(consumeSpotifyReturnPath());
   }
 
   function hydrateSpotifyToken() {
@@ -446,12 +449,18 @@ function createSpotifyService({
     return state.spotify.profile?.display_name?.trim()?.[0]?.toUpperCase() ?? 'S';
   }
 
-  function clearSpotifyQueryParams() {
+  function clearSpotifyQueryParams(targetPath = window.location.pathname) {
     const url = new URL(window.location.href);
     url.searchParams.delete('code');
     url.searchParams.delete('state');
     url.searchParams.delete('error');
-    window.history.replaceState({}, document.title, url.pathname + url.search);
+    window.history.replaceState({}, document.title, `${targetPath}${url.search}`);
+  }
+
+  function consumeSpotifyReturnPath() {
+    const returnPath = storage.getItem(SPOTIFY_STORAGE_KEYS.returnPath) || '/';
+    storage.removeItem(SPOTIFY_STORAGE_KEYS.returnPath);
+    return returnPath;
   }
 
   function getDefaultRedirectUri() {
@@ -459,7 +468,7 @@ function createSpotifyService({
       return '';
     }
 
-    return `${window.location.origin}${window.location.pathname}`;
+    return window.location.origin;
   }
 
   function isSpotifyConfigured(config) {
@@ -480,10 +489,10 @@ function createSpotifyService({
 
   return {
     closePlaylistModal,
-    handlePlaylistNav,
     handleSpotifyAuthButton,
     initializeSpotify,
     likeTrack,
+    openPlaylistComposer,
     renderSpotifyState,
     submitPlaylistForm,
   };

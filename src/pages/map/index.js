@@ -206,9 +206,7 @@ function createMapPage({ setActiveNav, showGenre, showView }) {
         button.className = 'pill-btn';
         button.textContent = related.name;
         button.addEventListener('click', () => {
-          showView('map');
-          setActiveNav(elements.navMap);
-          void showGenre(related.id);
+          selectMapGenre(related.id);
         });
         elements.mapSelectionLinks.appendChild(button);
       });
@@ -447,8 +445,8 @@ function createMapPage({ setActiveNav, showGenre, showView }) {
     }
   }
 
-  function selectMapGenre(genreId) {
-    showView('map');
+  function selectMapGenre(genreId, options = {}) {
+    showView('map', options);
     setActiveNav(elements.navMap);
     void showGenre(genreId);
   }
@@ -598,8 +596,8 @@ function createMapPage({ setActiveNav, showGenre, showView }) {
     elements.mapModal.setAttribute('aria-hidden', 'true');
   }
 
-  function openMapView() {
-    showView('map');
+  function openMapView(options = {}) {
+    showView('map', options);
     setActiveNav(elements.navMap);
     renderGenreMap();
 

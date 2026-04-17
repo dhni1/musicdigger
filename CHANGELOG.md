@@ -164,3 +164,6 @@
 - `/api/genre-details` 입력값 검증, 캐시 상한, rate limiting, CORS 제한 추가
 - CSP, `X-Frame-Options`, `X-Content-Type-Options` 등 기본 보안 헤더 추가
 - `README.md`에 현재 폴더 구조와 보안 관련 변경사항 반영
+
+## v0.7.2
+- route fallback 추가

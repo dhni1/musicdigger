@@ -1,15 +1,64 @@
 import { elements, state } from './context.js';
 
-function focusSection(element) {
+const ROUTE_PATHS = {
+  home: '/',
+  map: '/map',
+  library: '/library',
+  playlists: '/feed/playlists',
+  profile: '/profile',
+  settings: '/settings',
+};
+
+function normalizePathname(pathname) {
+  if (!pathname || pathname === '/') {
+    return '/';
+  }
+
+  const normalized = pathname.endsWith('/') ? pathname.slice(0, -1) : pathname;
+  return normalized || '/';
+}
+
+function resolveRouteKey(pathname) {
+  const normalizedPathname = normalizePathname(pathname);
+
+  return (
+    Object.entries(ROUTE_PATHS).find(([, routePath]) => routePath === normalizedPathname)?.[0] ??
+    null
+  );
+}
+
+function syncRouteHistory(routeKey, replaceHistory) {
+  const nextPath = ROUTE_PATHS[routeKey] ?? ROUTE_PATHS.home;
+
+  if (normalizePathname(window.location.pathname) === nextPath) {
+    return;
+  }
+
+  const method = replaceHistory ? 'replaceState' : 'pushState';
+  window.history[method]({ routeKey }, document.title, nextPath);
+}
+
+function focusSection(element, behavior = 'smooth') {
   if (element) {
-    element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    element.scrollIntoView({ behavior, block: 'start' });
   }
 }
 
-function showView(view) {
+function showView(view, options = {}) {
   const previousView = state.currentView;
+  const routeKey = options.routeKey ?? view;
+  const updateHistory = options.updateHistory ?? true;
+  const replaceHistory = options.replaceHistory ?? false;
+  const scrollBehavior =
+    options.scrollBehavior ?? (previousView === view || !updateHistory ? 'auto' : 'smooth');
+
   state.currentView = view;
+  state.currentRoute = routeKey;
   setMenuOpen(false);
+
+  if (updateHistory) {
+    syncRouteHistory(routeKey, replaceHistory);
+  }
 
   [
     ['home', elements.homeView],
@@ -21,27 +70,41 @@ function showView(view) {
     element?.classList.toggle('is-active', name === view);
   });
 
-  window.scrollTo({ top: 0, behavior: previousView === view ? 'auto' : 'smooth' });
+  window.scrollTo({ top: 0, behavior: scrollBehavior });
 }
 
-function openLibraryView(navButton = elements.navLibrary, targetSection = null) {
-  showView('library');
+function openLibraryView(navButton = elements.navLibrary, targetSection = null, options = {}) {
+  const routeKey =
+    options.routeKey ?? (navButton === elements.navPlaylists ? 'playlists' : 'library');
+  const updateHistory = options.updateHistory ?? true;
+
+  showView('library', {
+    ...options,
+    routeKey,
+    updateHistory,
+  });
   setActiveNav(navButton);
 
   if (targetSection) {
     window.requestAnimationFrame(() => {
-      focusSection(targetSection);
+      focusSection(targetSection, options.focusBehavior ?? (updateHistory ? 'smooth' : 'auto'));
     });
   }
 }
 
-function openProfileView() {
-  showView('profile');
+function openProfileView(options = {}) {
+  showView('profile', {
+    ...options,
+    routeKey: options.routeKey ?? 'profile',
+  });
   setActiveNav(elements.navProfile);
 }
 
-function openSettingsView() {
-  showView('settings');
+function openSettingsView(options = {}) {
+  showView('settings', {
+    ...options,
+    routeKey: options.routeKey ?? 'settings',
+  });
   setActiveNav(null);
 }
 
@@ -89,6 +152,7 @@ export {
   openLibraryView,
   openProfileView,
   openSettingsView,
+  resolveRouteKey,
   setActiveNav,
   setMenuOpen,
   showView,

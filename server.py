@@ -40,6 +40,14 @@ PUBLIC_ROOT_FILES = {
     "spotify-config.js",
 }
 PUBLIC_PREFIXES = ("src/", "styles/", "data/")
+CLIENT_ROUTES = {
+    "/",
+    "/feed/playlists",
+    "/library",
+    "/map",
+    "/profile",
+    "/settings",
+}
 GENRE_QUERY_RE = re.compile(r"^[a-zA-Z0-9][a-zA-Z0-9 &'(),./-]{0,79}$")
 
 
@@ -512,16 +520,16 @@ class Handler(SimpleHTTPRequestHandler):
 
 def resolve_public_asset_path(request_path):
     normalized_path = parse.unquote(request_path or "/")
+    normalized_path = normalized_path.rstrip("/") or "/"
 
     if normalized_path in {"", "/"}:
         relative_path = "index.html"
     else:
         relative_path = normalized_path.lstrip("/")
 
-    if relative_path.endswith("/"):
-        return None
-
     if not is_public_asset(relative_path):
+        if normalized_path in CLIENT_ROUTES:
+            return ROOT / "index.html"
         return None
 
     asset_path = (ROOT / relative_path).resolve()

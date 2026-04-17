@@ -9,6 +9,7 @@ const SPOTIFY_SCOPES = [
 
 const SPOTIFY_STORAGE_KEYS = {
   token: 'musicdigger.spotify.token',
+  returnPath: 'musicdigger.spotify.return-path',
   verifier: 'musicdigger.spotify.verifier',
   state: 'musicdigger.spotify.state',
 };
@@ -182,6 +183,7 @@ const state = {
   genres: [],
   filteredGenres: [],
   currentGenreId: null,
+  currentRoute: 'home',
   currentView: 'home',
   genreListExpanded: false,
   isDarkMode: true,
@@ -250,6 +252,7 @@ const elements = {
   spotifyRefreshButton: document.getElementById('spotify-refresh-button'),
   spotifyProfileCard: document.getElementById('spotify-profile-card'),
   playlistSection: document.getElementById('playlist-section'),
+  playlistCreateButton: document.getElementById('playlist-create-button'),
   likedSection: document.getElementById('liked-section'),
   playlistList: document.getElementById('playlist-list'),
   likedTrackList: document.getElementById('liked-track-list'),
