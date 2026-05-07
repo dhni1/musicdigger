@@ -7,8 +7,8 @@
       "aliases": ["hiphop", "rap"],
       "spotifySeedGenres": ["hip-hop"],
       "spotifySearchTerms": ["hip hop", "rap"],
-      "subgenres": ["jazz-hiphop", "trap", "boom-bap"],
-      "similar": ["r-n-b", "grime"],
+      "subgenres": ["jazz-hiphop", "trap", "boom-bap", "drill"],
+      "similar": ["r-n-b", "neo-soul", "grime"],
       "fusion": ["rap-rock"],
       "tracks": [
         { "title": "SICKO MODE", "artist": "Travis Scott" },
@@ -29,7 +29,7 @@
       "spotifySeedGenres": ["hip-hop", "jazz"],
       "spotifySearchTerms": ["jazz hip hop", "jazz rap"],
       "subgenres": [],
-      "similar": ["lofi", "hip-hop"],
+      "similar": ["lofi", "hip-hop", "neo-soul", "jazz"],
       "fusion": [],
       "tracks": [
         { "title": "Feather", "artist": "Nujabes" },
@@ -50,8 +50,8 @@
       "spotifySeedGenres": ["hip-hop"],
       "spotifySearchTerms": ["trap", "trap hip hop"],
       "subgenres": [],
-      "similar": ["hip-hop", "drill"],
-      "fusion": [],
+      "similar": ["hip-hop", "drill", "grime"],
+      "fusion": ["reggaeton"],
       "tracks": [
         { "title": "Mask Off", "artist": "Future" },
         { "title": "goosebumps", "artist": "Travis Scott" },
@@ -71,7 +71,7 @@
       "spotifySeedGenres": ["hip-hop"],
       "spotifySearchTerms": ["boom bap", "boombap", "90s hip hop"],
       "subgenres": [],
-      "similar": ["hip-hop", "jazz-hiphop"],
+      "similar": ["hip-hop", "jazz-hiphop", "soul"],
       "fusion": [],
       "tracks": [
         { "title": "N.Y. State of Mind", "artist": "Nas" },
@@ -85,14 +85,56 @@
       ]
     },
     {
+      "id": "grime",
+      "name": "Grime",
+      "description": "영국 특유의 거친 비트와 빠른 랩 플로우가 중심인 장르",
+      "aliases": ["uk grime"],
+      "spotifySeedGenres": ["hip-hop"],
+      "spotifySearchTerms": ["grime", "uk grime"],
+      "subgenres": [],
+      "similar": ["hip-hop", "drill", "uk-garage"],
+      "fusion": [],
+      "tracks": [
+        { "title": "Shutdown", "artist": "Skepta" },
+        { "title": "That's Not Me", "artist": "Skepta feat. Jme" },
+        { "title": "Man's Not Hot", "artist": "Big Shaq" },
+        { "title": "Konnichiwa", "artist": "Skepta" },
+        { "title": "German Whip", "artist": "Meridian Dan" },
+        { "title": "Too Many Man", "artist": "Boy Better Know" },
+        { "title": "Fix Up, Look Sharp", "artist": "Dizzee Rascal" },
+        { "title": "Pow (Forward)", "artist": "Lethal Bizzle" }
+      ]
+    },
+    {
+      "id": "drill",
+      "name": "Drill",
+      "description": "어둡고 묵직한 비트 위에 공격적인 랩이 올라가는 현대 힙합 장르",
+      "aliases": ["uk drill", "brooklyn drill"],
+      "spotifySeedGenres": ["hip-hop"],
+      "spotifySearchTerms": ["drill", "uk drill", "brooklyn drill"],
+      "subgenres": [],
+      "similar": ["trap", "grime", "hip-hop"],
+      "fusion": [],
+      "tracks": [
+        { "title": "Welcome to the Party", "artist": "Pop Smoke" },
+        { "title": "Body", "artist": "Tion Wayne & Russ Millions" },
+        { "title": "Dior", "artist": "Pop Smoke" },
+        { "title": "KEISHA & BECKY", "artist": "Russ Millions x Tion Wayne" },
+        { "title": "War", "artist": "Pop Smoke feat. Lil Tjay" },
+        { "title": "No Suburban", "artist": "Sheff G" },
+        { "title": "Know Better", "artist": "Headie One" },
+        { "title": "Doja", "artist": "Central Cee" }
+      ]
+    },
+    {
       "id": "r-n-b",
       "name": "R&B",
       "description": "감각적인 보컬과 리듬감이 중심인 소울풀한 장르",
       "aliases": ["rnb", "r&b", "rhythm and blues"],
       "spotifySeedGenres": ["r-n-b", "soul"],
       "spotifySearchTerms": ["r&b", "rnb", "rhythm and blues"],
-      "subgenres": [],
-      "similar": ["hip-hop", "soul", "pop"],
+      "subgenres": ["neo-soul"],
+      "similar": ["hip-hop", "soul", "pop", "city-pop"],
       "fusion": [],
       "tracks": [
         { "title": "Location", "artist": "Khalid" },
@@ -106,6 +148,69 @@
       ]
     },
     {
+      "id": "neo-soul",
+      "name": "Neo Soul",
+      "description": "전통 소울에 현대적인 힙합과 R&B 감각을 더한 세련된 장르",
+      "aliases": ["neo soul", "modern soul"],
+      "spotifySeedGenres": ["soul", "r-n-b"],
+      "spotifySearchTerms": ["neo soul", "modern soul"],
+      "subgenres": [],
+      "similar": ["r-n-b", "soul", "jazz-hiphop"],
+      "fusion": [],
+      "tracks": [
+        { "title": "Untitled (How Does It Feel)", "artist": "D'Angelo" },
+        { "title": "On & On", "artist": "Erykah Badu" },
+        { "title": "Golden", "artist": "Jill Scott" },
+        { "title": "Ex-Factor", "artist": "Lauryn Hill" },
+        { "title": "Ascension (Don't Ever Wonder)", "artist": "Maxwell" },
+        { "title": "Cranes in the Sky", "artist": "Solange" },
+        { "title": "I Want You Around", "artist": "Snoh Aalegra" },
+        { "title": "Focus", "artist": "H.E.R." }
+      ]
+    },
+    {
+      "id": "soul",
+      "name": "Soul",
+      "description": "감정선이 깊고 그루브가 풍부한 보컬 중심 장르",
+      "aliases": ["neo soul"],
+      "spotifySeedGenres": ["soul"],
+      "spotifySearchTerms": ["soul", "neo soul"],
+      "subgenres": ["neo-soul", "funk"],
+      "similar": ["r-n-b", "jazz", "blues"],
+      "fusion": [],
+      "tracks": [
+        { "title": "Untitled (How Does It Feel)", "artist": "D'Angelo" },
+        { "title": "Ain't No Sunshine", "artist": "Bill Withers" },
+        { "title": "Let's Stay Together", "artist": "Al Green" },
+        { "title": "Respect", "artist": "Aretha Franklin" },
+        { "title": "Superstition", "artist": "Stevie Wonder" },
+        { "title": "(Sittin' On) The Dock of the Bay", "artist": "Otis Redding" },
+        { "title": "What's Going On", "artist": "Marvin Gaye" },
+        { "title": "I Heard It Through The Grapevine", "artist": "Marvin Gaye" }
+      ]
+    },
+    {
+      "id": "jazz",
+      "name": "Jazz",
+      "description": "즉흥성과 화성 진행이 돋보이는 어쿠스틱 중심 장르",
+      "aliases": ["modern jazz"],
+      "spotifySeedGenres": ["jazz"],
+      "spotifySearchTerms": ["jazz", "modern jazz"],
+      "subgenres": ["bossa-nova"],
+      "similar": ["jazz-hiphop", "soul", "blues"],
+      "fusion": [],
+      "tracks": [
+        { "title": "So What", "artist": "Miles Davis" },
+        { "title": "Take Five", "artist": "The Dave Brubeck Quartet" },
+        { "title": "My Favorite Things", "artist": "John Coltrane" },
+        { "title": "Round Midnight", "artist": "Thelonious Monk" },
+        { "title": "Moanin'", "artist": "Art Blakey & The Jazz Messengers" },
+        { "title": "Sing, Sing, Sing", "artist": "Benny Goodman" },
+        { "title": "In A Sentimental Mood", "artist": "Duke Ellington & John Coltrane" },
+        { "title": "Blue in Green", "artist": "Miles Davis" }
+      ]
+    },
+    {
       "id": "lofi",
       "name": "Lo-Fi",
       "description": "편안한 반복 비트와 빈티지 질감이 특징인 집중형 사운드",
@@ -113,7 +218,7 @@
       "spotifySeedGenres": ["chill", "study"],
       "spotifySearchTerms": ["lofi hip hop", "lo-fi beats", "chill beats"],
       "subgenres": [],
-      "similar": ["jazz-hiphop", "ambient"],
+      "similar": ["jazz-hiphop", "ambient", "synthwave"],
       "fusion": [],
       "tracks": [
         { "title": "affection", "artist": "Jinsang" },
@@ -127,14 +232,35 @@
       ]
     },
     {
+      "id": "ambient",
+      "name": "Ambient",
+      "description": "질감과 공간감이 중심이 되는 부유감 있는 장르",
+      "aliases": ["ambient music"],
+      "spotifySeedGenres": ["ambient"],
+      "spotifySearchTerms": ["ambient", "ambient music"],
+      "subgenres": [],
+      "similar": ["lofi", "indie", "electronic", "classical"],
+      "fusion": ["synthwave"],
+      "tracks": [
+        { "title": "An Ending (Ascent)", "artist": "Brian Eno" },
+        { "title": "Weird Fishes/Arpeggi", "artist": "Lusine" },
+        { "title": "Weightless", "artist": "Marconi Union" },
+        { "title": "Xtal", "artist": "Aphex Twin" },
+        { "title": "#3", "artist": "Aphex Twin" },
+        { "title": "Near Light", "artist": "Olafur Arnalds" },
+        { "title": "Thursday Afternoon", "artist": "Brian Eno" },
+        { "title": "A Walk", "artist": "Tycho" }
+      ]
+    },
+    {
       "id": "pop",
       "name": "Pop",
       "description": "대중적 멜로디와 직관적인 훅이 강한 메인스트림 장르",
       "aliases": ["popular"],
       "spotifySeedGenres": ["pop"],
       "spotifySearchTerms": ["pop"],
-      "subgenres": [],
-      "similar": ["dance", "r-n-b", "k-pop"],
+      "subgenres": ["hyperpop", "city-pop"],
+      "similar": ["dance", "r-n-b", "k-pop", "disco"],
       "fusion": [],
       "tracks": [
         { "title": "Levitating", "artist": "Dua Lipa" },
@@ -148,6 +274,132 @@
       ]
     },
     {
+      "id": "hyperpop",
+      "name": "Hyperpop",
+      "description": "과장된 질감과 디지털 감성이 극대화된 초현대적 팝 장르",
+      "aliases": ["hyper pop"],
+      "spotifySeedGenres": ["pop", "electro"],
+      "spotifySearchTerms": ["hyperpop", "hyper pop"],
+      "subgenres": [],
+      "similar": ["pop", "k-pop", "synthwave"],
+      "fusion": [],
+      "tracks": [
+        { "title": "money machine", "artist": "100 gecs" },
+        { "title": "ringtone", "artist": "100 gecs" },
+        { "title": "Vroom Vroom", "artist": "Charli xcx" },
+        { "title": "claws", "artist": "Charli xcx" },
+        { "title": "Immaterial", "artist": "SOPHIE" },
+        { "title": "Haunted", "artist": "Laura Les" },
+        { "title": "gec 2 U", "artist": "100 gecs" },
+        { "title": "faceshopping", "artist": "SOPHIE" }
+      ]
+    },
+    {
+      "id": "city-pop",
+      "name": "City Pop",
+      "description": "도시적인 세련미와 낭만적인 신스 질감이 공존하는 일본 팝 장르",
+      "aliases": ["city pop", "japanese city pop"],
+      "spotifySeedGenres": ["j-pop", "synth-pop"],
+      "spotifySearchTerms": ["city pop", "japanese city pop"],
+      "subgenres": [],
+      "similar": ["pop", "k-pop", "disco", "r-n-b"],
+      "fusion": [],
+      "tracks": [
+        { "title": "Plastic Love", "artist": "Mariya Takeuchi" },
+        { "title": "Stay With Me", "artist": "Miki Matsubara" },
+        { "title": "Bay City", "artist": "Junko Yagami" },
+        { "title": "Remember Summer Days", "artist": "Anri" },
+        { "title": "Telephone Number", "artist": "Junko Ohashi" },
+        { "title": "4:00 A.M.", "artist": "Taeko Onuki" },
+        { "title": "Last Summer Whisper", "artist": "Anri" },
+        { "title": "Ride on Time", "artist": "Tatsuro Yamashita" }
+      ]
+    },
+    {
+      "id": "k-pop",
+      "name": "K-Pop",
+      "description": "강한 훅과 퍼포먼스 중심 구조가 특징인 한국 대중음악",
+      "aliases": ["kpop", "k pop"],
+      "spotifySeedGenres": ["k-pop"],
+      "spotifySearchTerms": ["k-pop", "kpop", "korean pop"],
+      "subgenres": [],
+      "similar": ["pop", "dance", "city-pop", "r-n-b"],
+      "fusion": [],
+      "tracks": [
+        { "title": "Supernova", "artist": "aespa" },
+        { "title": "Super Shy", "artist": "NewJeans" },
+        { "title": "Love Dive", "artist": "IVE" },
+        { "title": "Into The New World", "artist": "Girls' Generation" },
+        { "title": "DDU-DU DDU-DU", "artist": "BLACKPINK" },
+        { "title": "Dynamite", "artist": "BTS" },
+        { "title": "Gee", "artist": "Girls' Generation" },
+        { "title": "Gangnam Style", "artist": "PSY" }
+      ]
+    },
+    {
+      "id": "dance",
+      "name": "Dance",
+      "description": "직관적인 리듬과 에너지로 몸을 움직이게 만드는 대중 장르",
+      "aliases": ["dance pop"],
+      "spotifySeedGenres": ["dance"],
+      "spotifySearchTerms": ["dance", "dance pop"],
+      "subgenres": [],
+      "similar": ["pop", "house", "electronic", "disco", "reggaeton"],
+      "fusion": [],
+      "tracks": [
+        { "title": "Don't Start Now", "artist": "Dua Lipa" },
+        { "title": "Titanium", "artist": "David Guetta feat. Sia" },
+        { "title": "Wake Me Up", "artist": "Avicii" },
+        { "title": "We Found Love", "artist": "Rihanna feat. Calvin Harris" },
+        { "title": "One Kiss", "artist": "Calvin Harris & Dua Lipa" },
+        { "title": "Can't Get You Out Of My Head", "artist": "Kylie Minogue" },
+        { "title": "I Gotta Feeling", "artist": "The Black Eyed Peas" },
+        { "title": "Rather Be", "artist": "Clean Bandit feat. Jess Glynne" }
+      ]
+    },
+    {
+      "id": "disco",
+      "name": "Disco",
+      "description": "반짝이는 현악과 펑키한 리듬이 만나는 클래식 댄스 장르",
+      "aliases": ["nu disco", "classic disco"],
+      "spotifySeedGenres": ["disco"],
+      "spotifySearchTerms": ["disco", "nu disco", "classic disco"],
+      "subgenres": [],
+      "similar": ["dance", "funk", "pop", "city-pop"],
+      "fusion": [],
+      "tracks": [
+        { "title": "I Feel Love", "artist": "Donna Summer" },
+        { "title": "Le Freak", "artist": "CHIC" },
+        { "title": "Stayin' Alive", "artist": "Bee Gees" },
+        { "title": "Dancing Queen", "artist": "ABBA" },
+        { "title": "September", "artist": "Earth, Wind & Fire" },
+        { "title": "Don't Leave Me This Way", "artist": "Thelma Houston" },
+        { "title": "Disco Inferno", "artist": "The Trammps" },
+        { "title": "Last Dance", "artist": "Donna Summer" }
+      ]
+    },
+    {
+      "id": "funk",
+      "name": "Funk",
+      "description": "베이스와 리듬 섹션이 주도하는 끈적한 그루브 중심 장르",
+      "aliases": ["p-funk"],
+      "spotifySeedGenres": ["funk"],
+      "spotifySearchTerms": ["funk", "p-funk"],
+      "subgenres": [],
+      "similar": ["disco", "soul", "r-n-b"],
+      "fusion": [],
+      "tracks": [
+        { "title": "Super Freak", "artist": "Rick James" },
+        { "title": "Give Up the Funk (Tear the Roof off the Sucker)", "artist": "Parliament" },
+        { "title": "Get Up (I Feel Like Being A) Sex Machine", "artist": "James Brown" },
+        { "title": "Flash Light", "artist": "Parliament" },
+        { "title": "Brick House", "artist": "Commodores" },
+        { "title": "Play That Funky Music", "artist": "Wild Cherry" },
+        { "title": "Good Times", "artist": "CHIC" },
+        { "title": "Thank You (Falettinme Be Mice Elf Agin)", "artist": "Sly & The Family Stone" }
+      ]
+    },
+    {
       "id": "indie",
       "name": "Indie",
       "description": "독립적인 감성과 질감이 살아 있는 대안적 팝/록 사운드",
@@ -155,7 +407,7 @@
       "spotifySeedGenres": ["indie", "alternative"],
       "spotifySearchTerms": ["indie", "indie pop", "indie rock"],
       "subgenres": [],
-      "similar": ["alternative", "rock", "ambient"],
+      "similar": ["alternative", "rock", "ambient", "folk", "shoegaze"],
       "fusion": [],
       "tracks": [
         { "title": "The Less I Know The Better", "artist": "Tame Impala" },
@@ -175,7 +427,7 @@
       "aliases": ["alt rock", "alternative rock"],
       "spotifySeedGenres": ["alternative", "rock"],
       "spotifySearchTerms": ["alternative", "alternative rock"],
-      "subgenres": [],
+      "subgenres": ["shoegaze", "grunge", "emo"],
       "similar": ["indie", "rock", "punk"],
       "fusion": [],
       "tracks": [
@@ -190,14 +442,77 @@
       ]
     },
     {
+      "id": "shoegaze",
+      "name": "Shoegaze",
+      "description": "두꺼운 기타 노이즈와 몽환적인 보컬이 겹치는 드림 록 계열 장르",
+      "aliases": ["dream pop rock"],
+      "spotifySeedGenres": ["indie", "alternative"],
+      "spotifySearchTerms": ["shoegaze", "dream pop rock"],
+      "subgenres": [],
+      "similar": ["indie", "alternative", "ambient", "grunge"],
+      "fusion": [],
+      "tracks": [
+        { "title": "Only Shallow", "artist": "My Bloody Valentine" },
+        { "title": "When You Sleep", "artist": "My Bloody Valentine" },
+        { "title": "Alison", "artist": "Slowdive" },
+        { "title": "When the Sun Hits", "artist": "Slowdive" },
+        { "title": "Starting Over", "artist": "LSD and the Search for God" },
+        { "title": "Vapour Trail", "artist": "Ride" },
+        { "title": "Machine Gun", "artist": "Slowdive" },
+        { "title": "Cherry-coloured Funk", "artist": "Cocteau Twins" }
+      ]
+    },
+    {
+      "id": "grunge",
+      "name": "Grunge",
+      "description": "거친 기타 톤과 우울한 정서가 섞인 90년대 북서부 록 사운드",
+      "aliases": ["90s grunge"],
+      "spotifySeedGenres": ["grunge", "rock"],
+      "spotifySearchTerms": ["grunge", "90s grunge"],
+      "subgenres": [],
+      "similar": ["alternative", "rock", "metal", "punk"],
+      "fusion": [],
+      "tracks": [
+        { "title": "Smells Like Teen Spirit", "artist": "Nirvana" },
+        { "title": "Black Hole Sun", "artist": "Soundgarden" },
+        { "title": "Even Flow", "artist": "Pearl Jam" },
+        { "title": "Man in the Box", "artist": "Alice in Chains" },
+        { "title": "Come As You Are", "artist": "Nirvana" },
+        { "title": "Alive", "artist": "Pearl Jam" },
+        { "title": "Heart-Shaped Box", "artist": "Nirvana" },
+        { "title": "Would?", "artist": "Alice in Chains" }
+      ]
+    },
+    {
+      "id": "emo",
+      "name": "Emo",
+      "description": "직설적인 감정 표현과 멜로디를 앞세운 펑크/록 계열 장르",
+      "aliases": ["emo rock"],
+      "spotifySeedGenres": ["emo", "punk"],
+      "spotifySearchTerms": ["emo", "emo rock"],
+      "subgenres": [],
+      "similar": ["alternative", "punk", "grunge"],
+      "fusion": [],
+      "tracks": [
+        { "title": "Welcome to the Black Parade", "artist": "My Chemical Romance" },
+        { "title": "I Miss You", "artist": "blink-182" },
+        { "title": "Ohio Is for Lovers", "artist": "Hawthorne Heights" },
+        { "title": "Cute Without the 'E' (Cut from the Team)", "artist": "Taking Back Sunday" },
+        { "title": "Sugar, We're Goin Down", "artist": "Fall Out Boy" },
+        { "title": "Helena", "artist": "My Chemical Romance" },
+        { "title": "The Middle", "artist": "Jimmy Eat World" },
+        { "title": "Hands Down", "artist": "Dashboard Confessional" }
+      ]
+    },
+    {
       "id": "rock",
       "name": "Rock",
       "description": "기타 리프와 밴드 에너지가 중심인 클래식한 장르",
       "aliases": ["rock and roll"],
       "spotifySeedGenres": ["rock"],
       "spotifySearchTerms": ["rock", "rock music"],
-      "subgenres": [],
-      "similar": ["alternative", "metal", "punk"],
+      "subgenres": ["grunge", "emo"],
+      "similar": ["alternative", "metal", "punk", "blues"],
       "fusion": ["rap-rock"],
       "tracks": [
         { "title": "Smells Like Teen Spirit", "artist": "Nirvana" },
@@ -211,161 +526,14 @@
       ]
     },
     {
-      "id": "jazz",
-      "name": "Jazz",
-      "description": "즉흥성과 화성 진행이 돋보이는 어쿠스틱 중심 장르",
-      "aliases": ["modern jazz"],
-      "spotifySeedGenres": ["jazz"],
-      "spotifySearchTerms": ["jazz", "modern jazz"],
-      "subgenres": [],
-      "similar": ["jazz-hiphop", "soul"],
-      "fusion": [],
-      "tracks": [
-        { "title": "So What", "artist": "Miles Davis" },
-        { "title": "Take Five", "artist": "The Dave Brubeck Quartet" },
-        { "title": "My Favorite Things", "artist": "John Coltrane" },
-        { "title": "Round Midnight", "artist": "Thelonious Monk" },
-        { "title": "Moanin'", "artist": "Art Blakey & The Jazz Messengers" },
-        { "title": "Sing, Sing, Sing", "artist": "Benny Goodman" },
-        { "title": "In A Sentimental Mood", "artist": "Duke Ellington & John Coltrane" },
-        { "title": "Blue in Green", "artist": "Miles Davis" }
-      ]
-    },
-    {
-      "id": "soul",
-      "name": "Soul",
-      "description": "감정선이 깊고 그루브가 풍부한 보컬 중심 장르",
-      "aliases": ["neo soul"],
-      "spotifySeedGenres": ["soul"],
-      "spotifySearchTerms": ["soul", "neo soul"],
-      "subgenres": [],
-      "similar": ["r-n-b", "jazz"],
-      "fusion": [],
-      "tracks": [
-        { "title": "Untitled (How Does It Feel)", "artist": "D'Angelo" },
-        { "title": "Ain't No Sunshine", "artist": "Bill Withers" },
-        { "title": "Let's Stay Together", "artist": "Al Green" },
-        { "title": "Respect", "artist": "Aretha Franklin" },
-        { "title": "Superstition", "artist": "Stevie Wonder" },
-        { "title": "(Sittin' On) The Dock of the Bay", "artist": "Otis Redding" },
-        { "title": "What's Going On", "artist": "Marvin Gaye" },
-        { "title": "I Heard It Through The Grapevine", "artist": "Marvin Gaye" }
-      ]
-    },
-    {
-      "id": "electronic",
-      "name": "Electronic",
-      "description": "신시사이저와 프로덕션 중심으로 펼쳐지는 전자음악 전반",
-      "aliases": ["electronica", "edm"],
-      "spotifySeedGenres": ["electronic", "edm"],
-      "spotifySearchTerms": ["electronic", "edm", "electronica"],
-      "subgenres": ["house", "techno"],
-      "similar": ["ambient", "dance"],
-      "fusion": [],
-      "tracks": [
-        { "title": "Strobe", "artist": "deadmau5" },
-        { "title": "Midnight City", "artist": "M83" },
-        { "title": "One More Time", "artist": "Daft Punk" },
-        { "title": "Levels", "artist": "Avicii" },
-        { "title": "Clarity", "artist": "Zedd feat. Foxes" },
-        { "title": "Animals", "artist": "Martin Garrix" },
-        { "title": "Scary Monsters and Nice Sprites", "artist": "Skrillex" },
-        { "title": "Opus", "artist": "Eric Prydz" }
-      ]
-    },
-    {
-      "id": "house",
-      "name": "House",
-      "description": "반복적인 4/4 킥과 그루브가 중심인 클럽 사운드",
-      "aliases": ["deep house"],
-      "spotifySeedGenres": ["house"],
-      "spotifySearchTerms": ["house", "deep house"],
-      "subgenres": [],
-      "similar": ["electronic", "dance", "techno"],
-      "fusion": [],
-      "tracks": [
-        { "title": "Turn Me On", "artist": "Riton x Oliver Heldens" },
-        { "title": "Cola", "artist": "CamelPhat & Elderbrook" },
-        { "title": "Show Me Love", "artist": "Robin S." },
-        { "title": "Intoxicated", "artist": "Martin Solveig & GTA" },
-        { "title": "This Girl", "artist": "Kungs vs Cookin' On 3 Burners" },
-        { "title": "You Don't Know Me", "artist": "Jax Jones feat. RAYE" },
-        { "title": "Piece Of Your Heart", "artist": "MEDUZA feat. Goodboys" },
-        { "title": "Finally", "artist": "Kings Of Tomorrow feat. Julie McKnight" }
-      ]
-    },
-    {
-      "id": "techno",
-      "name": "Techno",
-      "description": "기계적 반복과 추진력이 강한 전자 클럽 장르",
-      "aliases": ["minimal techno"],
-      "spotifySeedGenres": ["techno"],
-      "spotifySearchTerms": ["techno", "minimal techno"],
-      "subgenres": [],
-      "similar": ["house", "electronic"],
-      "fusion": [],
-      "tracks": [
-        { "title": "Spastik", "artist": "Plastikman" },
-        { "title": "Your Mind", "artist": "Adam Beyer & Bart Skils" },
-        { "title": "The Bells", "artist": "Jeff Mills" },
-        { "title": "Strings of Life", "artist": "Rhythim Is Rhythim" },
-        { "title": "Energy Flash", "artist": "Joey Beltram" },
-        { "title": "Higher State Of Consciousness", "artist": "Josh Wink" },
-        { "title": "Age Of Love", "artist": "Charlotte de Witte & Enrico Sangiuliano" },
-        { "title": "Children", "artist": "Robert Miles" }
-      ]
-    },
-    {
-      "id": "ambient",
-      "name": "Ambient",
-      "description": "질감과 공간감이 중심이 되는 부유감 있는 장르",
-      "aliases": ["ambient music"],
-      "spotifySeedGenres": ["ambient"],
-      "spotifySearchTerms": ["ambient", "ambient music"],
-      "subgenres": [],
-      "similar": ["lofi", "indie", "electronic"],
-      "fusion": [],
-      "tracks": [
-        { "title": "An Ending (Ascent)", "artist": "Brian Eno" },
-        { "title": "Weird Fishes/Arpeggi", "artist": "Lusine" },
-        { "title": "Weightless", "artist": "Marconi Union" },
-        { "title": "Xtal", "artist": "Aphex Twin" },
-        { "title": "#3", "artist": "Aphex Twin" },
-        { "title": "Near Light", "artist": "Ólafur Arnalds" },
-        { "title": "Thursday Afternoon", "artist": "Brian Eno" },
-        { "title": "A Walk", "artist": "Tycho" }
-      ]
-    },
-    {
-      "id": "k-pop",
-      "name": "K-Pop",
-      "description": "강한 훅과 퍼포먼스 중심 구조가 특징인 한국 대중음악",
-      "aliases": ["kpop", "k pop"],
-      "spotifySeedGenres": ["k-pop"],
-      "spotifySearchTerms": ["k-pop", "kpop", "korean pop"],
-      "subgenres": [],
-      "similar": ["pop", "dance"],
-      "fusion": [],
-      "tracks": [
-        { "title": "Supernova", "artist": "aespa" },
-        { "title": "Super Shy", "artist": "NewJeans" },
-        { "title": "Love Dive", "artist": "IVE" },
-        { "title": "Into The New World", "artist": "Girls' Generation" },
-        { "title": "DDU-DU DDU-DU", "artist": "BLACKPINK" },
-        { "title": "Dynamite", "artist": "BTS" },
-        { "title": "Gee", "artist": "Girls' Generation" },
-        { "title": "Gangnam Style", "artist": "PSY" }
-      ]
-    },
-    {
       "id": "punk",
       "name": "Punk",
       "description": "짧고 빠른 전개와 반항적인 에너지가 중심인 록 장르",
       "aliases": ["punk rock"],
       "spotifySeedGenres": ["punk", "rock"],
       "spotifySearchTerms": ["punk", "punk rock"],
-      "subgenres": [],
-      "similar": ["alternative", "rock"],
+      "subgenres": ["emo"],
+      "similar": ["alternative", "rock", "grunge"],
       "fusion": [],
       "tracks": [
         { "title": "Basket Case", "artist": "Green Day" },
@@ -386,7 +554,7 @@
       "spotifySeedGenres": ["metal"],
       "spotifySearchTerms": ["metal", "heavy metal"],
       "subgenres": [],
-      "similar": ["rock", "punk"],
+      "similar": ["rock", "punk", "grunge", "rap-rock"],
       "fusion": [],
       "tracks": [
         { "title": "Master of Puppets", "artist": "Metallica" },
@@ -395,50 +563,8 @@
         { "title": "Crazy Train", "artist": "Ozzy Osbourne" },
         { "title": "Paranoid", "artist": "Black Sabbath" },
         { "title": "Toxicity", "artist": "System Of A Down" },
-        { "title": "Ace of Spades", "artist": "Motörhead" },
+        { "title": "Ace of Spades", "artist": "Motorhead" },
         { "title": "The Trooper", "artist": "Iron Maiden" }
-      ]
-    },
-    {
-      "id": "dance",
-      "name": "Dance",
-      "description": "직관적인 리듬과 에너지로 몸을 움직이게 만드는 대중 장르",
-      "aliases": ["dance pop"],
-      "spotifySeedGenres": ["dance"],
-      "spotifySearchTerms": ["dance", "dance pop"],
-      "subgenres": [],
-      "similar": ["pop", "house", "electronic"],
-      "fusion": [],
-      "tracks": [
-        { "title": "Don't Start Now", "artist": "Dua Lipa" },
-        { "title": "Titanium", "artist": "David Guetta feat. Sia" },
-        { "title": "Wake Me Up", "artist": "Avicii" },
-        { "title": "We Found Love", "artist": "Rihanna feat. Calvin Harris" },
-        { "title": "One Kiss", "artist": "Calvin Harris & Dua Lipa" },
-        { "title": "Can't Get You Out Of My Head", "artist": "Kylie Minogue" },
-        { "title": "I Gotta Feeling", "artist": "The Black Eyed Peas" },
-        { "title": "Rather Be", "artist": "Clean Bandit feat. Jess Glynne" }
-      ]
-    },
-    {
-      "id": "grime",
-      "name": "Grime",
-      "description": "영국 특유의 거친 비트와 빠른 랩 플로우가 중심인 장르",
-      "aliases": ["uk grime"],
-      "spotifySeedGenres": ["hip-hop"],
-      "spotifySearchTerms": ["grime", "uk grime"],
-      "subgenres": [],
-      "similar": ["hip-hop", "drill"],
-      "fusion": [],
-      "tracks": [
-        { "title": "Shutdown", "artist": "Skepta" },
-        { "title": "That's Not Me", "artist": "Skepta feat. Jme" },
-        { "title": "Man's Not Hot", "artist": "Big Shaq" },
-        { "title": "Konnichiwa", "artist": "Skepta" },
-        { "title": "German Whip", "artist": "Meridian Dan" },
-        { "title": "Too Many Man", "artist": "Boy Better Know" },
-        { "title": "Fix Up, Look Sharp", "artist": "Dizzee Rascal" },
-        { "title": "Pow (Forward)", "artist": "Lethal Bizzle" }
       ]
     },
     {
@@ -449,7 +575,7 @@
       "spotifySeedGenres": ["rock", "hip-hop"],
       "spotifySearchTerms": ["rap rock", "raprock"],
       "subgenres": [],
-      "similar": ["hip-hop", "rock", "alternative"],
+      "similar": ["hip-hop", "rock", "alternative", "metal"],
       "fusion": [],
       "tracks": [
         { "title": "Numb / Encore", "artist": "JAY-Z & Linkin Park" },
@@ -463,24 +589,402 @@
       ]
     },
     {
-      "id": "drill",
-      "name": "Drill",
-      "description": "어둡고 묵직한 비트 위에 공격적인 랩이 올라가는 현대 힙합 장르",
-      "aliases": ["uk drill", "brooklyn drill"],
-      "spotifySeedGenres": ["hip-hop"],
-      "spotifySearchTerms": ["drill", "uk drill", "brooklyn drill"],
-      "subgenres": [],
-      "similar": ["trap", "grime"],
+      "id": "electronic",
+      "name": "Electronic",
+      "description": "신시사이저와 프로덕션 중심으로 펼쳐지는 전자음악 전반",
+      "aliases": ["electronica", "edm"],
+      "spotifySeedGenres": ["electronic", "edm"],
+      "spotifySearchTerms": ["electronic", "edm", "electronica"],
+      "subgenres": ["house", "techno", "drum-and-bass"],
+      "similar": ["ambient", "dance", "trance"],
+      "fusion": ["synthwave"],
+      "tracks": [
+        { "title": "Strobe", "artist": "deadmau5" },
+        { "title": "Midnight City", "artist": "M83" },
+        { "title": "One More Time", "artist": "Daft Punk" },
+        { "title": "Levels", "artist": "Avicii" },
+        { "title": "Clarity", "artist": "Zedd feat. Foxes" },
+        { "title": "Animals", "artist": "Martin Garrix" },
+        { "title": "Scary Monsters and Nice Sprites", "artist": "Skrillex" },
+        { "title": "Opus", "artist": "Eric Prydz" }
+      ]
+    },
+    {
+      "id": "house",
+      "name": "House",
+      "description": "반복적인 4/4 킥과 그루브가 중심인 클럽 사운드",
+      "aliases": ["deep house"],
+      "spotifySeedGenres": ["house"],
+      "spotifySearchTerms": ["house", "deep house"],
+      "subgenres": ["uk-garage", "amapiano"],
+      "similar": ["electronic", "dance", "techno"],
       "fusion": [],
       "tracks": [
-        { "title": "Welcome to the Party", "artist": "Pop Smoke" },
-        { "title": "Body", "artist": "Tion Wayne & Russ Millions" },
-        { "title": "Dior", "artist": "Pop Smoke" },
-        { "title": "KEISHA & BECKY", "artist": "Russ Millions x Tion Wayne" },
-        { "title": "War", "artist": "Pop Smoke feat. Lil Tjay" },
-        { "title": "No Suburban", "artist": "Sheff G" },
-        { "title": "Know Better", "artist": "Headie One" },
-        { "title": "Doja", "artist": "Central Cee" }
+        { "title": "Turn Me On", "artist": "Riton x Oliver Heldens" },
+        { "title": "Cola", "artist": "CamelPhat & Elderbrook" },
+        { "title": "Show Me Love", "artist": "Robin S." },
+        { "title": "Intoxicated", "artist": "Martin Solveig & GTA" },
+        { "title": "This Girl", "artist": "Kungs vs Cookin' On 3 Burners" },
+        { "title": "You Don't Know Me", "artist": "Jax Jones feat. RAYE" },
+        { "title": "Piece Of Your Heart", "artist": "MEDUZA feat. Goodboys" },
+        { "title": "Finally", "artist": "Kings Of Tomorrow feat. Julie McKnight" }
+      ]
+    },
+    {
+      "id": "uk-garage",
+      "name": "UK Garage",
+      "description": "스윙감 있는 비트와 빠른 컷업이 살아 있는 영국 클럽 장르",
+      "aliases": ["ukg", "garage"],
+      "spotifySeedGenres": ["garage", "house"],
+      "spotifySearchTerms": ["uk garage", "ukg", "garage"],
+      "subgenres": [],
+      "similar": ["house", "grime", "drum-and-bass"],
+      "fusion": [],
+      "tracks": [
+        { "title": "Flowers", "artist": "Sweet Female Attitude" },
+        { "title": "Re-Rewind", "artist": "Artful Dodger feat. Craig David" },
+        { "title": "Do You Really Like It?", "artist": "DJ Pied Piper & The Masters of Ceremonies" },
+        { "title": "21 Seconds", "artist": "So Solid Crew" },
+        { "title": "Fill Me In", "artist": "Craig David" },
+        { "title": "RipGroove", "artist": "Double 99" },
+        { "title": "Bound 4 Da Reload (Casualty)", "artist": "Oxide & Neutrino" },
+        { "title": "Babycakes", "artist": "3 of a Kind" }
+      ]
+    },
+    {
+      "id": "techno",
+      "name": "Techno",
+      "description": "기계적 반복과 추진력이 강한 전자 클럽 장르",
+      "aliases": ["minimal techno"],
+      "spotifySeedGenres": ["techno"],
+      "spotifySearchTerms": ["techno", "minimal techno"],
+      "subgenres": [],
+      "similar": ["house", "electronic", "trance"],
+      "fusion": [],
+      "tracks": [
+        { "title": "Spastik", "artist": "Plastikman" },
+        { "title": "Your Mind", "artist": "Adam Beyer & Bart Skils" },
+        { "title": "The Bells", "artist": "Jeff Mills" },
+        { "title": "Strings of Life", "artist": "Rhythim Is Rhythim" },
+        { "title": "Energy Flash", "artist": "Joey Beltram" },
+        { "title": "Higher State Of Consciousness", "artist": "Josh Wink" },
+        { "title": "Age Of Love", "artist": "Charlotte de Witte & Enrico Sangiuliano" },
+        { "title": "Children", "artist": "Robert Miles" }
+      ]
+    },
+    {
+      "id": "trance",
+      "name": "Trance",
+      "description": "고양감 있는 빌드업과 서정적인 신스가 중심인 전자 장르",
+      "aliases": ["uplifting trance"],
+      "spotifySeedGenres": ["trance"],
+      "spotifySearchTerms": ["trance", "uplifting trance"],
+      "subgenres": [],
+      "similar": ["electronic", "techno", "synthwave"],
+      "fusion": [],
+      "tracks": [
+        { "title": "Adagio for Strings", "artist": "Tiësto" },
+        { "title": "For An Angel", "artist": "Paul van Dyk" },
+        { "title": "Sun & Moon", "artist": "Above & Beyond feat. Richard Bedford" },
+        { "title": "Carte Blanche", "artist": "Veracocha" },
+        { "title": "Silence", "artist": "Delerium feat. Sarah McLachlan (Tiesto Remix)" },
+        { "title": "In and Out of Love", "artist": "Armin van Buuren feat. Sharon den Adel" },
+        { "title": "Children", "artist": "Robert Miles" },
+        { "title": "Communication", "artist": "Armin van Buuren" }
+      ]
+    },
+    {
+      "id": "drum-and-bass",
+      "name": "Drum & Bass",
+      "description": "빠른 브레이크비트와 저역 베이스가 질주하는 전자 장르",
+      "aliases": ["dnb", "drum n bass"],
+      "spotifySeedGenres": ["drum-and-bass"],
+      "spotifySearchTerms": ["drum and bass", "dnb", "drum n bass"],
+      "subgenres": [],
+      "similar": ["electronic", "uk-garage", "dubstep"],
+      "fusion": [],
+      "tracks": [
+        { "title": "Inner City Life", "artist": "Goldie" },
+        { "title": "Timewarp", "artist": "Sub Focus" },
+        { "title": "Tarantula", "artist": "Pendulum" },
+        { "title": "Hold Your Colour", "artist": "Pendulum" },
+        { "title": "Blind Faith", "artist": "Chase & Status feat. Liam Bailey" },
+        { "title": "Original Nuttah 25", "artist": "UK Apache & Shy FX" },
+        { "title": "Afterglow", "artist": "Wilkinson" },
+        { "title": "Voodoo People (Pendulum Remix)", "artist": "The Prodigy" }
+      ]
+    },
+    {
+      "id": "dubstep",
+      "name": "Dubstep",
+      "description": "묵직한 드롭과 저음 설계가 핵심인 베이스 뮤직 장르",
+      "aliases": ["brostep"],
+      "spotifySeedGenres": ["dubstep"],
+      "spotifySearchTerms": ["dubstep", "brostep"],
+      "subgenres": [],
+      "similar": ["electronic", "drum-and-bass", "grime"],
+      "fusion": [],
+      "tracks": [
+        { "title": "Scary Monsters and Nice Sprites", "artist": "Skrillex" },
+        { "title": "Midnight Request Line", "artist": "Skream" },
+        { "title": "I Can't Stop", "artist": "Flux Pavilion" },
+        { "title": "Promises", "artist": "Nero" },
+        { "title": "Eyes On Fire (Zeds Dead Remix)", "artist": "Blue Foundation" },
+        { "title": "Bass Head", "artist": "Bassnectar" },
+        { "title": "Internet Friends", "artist": "Knife Party" },
+        { "title": "Centipede", "artist": "Knife Party" }
+      ]
+    },
+    {
+      "id": "synthwave",
+      "name": "Synthwave",
+      "description": "80년대 신스와 네온 감성을 현대적으로 재해석한 복고 전자 장르",
+      "aliases": ["retrowave", "outrun"],
+      "spotifySeedGenres": ["synth-pop", "electronic"],
+      "spotifySearchTerms": ["synthwave", "retrowave", "outrun"],
+      "subgenres": [],
+      "similar": ["electronic", "ambient", "hyperpop", "trance"],
+      "fusion": [],
+      "tracks": [
+        { "title": "Nightcall", "artist": "Kavinsky" },
+        { "title": "A Real Hero", "artist": "College & Electric Youth" },
+        { "title": "Days of Thunder", "artist": "The Midnight" },
+        { "title": "Turbo Killer", "artist": "Carpenter Brut" },
+        { "title": "Resonance", "artist": "HOME" },
+        { "title": "Running in the Night", "artist": "FM-84 feat. Ollie Wride" },
+        { "title": "Sunset", "artist": "The Midnight" },
+        { "title": "Tech Noir", "artist": "Gunship" }
+      ]
+    },
+    {
+      "id": "afrobeats",
+      "name": "Afrobeats",
+      "description": "서아프리카 리듬과 팝 감각이 결합된 글로벌 댄스 장르",
+      "aliases": ["afrobeats pop", "naija pop"],
+      "spotifySeedGenres": ["afrobeat", "dancehall"],
+      "spotifySearchTerms": ["afrobeats", "afrobeats pop", "naija pop"],
+      "subgenres": ["amapiano"],
+      "similar": ["dance", "pop", "reggaeton"],
+      "fusion": [],
+      "tracks": [
+        { "title": "Essence", "artist": "Wizkid feat. Tems" },
+        { "title": "Last Last", "artist": "Burna Boy" },
+        { "title": "Calm Down", "artist": "Rema" },
+        { "title": "Ye", "artist": "Burna Boy" },
+        { "title": "Fall", "artist": "Davido" },
+        { "title": "Love Nwantiti (ah ah ah)", "artist": "CKay" },
+        { "title": "Peru", "artist": "Fireboy DML" },
+        { "title": "Rush", "artist": "Ayra Starr" }
+      ]
+    },
+    {
+      "id": "amapiano",
+      "name": "Amapiano",
+      "description": "깊은 로그 드럼과 부드러운 하우스 감성이 어우러진 남아공 댄스 장르",
+      "aliases": ["south african house"],
+      "spotifySeedGenres": ["house", "afrobeat"],
+      "spotifySearchTerms": ["amapiano", "south african house"],
+      "subgenres": [],
+      "similar": ["afrobeats", "house", "dance"],
+      "fusion": [],
+      "tracks": [
+        { "title": "Mnike", "artist": "Tyler ICU feat. Tumelo.za" },
+        { "title": "Sponono", "artist": "Kabza De Small & DJ Maphorisa feat. Wizkid, Burna Boy, Cassper Nyovest & Madumane" },
+        { "title": "John Wick", "artist": "De Mthuda feat. Sir Trill & Da Muziqal Chef" },
+        { "title": "Umlando", "artist": "Toss feat. 9umba, Mdoovar, Sbhe & Sino Msolo" },
+        { "title": "Adiwele", "artist": "Young Stunna feat. Kabza De Small & DJ Maphorisa" },
+        { "title": "Dali Nguwe", "artist": "Master KG feat. Nkosazana Daughter" },
+        { "title": "Hamba Wena", "artist": "Deep London feat. Boohle" },
+        { "title": "Bhele", "artist": "Kamo Mphela, Khalil Harrison, Tyler ICU & Baby S.O.N" }
+      ]
+    },
+    {
+      "id": "latin",
+      "name": "Latin",
+      "description": "라틴권 리듬과 보컬 스타일을 폭넓게 아우르는 대중 장르 축",
+      "aliases": ["latin pop", "latino"],
+      "spotifySeedGenres": ["latin", "latino"],
+      "spotifySearchTerms": ["latin", "latin pop", "latino"],
+      "subgenres": ["reggaeton", "salsa", "bossa-nova"],
+      "similar": ["dance", "pop", "afrobeats"],
+      "fusion": [],
+      "tracks": [
+        { "title": "Despacito", "artist": "Luis Fonsi feat. Daddy Yankee" },
+        { "title": "Vivir Mi Vida", "artist": "Marc Anthony" },
+        { "title": "Danza Kuduro", "artist": "Don Omar feat. Lucenzo" },
+        { "title": "Mi Gente", "artist": "J Balvin & Willy William" },
+        { "title": "Bailando", "artist": "Enrique Iglesias feat. Gente de Zona" },
+        { "title": "La Gozadera", "artist": "Gente de Zona feat. Marc Anthony" },
+        { "title": "Suavemente", "artist": "Elvis Crespo" },
+        { "title": "Borro Cassette", "artist": "Maluma" }
+      ]
+    },
+    {
+      "id": "reggaeton",
+      "name": "Reggaeton",
+      "description": "데뎀비트 리듬과 랩싱잉이 중심인 라틴 클럽 장르",
+      "aliases": ["reggaeton urbano"],
+      "spotifySeedGenres": ["reggaeton"],
+      "spotifySearchTerms": ["reggaeton", "reggaeton urbano"],
+      "subgenres": [],
+      "similar": ["latin", "dance", "trap", "afrobeats"],
+      "fusion": [],
+      "tracks": [
+        { "title": "Gasolina", "artist": "Daddy Yankee" },
+        { "title": "Safaera", "artist": "Bad Bunny, Jowell & Randy, Nengo Flow" },
+        { "title": "DAKITI", "artist": "Bad Bunny & Jhayco" },
+        { "title": "Tusa", "artist": "KAROL G feat. Nicki Minaj" },
+        { "title": "Baila Baila Baila", "artist": "Ozuna" },
+        { "title": "Con Altura", "artist": "ROSALIA & J Balvin feat. El Guincho" },
+        { "title": "Provenza", "artist": "KAROL G" },
+        { "title": "Mayor Que Yo", "artist": "Luny Tunes & Daddy Yankee, Wisin & Yandel, Baby Ranks, Hector El Father" }
+      ]
+    },
+    {
+      "id": "salsa",
+      "name": "Salsa",
+      "description": "브라스와 퍼커션이 이끄는 뜨거운 라틴 댄스 장르",
+      "aliases": ["salsa dura"],
+      "spotifySeedGenres": ["salsa"],
+      "spotifySearchTerms": ["salsa", "salsa dura"],
+      "subgenres": [],
+      "similar": ["latin", "bossa-nova", "jazz"],
+      "fusion": [],
+      "tracks": [
+        { "title": "Vivir Lo Nuestro", "artist": "Marc Anthony & La India" },
+        { "title": "Pedro Navaja", "artist": "Ruben Blades" },
+        { "title": "La Vida Es Un Carnaval", "artist": "Celia Cruz" },
+        { "title": "El Cantante", "artist": "Hector Lavoe" },
+        { "title": "Quimbara", "artist": "Celia Cruz" },
+        { "title": "Periodico De Ayer", "artist": "Hector Lavoe" },
+        { "title": "Lloraras", "artist": "Oscar D'Leon" },
+        { "title": "Aguanile", "artist": "Willie Colon & Hector Lavoe" }
+      ]
+    },
+    {
+      "id": "bossa-nova",
+      "name": "Bossa Nova",
+      "description": "재즈 화성과 브라질 리듬이 조용하게 흐르는 우아한 장르",
+      "aliases": ["bossanova", "brazilian jazz"],
+      "spotifySeedGenres": ["bossanova", "brazil"],
+      "spotifySearchTerms": ["bossa nova", "bossanova", "brazilian jazz"],
+      "subgenres": [],
+      "similar": ["jazz", "latin", "salsa"],
+      "fusion": [],
+      "tracks": [
+        { "title": "The Girl From Ipanema", "artist": "Stan Getz & Joao Gilberto" },
+        { "title": "Corcovado", "artist": "Stan Getz & Astrud Gilberto" },
+        { "title": "Agua de Beber", "artist": "Astrud Gilberto" },
+        { "title": "Mas Que Nada", "artist": "Jorge Ben Jor" },
+        { "title": "Desafinado", "artist": "Stan Getz & Joao Gilberto" },
+        { "title": "Wave", "artist": "Antonio Carlos Jobim" },
+        { "title": "Chega De Saudade", "artist": "Joao Gilberto" },
+        { "title": "Samba De Verao", "artist": "Marcos Valle" }
+      ]
+    },
+    {
+      "id": "folk",
+      "name": "Folk",
+      "description": "서정적인 멜로디와 어쿠스틱 악기가 중심이 되는 이야기형 장르",
+      "aliases": ["indie folk", "acoustic folk"],
+      "spotifySeedGenres": ["folk", "acoustic"],
+      "spotifySearchTerms": ["folk", "indie folk", "acoustic folk"],
+      "subgenres": [],
+      "similar": ["indie", "country", "blues"],
+      "fusion": [],
+      "tracks": [
+        { "title": "Skinny Love", "artist": "Bon Iver" },
+        { "title": "Holocene", "artist": "Bon Iver" },
+        { "title": "The Night We Met", "artist": "Lord Huron" },
+        { "title": "Blowin' in the Wind", "artist": "Bob Dylan" },
+        { "title": "Fast Car", "artist": "Tracy Chapman" },
+        { "title": "Ho Hey", "artist": "The Lumineers" },
+        { "title": "Suzanne", "artist": "Leonard Cohen" },
+        { "title": "The Blower's Daughter", "artist": "Damien Rice" }
+      ]
+    },
+    {
+      "id": "country",
+      "name": "Country",
+      "description": "서사적인 가사와 현악기 중심 편성이 살아 있는 미국 루츠 장르",
+      "aliases": ["modern country"],
+      "spotifySeedGenres": ["country"],
+      "spotifySearchTerms": ["country", "modern country"],
+      "subgenres": [],
+      "similar": ["folk", "blues", "rock"],
+      "fusion": [],
+      "tracks": [
+        { "title": "Jolene", "artist": "Dolly Parton" },
+        { "title": "Take Me Home, Country Roads", "artist": "John Denver" },
+        { "title": "Friends in Low Places", "artist": "Garth Brooks" },
+        { "title": "Wagon Wheel", "artist": "Darius Rucker" },
+        { "title": "Tennessee Whiskey", "artist": "Chris Stapleton" },
+        { "title": "Before He Cheats", "artist": "Carrie Underwood" },
+        { "title": "Ring of Fire", "artist": "Johnny Cash" },
+        { "title": "The Gambler", "artist": "Kenny Rogers" }
+      ]
+    },
+    {
+      "id": "blues",
+      "name": "Blues",
+      "description": "블루노트와 기타 프레이징이 감정을 짙게 끌어내는 루츠 장르",
+      "aliases": ["electric blues"],
+      "spotifySeedGenres": ["blues"],
+      "spotifySearchTerms": ["blues", "electric blues"],
+      "subgenres": [],
+      "similar": ["jazz", "soul", "rock", "country"],
+      "fusion": [],
+      "tracks": [
+        { "title": "The Thrill Is Gone", "artist": "B.B. King" },
+        { "title": "Hoochie Coochie Man", "artist": "Muddy Waters" },
+        { "title": "Pride and Joy", "artist": "Stevie Ray Vaughan" },
+        { "title": "Boom Boom", "artist": "John Lee Hooker" },
+        { "title": "Cross Road Blues", "artist": "Robert Johnson" },
+        { "title": "I'd Rather Go Blind", "artist": "Etta James" },
+        { "title": "Mannish Boy", "artist": "Muddy Waters" },
+        { "title": "Sweet Home Chicago", "artist": "Robert Johnson" }
+      ]
+    },
+    {
+      "id": "classical",
+      "name": "Classical",
+      "description": "오케스트라와 실내악 전통을 바탕으로 한 서양 예술음악 장르",
+      "aliases": ["orchestral", "piano classical"],
+      "spotifySeedGenres": ["classical", "piano"],
+      "spotifySearchTerms": ["classical", "orchestral", "piano classical"],
+      "subgenres": [],
+      "similar": ["ambient", "soundtrack"],
+      "fusion": [],
+      "tracks": [
+        { "title": "Moonlight Sonata", "artist": "Ludwig van Beethoven" },
+        { "title": "Clair de Lune", "artist": "Claude Debussy" },
+        { "title": "The Four Seasons: Spring", "artist": "Antonio Vivaldi" },
+        { "title": "Canon in D", "artist": "Johann Pachelbel" },
+        { "title": "Nocturne Op. 9 No. 2", "artist": "Frederic Chopin" },
+        { "title": "Symphony No. 5", "artist": "Ludwig van Beethoven" },
+        { "title": "Gymnopedie No. 1", "artist": "Erik Satie" },
+        { "title": "Swan Lake Theme", "artist": "Pyotr Ilyich Tchaikovsky" }
+      ]
+    },
+    {
+      "id": "soundtrack",
+      "name": "Soundtrack",
+      "description": "영화와 드라마의 장면 감정을 이끄는 시네마틱 음악 장르",
+      "aliases": ["film score", "ost"],
+      "spotifySeedGenres": ["soundtracks", "movies"],
+      "spotifySearchTerms": ["soundtrack", "film score", "ost"],
+      "subgenres": [],
+      "similar": ["classical", "ambient"],
+      "fusion": [],
+      "tracks": [
+        { "title": "Time", "artist": "Hans Zimmer" },
+        { "title": "Concerning Hobbits", "artist": "Howard Shore" },
+        { "title": "Hedwig's Theme", "artist": "John Williams" },
+        { "title": "He's a Pirate", "artist": "Klaus Badelt" },
+        { "title": "City of Stars", "artist": "Ryan Gosling & Emma Stone" },
+        { "title": "My Heart Will Go On", "artist": "Celine Dion" },
+        { "title": "Now We Are Free", "artist": "Hans Zimmer & Lisa Gerrard" },
+        { "title": "Let It Go", "artist": "Idina Menzel" }
       ]
     }
   ]

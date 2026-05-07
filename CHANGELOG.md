@@ -184,3 +184,10 @@
 
 ## v0.7.5
 - `Open Full Map` 모달이 사이드바 개편 이후에도 상단바 아래 전체 폭을 다시 꽉 채우도록 레이아웃 수정
+
+## v0.8.0
+- `data/genres.json` 장르 카탈로그를 `23개 -> 47개`로 대폭 확장
+- `Neo Soul`, `City Pop`, `Disco`, `Funk`, `Shoegaze`, `Emo`, `Synthwave`, `Afrobeats`, `Amapiano`, `Reggaeton`, `Soundtrack` 등 장르 축 추가
+- 기존 장르의 `Subgenres`, `Similar`, `Fusion` 연결을 새 카탈로그 기준으로 다시 정리해 탐색 흐름 보강
+- 장르 검색 시 더 다양한 스타일 키워드와 연결 장르가 함께 잡히도록 메타데이터 확장
+- 장르 맵 군집 키워드를 넓혀 신규 장르가 특정 구역에 몰리지 않고 더 자연스럽게 분산되도록 조정
