@@ -263,8 +263,6 @@ const elements = {
   sidebarRandom: document.getElementById('sidebar-random'),
   playerTrackTitle: document.getElementById('player-track-title'),
   playerTrackArtist: document.getElementById('player-track-artist'),
-  playerBarTitle: document.getElementById('player-bar-title'),
-  playerBarSubtitle: document.getElementById('player-bar-subtitle'),
   navHome: document.getElementById('nav-home'),
   navMap: document.getElementById('nav-map'),
   navLibrary: document.getElementById('nav-library'),

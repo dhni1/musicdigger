@@ -383,11 +383,6 @@ function createHomePage({ likeTrack, renderGenreMap, renderMapSelection, setActi
     elements.playerTrackArtist.textContent = leadTrack
       ? `${leadTrack.artist} · ${genre.name}`
       : 'Track information will appear here.';
-    elements.playerBarTitle.textContent = leadTrack ? leadTrack.title : genre.name;
-    elements.playerBarSubtitle.textContent = leadTrack
-      ? `${leadTrack.artist} · ${genre.name}`
-      : 'MUSICDIGGER queue';
-
     if (genre.detailsLoading && tracks.length) {
       renderTracks(tracks);
     } else if (genre.detailsLoading) {
@@ -500,8 +495,6 @@ function createHomePage({ likeTrack, renderGenreMap, renderMapSelection, setActi
     elements.relationCount.textContent = '0';
     elements.playerTrackTitle.textContent = 'No track available';
     elements.playerTrackArtist.textContent = 'Track information will appear here.';
-    elements.playerBarTitle.textContent = 'No results';
-    elements.playerBarSubtitle.textContent = 'Try another search';
     clearChildren(elements.trackList);
     elements.trackList.appendChild(
       createEmptyState('표시할 트랙이 없습니다.', {

@@ -1,10 +1,6 @@
 @media (max-width: 1260px) {
   .main-shell {
-    padding-bottom: 90px;
-  }
-
-  .player-bar {
-    left: 14px;
+    padding-bottom: 24px;
   }
 
   .content-grid {
@@ -51,14 +47,6 @@
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
-  .player-bar {
-    grid-template-columns: 1fr;
-  }
-
-  .player-progress {
-    justify-content: flex-start;
-  }
-
   .map-modal-shell {
     top: 132px;
   }
@@ -66,7 +54,7 @@
 
 @media (max-width: 680px) {
   .main-shell {
-    padding: 0 10px 86px;
+    padding: 0 10px 24px;
   }
 
   .topbar {
@@ -96,8 +84,7 @@
   .profile-hero,
   .profile-block,
   .settings-hero,
-  .settings-block,
-  .player-bar {
+  .settings-block {
     padding: 12px;
   }
 
