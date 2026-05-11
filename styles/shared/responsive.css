@@ -1,4 +1,8 @@
 @media (max-width: 1260px) {
+  .map-grid {
+    min-height: auto;
+  }
+
   .main-shell {
     padding-bottom: 24px;
   }

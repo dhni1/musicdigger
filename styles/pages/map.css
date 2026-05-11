@@ -7,11 +7,19 @@
   display: grid;
   grid-template-columns: minmax(0, 1.6fr) minmax(280px, 0.84fr);
   gap: 12px;
+  min-height: calc(100dvh - 136px);
+  align-items: stretch;
 }
 
 .map-panel,
 .map-inspector {
   min-width: 0;
+  min-height: 0;
+}
+
+.map-panel {
+  display: flex;
+  flex-direction: column;
 }
 
 .map-toolbar,
@@ -28,7 +36,8 @@
 
 .genre-map-canvas {
   position: relative;
-  min-height: 560px;
+  flex: 1 1 auto;
+  min-height: 0;
   overflow: auto;
   border: 1px solid var(--line);
   border-radius: var(--radius-sm);
@@ -166,6 +175,7 @@ body.theme-light .map-node {
   display: grid;
   gap: 12px;
   align-content: start;
+  grid-auto-rows: min-content;
 }
 
 .map-selection-copy {
