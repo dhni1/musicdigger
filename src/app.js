@@ -95,7 +95,7 @@ function bindEvents() {
     mapPage.adjustMapZoom('main', -MAP_ZOOM_STEP);
   });
   addClick(elements.mapZoomReset, () => {
-    mapPage.setMapZoom('main', 1);
+    mapPage.resetMapZoom('main');
   });
   addClick(elements.mapOpenModal, mapPage.openMapModal);
   addClick(elements.mapModalClose, mapPage.closeMapModal);
@@ -106,7 +106,7 @@ function bindEvents() {
     mapPage.adjustMapZoom('modal', -MAP_ZOOM_STEP);
   });
   addClick(elements.mapModalZoomReset, () => {
-    mapPage.setMapZoom('modal', 1);
+    mapPage.resetMapZoom('modal');
   });
   addClick(elements.spotifyAuthButton, () => {
     void spotifyService.handleSpotifyAuthButton();

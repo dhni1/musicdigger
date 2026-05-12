@@ -427,6 +427,10 @@ function createMapPage({ setActiveNav, showGenre, showView }) {
     setMapZoom(key, getMapZoom(key) + delta);
   }
 
+  function resetMapZoom(key) {
+    setMapZoom(key, getMapBaseZoom(key));
+  }
+
   function getMapViewport(key) {
     return key === 'modal' ? elements.mapModalCanvas : elements.mapCanvas;
   }
@@ -854,6 +858,7 @@ function createMapPage({ setActiveNav, showGenre, showView }) {
     openMapView,
     renderGenreMap,
     renderMapSelection,
+    resetMapZoom,
     setMapZoom,
   };
 }

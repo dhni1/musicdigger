@@ -13,10 +13,10 @@
 }
 
 .map-stage-tools {
-  position: absolute;
-  top: 14px;
-  right: 14px;
-  z-index: 5;
+  position: fixed;
+  top: 92px;
+  right: 24px;
+  z-index: 24;
   display: grid;
   gap: 10px;
   justify-items: end;

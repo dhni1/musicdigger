@@ -28,7 +28,7 @@
   }
 
   .map-stage-tools {
-    width: 100%;
+    right: 18px;
     justify-items: end;
   }
 
@@ -66,6 +66,11 @@
 }
 
 @media (max-width: 680px) {
+  .map-stage-tools {
+    top: 132px;
+    right: 14px;
+  }
+
   .main-shell {
     padding: 0 10px 24px;
   }
