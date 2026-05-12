@@ -70,32 +70,6 @@ function createMapPage({ setActiveNav, showGenre, showView }) {
     const activeLayout = state.currentGenreId ? state.mapLayoutById.get(state.currentGenreId) : null;
     const activeConnections = new Set(activeLayout ? getMapConnectionIds(activeLayout.genre) : []);
 
-    const connectionLayer = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-    connectionLayer.setAttribute('viewBox', `0 0 ${MAP_SURFACE_WIDTH} ${MAP_SURFACE_HEIGHT}`);
-    connectionLayer.setAttribute('preserveAspectRatio', 'none');
-    connectionLayer.classList.add('map-connection-layer');
-
-    if (activeLayout) {
-      getMapConnectionIds(activeLayout.genre).forEach(targetId => {
-        const target = state.mapLayoutById.get(targetId);
-
-        if (!target) {
-          return;
-        }
-
-        const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-        line.setAttribute('x1', String(activeLayout.x * scale));
-        line.setAttribute('y1', String(activeLayout.y * scale));
-        line.setAttribute('x2', String(target.x * scale));
-        line.setAttribute('y2', String(target.y * scale));
-        line.classList.add('map-connection-line');
-        line.style.setProperty('--line-color', target.family.color);
-        connectionLayer.appendChild(line);
-      });
-    }
-
-    surface.appendChild(connectionLayer);
-
     MAP_FAMILIES.forEach(family => {
       if (!layout.some(item => item.family.id === family.id)) {
         return;
@@ -119,7 +93,7 @@ function createMapPage({ setActiveNav, showGenre, showView }) {
       button.style.left = `${Math.round(item.x * scale)}px`;
       button.style.top = `${Math.round(item.y * scale)}px`;
       button.style.fontSize = `${(item.size * clamp(scale, 0.28, 1.35)).toFixed(3)}rem`;
-      button.style.setProperty('--map-node-color', item.family.color);
+      button.style.setProperty('--map-node-color', getRandomMapNodeColor(item.genre.id));
       button.title = `${item.genre.name} · ${item.family.label} · ${relationCount} links`;
 
       if (item.genre.id === state.currentGenreId) {
@@ -355,6 +329,13 @@ function createMapPage({ setActiveNav, showGenre, showView }) {
 
   function estimateMapNodeHeight(size) {
     return Math.max(24, size * 25);
+  }
+
+  function getRandomMapNodeColor(seed) {
+    const hue = Math.abs(hashString(`${seed}-map-color`)) % 360;
+    const saturation = 68 + (Math.abs(hashString(`${seed}-sat`)) % 18);
+    const lightness = 62 + (Math.abs(hashString(`${seed}-light`)) % 10);
+    return `hsl(${hue}deg ${saturation}% ${lightness}%)`;
   }
 
   function detectMapFamily(genre) {
