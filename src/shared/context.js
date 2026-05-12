@@ -25,74 +25,6 @@ const MAP_MIN_ZOOM = 0.24;
 const MAP_MAX_ZOOM = 2.2;
 const MAP_DRAG_THRESHOLD = 6;
 
-const MAP_FAMILIES = [
-  {
-    id: 'pulse',
-    label: 'Pulse',
-    centerX: 18,
-    centerY: 24,
-    color: '#ff8c69',
-    keywords: ['hip-hop', 'hiphop', 'rap', 'trap', 'grime', 'drill', 'boom-bap', 'uk-garage'],
-  },
-  {
-    id: 'spectrum',
-    label: 'Spectrum',
-    centerX: 49,
-    centerY: 18,
-    color: '#31c7ea',
-    keywords: [
-      'pop',
-      'dance',
-      'k-pop',
-      'edm',
-      'house',
-      'electro',
-      'disco',
-      'funk',
-      'city-pop',
-      'hyperpop',
-      'reggaeton',
-      'afrobeats',
-      'amapiano',
-    ],
-  },
-  {
-    id: 'distortion',
-    label: 'Distortion',
-    centerX: 76,
-    centerY: 34,
-    color: '#f3c968',
-    keywords: ['rock', 'indie', 'alternative', 'punk', 'metal', 'grunge', 'shoegaze', 'emo'],
-  },
-  {
-    id: 'afterglow',
-    label: 'Afterglow',
-    centerX: 32,
-    centerY: 74,
-    color: '#9d7bff',
-    keywords: [
-      'jazz',
-      'lofi',
-      'lo-fi',
-      'ambient',
-      'soul',
-      'neo-soul',
-      'r-n-b',
-      'rnb',
-      'synthwave',
-      'blues',
-    ],
-  },
-  {
-    id: 'horizon',
-    label: 'Horizon',
-    centerX: 72,
-    centerY: 74,
-    color: '#73d6a8',
-    keywords: ['classical', 'country', 'soundtrack', 'world', 'acoustic', 'folk', 'latin', 'salsa', 'bossa'],
-  },
-];
-
 const BUILTIN_GENRES = [
   {
     id: 'hiphop',
@@ -338,7 +270,6 @@ export {
   BUILTIN_GENRES,
   DEFAULT_VISIBLE_GENRES,
   MAP_DRAG_THRESHOLD,
-  MAP_FAMILIES,
   MAP_MAX_ZOOM,
   MAP_MIN_NODE_GAP,
   MAP_MIN_ZOOM,

@@ -166,30 +166,13 @@ body.theme-light .map-zoom-controls .ghost-button {
   background: transparent;
 }
 
-.map-cluster-label {
-  position: absolute;
-  z-index: 2;
-  transform: translate(-50%, -50%);
-  color: rgba(244, 246, 251, 0.24);
-  font-size: 1rem;
-  font-weight: 700;
-  letter-spacing: 0.34em;
-  text-transform: uppercase;
-  pointer-events: none;
-  white-space: nowrap;
-}
-
-body.theme-light .map-cluster-label {
-  color: rgba(18, 23, 34, 0.22);
-}
-
 .map-node {
   position: absolute;
   z-index: 3;
   padding: 0;
   border: 0;
   background: transparent;
-  color: var(--map-node-color, rgba(244, 246, 251, 0.82));
+  color: rgba(244, 246, 251, 0.84);
   font-family: "Space Grotesk", sans-serif;
   font-weight: 700;
   letter-spacing: -0.04em;
@@ -201,30 +184,38 @@ body.theme-light .map-cluster-label {
 }
 
 body.theme-light .map-node {
-  color: var(--map-node-color, rgba(18, 23, 34, 0.72));
+  color: rgba(18, 23, 34, 0.78);
   text-shadow: 0 0 14px rgba(255, 255, 255, 0.72);
 }
 
 .map-node:hover,
 .map-node:focus-visible {
-  color: var(--map-node-color, var(--accent-2));
+  color: rgba(255, 248, 214, 0.96);
   transform: translate(-50%, -50%) scale(1.04);
   outline: none;
-  text-shadow: 0 0 22px color-mix(in srgb, var(--map-node-color, var(--accent-2)) 28%, transparent);
+  text-shadow: 0 0 22px rgba(255, 220, 110, 0.3);
 }
 
 .map-node.is-linked {
   opacity: 1;
-  text-shadow: 0 0 20px color-mix(in srgb, var(--map-node-color, var(--accent-2)) 22%, transparent);
+  color: rgba(255, 255, 255, 0.98);
+  text-shadow: 0 0 18px rgba(255, 255, 255, 0.16);
 }
 
 body.theme-light .map-node.is-linked {
-  text-shadow: 0 0 16px rgba(255, 255, 255, 0.82);
+  color: rgba(18, 23, 34, 0.92);
+  text-shadow: 0 0 12px rgba(255, 255, 255, 0.82);
 }
 
 .map-node.is-active {
+  color: #f3c968;
   transform: translate(-50%, -50%) scale(1.06);
-  text-shadow: 0 0 26px color-mix(in srgb, var(--map-node-color, var(--accent)) 36%, transparent);
+  text-shadow: 0 0 26px rgba(243, 201, 104, 0.42);
+}
+
+body.theme-light .map-node.is-active {
+  color: #c18b14;
+  text-shadow: 0 0 18px rgba(193, 139, 20, 0.22);
 }
 
 .map-inspector {
