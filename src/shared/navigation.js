@@ -69,6 +69,8 @@ function showView(view, options = {}) {
     element?.classList.toggle('is-active', name === view);
   });
 
+  elements.body?.classList.toggle('is-map-view', view === 'map');
+
   window.scrollTo({ top: 0, behavior: scrollBehavior });
 }
 

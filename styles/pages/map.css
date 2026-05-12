@@ -20,6 +20,7 @@
   display: grid;
   gap: 10px;
   justify-items: end;
+  align-content: start;
   pointer-events: none;
 }
 
@@ -35,18 +36,19 @@
 .map-stats,
 .map-zoom-controls {
   padding: 10px;
-  border: 0;
+  border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: calc(var(--radius-sm) + 2px);
-  background: rgba(11, 14, 20, 0.18);
+  background: rgba(11, 14, 20, 0.42);
   backdrop-filter: blur(12px);
-  box-shadow: none;
+  box-shadow: 0 10px 24px rgba(4, 6, 10, 0.14);
   pointer-events: auto;
 }
 
 body.theme-light .map-stats,
 body.theme-light .map-zoom-controls {
-  background: rgba(252, 253, 255, 0.4);
-  box-shadow: none;
+  border-color: rgba(18, 23, 34, 0.08);
+  background: rgba(252, 253, 255, 0.72);
+  box-shadow: 0 10px 24px rgba(65, 76, 91, 0.08);
 }
 
 .map-stats .section-meta {
@@ -64,6 +66,7 @@ body.theme-light .map-zoom-controls {
 }
 
 .map-stage-body {
+  display: flex;
   flex: 1 1 auto;
   height: 100%;
   position: relative;
@@ -146,11 +149,12 @@ body.theme-light .genre-map-surface::before {
 }
 
 .map-zoom-controls .ghost-button {
-  border-color: transparent;
-  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.12);
 }
 
 body.theme-light .map-zoom-controls .ghost-button {
+  border-color: rgba(18, 23, 34, 0.08);
   background: rgba(18, 23, 34, 0.06);
 }
 

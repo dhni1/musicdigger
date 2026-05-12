@@ -22,6 +22,8 @@ import { clamp, hashString } from '../../shared/utils.js';
 const MAP_INSPECTOR_MARGIN = 18;
 
 function createMapPage({ setActiveNav, showGenre, showView }) {
+  let resizeBound = false;
+
   function renderGenreMap() {
     if (!elements.mapCanvas || !elements.mapSurface) {
       return;
@@ -458,13 +460,17 @@ function createMapPage({ setActiveNav, showGenre, showView }) {
       return;
     }
 
-    state.mapBaseZoom[key] = Math.round(getFitMapZoom(key) * 100) / 100;
-    state.mapZoom[key] = getMapBaseZoom(key);
-    renderGenreMap();
-
     window.requestAnimationFrame(() => {
-      centerViewportOnMap(viewport);
-      updateMapZoomUI(key);
+      const fitZoom = Math.round(getFitMapZoom(key) * 100) / 100;
+
+      state.mapBaseZoom[key] = fitZoom;
+      state.mapZoom[key] = fitZoom;
+      renderGenreMap();
+
+      window.requestAnimationFrame(() => {
+        centerViewportOnMap(viewport);
+        updateMapZoomUI(key);
+      });
     });
   }
 
@@ -675,6 +681,15 @@ function createMapPage({ setActiveNav, showGenre, showView }) {
   function bindMapViewport(viewport, key) {
     if (!viewport) {
       return;
+    }
+
+    if (!resizeBound) {
+      resizeBound = true;
+      window.addEventListener('resize', () => {
+        if (state.currentView === 'map') {
+          fitMapToViewport('main');
+        }
+      });
     }
 
     let isDragging = false;

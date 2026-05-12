@@ -359,3 +359,17 @@ body.theme-light .topbar {
 .map-view.is-active {
   display: flex;
 }
+
+body.is-map-view {
+  overflow: hidden;
+}
+
+body.is-map-view .app-shell,
+body.is-map-view .main-shell {
+  height: 100dvh;
+}
+
+body.is-map-view .page-shell,
+body.is-map-view .map-view {
+  overflow: hidden;
+}
