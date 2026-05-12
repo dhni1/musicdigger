@@ -1,5 +1,7 @@
 .map-stage {
-  min-height: calc(100dvh - 136px);
+  display: flex;
+  flex: 1 1 auto;
+  min-height: 0;
   padding: 0;
   background:
     radial-gradient(circle at 16% 18%, rgba(255, 140, 105, 0.08), transparent 24%),
@@ -13,11 +15,11 @@
 .map-stage-tools {
   position: absolute;
   top: 14px;
-  left: 14px;
+  right: 14px;
   z-index: 5;
   display: grid;
   gap: 10px;
-  justify-items: start;
+  justify-items: end;
   pointer-events: none;
 }
 
@@ -33,19 +35,18 @@
 .map-stats,
 .map-zoom-controls {
   padding: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 0;
   border-radius: calc(var(--radius-sm) + 2px);
-  background: rgba(11, 14, 20, 0.72);
+  background: rgba(11, 14, 20, 0.18);
   backdrop-filter: blur(12px);
-  box-shadow: 0 14px 30px rgba(4, 6, 10, 0.18);
+  box-shadow: none;
   pointer-events: auto;
 }
 
 body.theme-light .map-stats,
 body.theme-light .map-zoom-controls {
-  border-color: rgba(18, 23, 34, 0.08);
-  background: rgba(252, 253, 255, 0.8);
-  box-shadow: 0 12px 26px rgba(65, 76, 91, 0.1);
+  background: rgba(252, 253, 255, 0.4);
+  box-shadow: none;
 }
 
 .map-stats .section-meta {
@@ -63,14 +64,17 @@ body.theme-light .map-zoom-controls {
 }
 
 .map-stage-body {
+  flex: 1 1 auto;
+  height: 100%;
   position: relative;
-  min-height: calc(100dvh - 128px);
+  min-height: 0;
 }
 
 .genre-map-canvas {
+  flex: 1 1 auto;
   position: relative;
   height: 100%;
-  min-height: calc(100dvh - 128px);
+  min-height: 0;
   overflow: auto;
   border: 0;
   border-radius: 0;
@@ -139,6 +143,15 @@ body.theme-light .genre-map-surface::before {
     linear-gradient(rgba(18, 23, 34, 0.05) 1px, transparent 1px),
     linear-gradient(90deg, rgba(18, 23, 34, 0.045) 1px, transparent 1px);
   background-size: 100% 92px, 92px 100%;
+}
+
+.map-zoom-controls .ghost-button {
+  border-color: transparent;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+body.theme-light .map-zoom-controls .ghost-button {
+  background: rgba(18, 23, 34, 0.06);
 }
 
 .map-empty-state {

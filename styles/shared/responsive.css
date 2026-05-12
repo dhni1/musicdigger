@@ -20,7 +20,7 @@
   }
 
   .map-stage {
-    min-height: auto;
+    min-height: 0;
   }
 
   .map-stage-topbar {
@@ -29,11 +29,11 @@
 
   .map-stage-tools {
     width: 100%;
-    justify-items: start;
+    justify-items: end;
   }
 
   .genre-map-canvas {
-    min-height: 560px;
+    min-height: 0;
   }
 
   .map-modal-shell {
@@ -110,7 +110,7 @@
   }
 
   .genre-map-canvas {
-    min-height: 440px;
+    min-height: 0;
   }
 
   .genre-map-canvas-modal {
