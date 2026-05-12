@@ -183,12 +183,20 @@
         </section>
 
         <section id="map-view" class="app-view map-view">
-          <div class="map-grid">
-            <section class="panel-surface map-panel">
-              <div class="section-heading">
-                <div>
-                  <p class="section-kicker">Every Genre Nearby</p>
-                  <h3>Noise Map</h3>
+          <section class="panel-surface map-stage">
+            <div class="map-stage-topbar">
+              <div class="map-stage-intro">
+                <p class="section-kicker">Spread Out, Follow the Sound</p>
+                <h3>Noise Map</h3>
+                <p class="map-stage-note">
+                  거대한 장르 필드를 드래그하며 훑고, 이름을 눌러 연결된 흐름과 대표곡을 따라가보세요.
+                </p>
+              </div>
+
+              <div class="map-stage-tools">
+                <div class="map-stats">
+                  <span class="section-meta">Visible <strong id="map-visible-count">0</strong></span>
+                  <span class="section-meta">Links <strong id="map-connection-count">0</strong></span>
                 </div>
                 <div class="map-toolbar">
                   <div class="map-zoom-controls" aria-label="맵 확대 축소">
@@ -202,50 +210,58 @@
                   </button>
                 </div>
               </div>
+            </div>
+
+            <div class="map-stage-body">
               <div id="genre-map-canvas" class="genre-map-canvas" aria-label="장르 맵">
                 <div id="genre-map-surface" class="genre-map-surface"></div>
               </div>
-            </section>
 
-            <aside class="panel-surface map-inspector">
-              <div class="section-heading tight">
-                <div>
-                  <p class="section-kicker">Selected Sound</p>
-                  <h3 id="map-selection-title">Select a genre</h3>
+              <aside class="panel-surface map-inspector">
+                <div class="map-inspector-head">
+                  <span id="map-selection-badge" class="section-meta accent">Music Map</span>
+                  <button id="map-open-home" class="secondary-button ghost-button" type="button">
+                    Open In Home
+                  </button>
                 </div>
-              </div>
 
-              <p id="map-selection-desc" class="hero-description map-selection-copy">
-                맵의 장르 이름을 누르면 이 영역에 설명, 연결된 장르, 대표곡이 표시됩니다.
-              </p>
-
-              <section class="map-inspector-block">
                 <div class="section-heading tight">
                   <div>
-                    <p class="section-kicker">Connections</p>
-                    <h3>Nearby Links</h3>
+                    <p class="section-kicker">Selected Sound</p>
+                    <h3 id="map-selection-title">Select a genre</h3>
                   </div>
                 </div>
-                <div id="map-selection-links" class="pill-group map-selection-links">
-                  <div class="empty-state">연결된 장르가 여기에 표시됩니다.</div>
-                </div>
-              </section>
 
-              <section class="map-inspector-block">
-                <div class="section-heading tight">
-                  <div>
-                    <p class="section-kicker">Preview</p>
-                    <h3>Major Tracks</h3>
+                <p id="map-selection-desc" class="hero-description map-selection-copy">
+                  맵의 장르 이름을 누르면 이 영역에 설명, 연결된 장르, 대표곡이 표시됩니다.
+                </p>
+
+                <section class="map-inspector-block">
+                  <div class="section-heading tight">
+                    <div>
+                      <p class="section-kicker">Connections</p>
+                      <h3>Nearby Links</h3>
+                    </div>
                   </div>
-                </div>
-                <ul id="map-selection-tracks" class="map-track-preview">
-                  <li class="empty-state">대표곡 미리보기가 여기에 표시됩니다.</li>
-                </ul>
-              </section>
+                  <div id="map-selection-links" class="pill-group map-selection-links">
+                    <div class="empty-state">연결된 장르가 여기에 표시됩니다.</div>
+                  </div>
+                </section>
 
-              <button id="map-open-home" class="secondary-button" type="button">Open In Home</button>
-            </aside>
-          </div>
+                <section class="map-inspector-block">
+                  <div class="section-heading tight">
+                    <div>
+                      <p class="section-kicker">Preview</p>
+                      <h3>Major Tracks</h3>
+                    </div>
+                  </div>
+                  <ul id="map-selection-tracks" class="map-track-preview">
+                    <li class="empty-state">대표곡 미리보기가 여기에 표시됩니다.</li>
+                  </ul>
+                </section>
+              </aside>
+            </div>
+          </section>
         </section>
 
         <section id="library-view" class="app-view library-view">

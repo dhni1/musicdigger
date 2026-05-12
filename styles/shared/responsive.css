@@ -1,8 +1,4 @@
 @media (max-width: 1260px) {
-  .map-grid {
-    min-height: auto;
-  }
-
   .main-shell {
     padding-bottom: 24px;
   }
@@ -23,8 +19,32 @@
     grid-template-columns: 1fr;
   }
 
-  .map-grid {
-    grid-template-columns: 1fr;
+  .map-stage {
+    min-height: auto;
+  }
+
+  .map-stage-topbar {
+    flex-direction: column;
+  }
+
+  .map-stage-tools {
+    width: 100%;
+    justify-items: start;
+  }
+
+  .map-stage-body {
+    display: grid;
+    gap: 12px;
+  }
+
+  .genre-map-canvas {
+    min-height: 560px;
+  }
+
+  .map-inspector {
+    position: static;
+    width: 100%;
+    max-height: none;
   }
 
   .map-modal-shell {
@@ -83,7 +103,7 @@
   .browse-panel,
   .detail-panel,
   .side-panel,
-  .map-panel,
+  .map-stage,
   .map-inspector,
   .profile-hero,
   .profile-block,
@@ -106,6 +126,11 @@
 
   .genre-map-canvas-modal {
     margin-top: 10px;
+  }
+
+  .map-inspector-head {
+    align-items: flex-start;
+    flex-direction: column;
   }
 
   .spotlight-card {

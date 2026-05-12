@@ -152,7 +152,7 @@ function createMapPage({ setActiveNav, showGenre, showView }) {
 
     if (!genre) {
       if (elements.mapSelectionBadge) {
-        elements.mapSelectionBadge.textContent = 'Music Map';
+        elements.mapSelectionBadge.textContent = 'Genre Field';
       }
       elements.mapSelectionTitle.textContent = 'Select a genre';
       elements.mapSelectionDesc.textContent =
@@ -175,9 +175,10 @@ function createMapPage({ setActiveNav, showGenre, showView }) {
 
     const connectionIds = getMapConnectionIds(genre);
     const previewTracks = (genre.tracks ?? []).slice(0, MAX_MAP_PREVIEW_TRACKS);
+    const family = detectMapFamily(genre);
 
     if (elements.mapSelectionBadge) {
-      elements.mapSelectionBadge.textContent = 'Music Map';
+      elements.mapSelectionBadge.textContent = family.label;
     }
     elements.mapSelectionTitle.textContent = genre.name;
     elements.mapSelectionDesc.textContent =
