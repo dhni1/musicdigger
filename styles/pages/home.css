@@ -94,6 +94,11 @@
   gap: 10px;
 }
 
+#genre-page-info {
+  justify-content: center;
+  min-width: 64px;
+}
+
 .genre-card {
   position: relative;
   padding: 12px;

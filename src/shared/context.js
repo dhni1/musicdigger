@@ -14,7 +14,7 @@ const SPOTIFY_STORAGE_KEYS = {
   state: 'musicdigger.spotify.state',
 };
 
-const DEFAULT_VISIBLE_GENRES = 4;
+const DEFAULT_VISIBLE_GENRES = 8;
 const BACKEND_REQUEST_TIMEOUT_MS = 1800;
 const MAX_MAP_PREVIEW_TRACKS = 3;
 const MAP_SURFACE_WIDTH = 1800;
@@ -142,7 +142,7 @@ const state = {
   currentGenreId: null,
   currentRoute: 'home',
   currentView: 'home',
-  genreListExpanded: false,
+  genreListPage: 0,
   isDarkMode: true,
   searchQuery: '',
   usingBackendGenres: false,
@@ -187,7 +187,9 @@ const elements = {
   profileView: document.getElementById('profile-view'),
   settingsView: document.getElementById('settings-view'),
   genreList: document.getElementById('genre-list'),
-  genreToggle: document.getElementById('genre-toggle'),
+  genrePagePrev: document.getElementById('genre-page-prev'),
+  genrePageInfo: document.getElementById('genre-page-info'),
+  genrePageNext: document.getElementById('genre-page-next'),
   genreTitle: document.getElementById('genre-title'),
   genreDesc: document.getElementById('genre-desc'),
   trackList: document.getElementById('track-list'),

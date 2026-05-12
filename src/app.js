@@ -114,8 +114,11 @@ function bindEvents() {
   addClick(elements.spotifyRefreshButton, () => {
     void spotifyService.handleSpotifyRefreshButton();
   });
-  addClick(elements.genreToggle, () => {
-    homePage.toggleGenreListExpansion();
+  addClick(elements.genrePagePrev, () => {
+    homePage.changeGenreListPage(-1);
+  });
+  addClick(elements.genrePageNext, () => {
+    homePage.changeGenreListPage(1);
   });
   addClick(elements.playlistModalClose, spotifyService.closePlaylistModal);
   addClick(elements.playlistModal, event => {

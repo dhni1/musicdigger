@@ -115,10 +115,8 @@ function createHomePage({ likeTrack, renderGenreMap, renderMapSelection, setActi
     const keyword = buildSearchToken(query);
 
     if (!keyword.normalized) {
-      state.genreListExpanded = false;
       state.filteredGenres = [...state.genres];
     } else {
-      state.genreListExpanded = true;
       state.filteredGenres = state.genres
         .map((genre, index) => ({
           genre,
@@ -128,6 +126,12 @@ function createHomePage({ likeTrack, renderGenreMap, renderMapSelection, setActi
         .filter(item => item.score > 0)
         .sort((left, right) => right.score - left.score || left.index - right.index)
         .map(item => item.genre);
+    }
+
+    state.genreListPage = 0;
+
+    if (state.currentGenreId && state.filteredGenres.some(genre => genre.id === state.currentGenreId)) {
+      ensureGenreVisibleInPage(state.currentGenreId);
     }
 
     updateSearchStatus(keyword);
@@ -145,8 +149,7 @@ function createHomePage({ likeTrack, renderGenreMap, renderMapSelection, setActi
   }
 
   function updateSearchStatus(keyword) {
-    const isSearching = Boolean(keyword.normalized);
-    updateGenreToggle(isSearching);
+    updateGenrePagination(Boolean(keyword.normalized));
   }
 
   function getGenreSearchScore(genre, keyword) {
@@ -237,51 +240,64 @@ function createHomePage({ likeTrack, renderGenreMap, renderMapSelection, setActi
   }
 
   function getVisibleGenres() {
-    if (
-      state.genreListExpanded ||
-      state.filteredGenres.length <= DEFAULT_VISIBLE_GENRES ||
-      buildSearchToken(state.searchQuery).normalized
-    ) {
-      return state.filteredGenres;
-    }
-
-    const visibleGenres = state.filteredGenres.slice(0, DEFAULT_VISIBLE_GENRES);
-
-    if (
-      state.currentGenreId &&
-      !visibleGenres.some(genre => genre.id === state.currentGenreId)
-    ) {
-      const currentGenre = state.filteredGenres.find(genre => genre.id === state.currentGenreId);
-      if (currentGenre) {
-        visibleGenres[visibleGenres.length - 1] = currentGenre;
-      }
-    }
-
-    return visibleGenres;
+    clampGenreListPage();
+    const start = state.genreListPage * DEFAULT_VISIBLE_GENRES;
+    return state.filteredGenres.slice(start, start + DEFAULT_VISIBLE_GENRES);
   }
 
-  function updateGenreToggle(isSearching) {
-    if (!elements.genreToggle) {
+  function getGenrePageCount() {
+    return Math.max(1, Math.ceil(state.filteredGenres.length / DEFAULT_VISIBLE_GENRES));
+  }
+
+  function clampGenreListPage() {
+    state.genreListPage = Math.min(Math.max(state.genreListPage, 0), getGenrePageCount() - 1);
+  }
+
+  function ensureGenreVisibleInPage(genreId) {
+    const genreIndex = state.filteredGenres.findIndex(genre => genre.id === genreId);
+
+    if (genreIndex >= 0) {
+      state.genreListPage = Math.floor(genreIndex / DEFAULT_VISIBLE_GENRES);
+    }
+  }
+
+  function updateGenrePagination(isSearching = false) {
+    if (!elements.genrePagePrev || !elements.genrePageNext || !elements.genrePageInfo) {
       return;
     }
 
-    const shouldShow = !isSearching && state.filteredGenres.length > DEFAULT_VISIBLE_GENRES;
-    elements.genreToggle.hidden = !shouldShow;
+    clampGenreListPage();
+    const pageCount = getGenrePageCount();
+    const shouldShow = state.filteredGenres.length > DEFAULT_VISIBLE_GENRES;
 
-    if (!shouldShow) {
-      return;
-    }
+    elements.genrePagePrev.hidden = !shouldShow;
+    elements.genrePageNext.hidden = !shouldShow;
+    elements.genrePageInfo.hidden = !shouldShow;
+    elements.genrePagePrev.disabled = !shouldShow || state.genreListPage === 0;
+    elements.genrePageNext.disabled = !shouldShow || state.genreListPage >= pageCount - 1;
+    elements.genrePageInfo.textContent = shouldShow
+      ? `${state.genreListPage + 1} / ${pageCount}`
+      : isSearching && state.filteredGenres.length
+        ? 'Search'
+        : '1 / 1';
+  }
 
-    elements.genreToggle.textContent = state.genreListExpanded ? 'Show Less' : 'Show More';
+  function changeGenreListPage(delta) {
+    const nextPage = state.genreListPage + delta;
+    state.genreListPage = Math.min(Math.max(nextPage, 0), getGenrePageCount() - 1);
+    renderGenreList();
+    updateGenrePagination(Boolean(buildSearchToken(state.searchQuery).normalized));
   }
 
   function renderGenreList() {
     clearChildren(elements.genreList);
+    clampGenreListPage();
 
     if (state.filteredGenres.length === 0) {
       elements.genreList.appendChild(
         createEmptyState('검색된 장르가 없습니다. 다른 장르 이름으로 다시 찾아보세요.'),
       );
+      updateGenrePagination(Boolean(buildSearchToken(state.searchQuery).normalized));
       return;
     }
 
@@ -312,6 +328,8 @@ function createHomePage({ likeTrack, renderGenreMap, renderMapSelection, setActi
       });
       elements.genreList.appendChild(button);
     });
+
+    updateGenrePagination(Boolean(buildSearchToken(state.searchQuery).normalized));
   }
 
   async function showGenre(id) {
@@ -322,6 +340,7 @@ function createHomePage({ likeTrack, renderGenreMap, renderMapSelection, setActi
     }
 
     state.currentGenreId = genre.id;
+    ensureGenreVisibleInPage(genre.id);
 
     if (genre.spotifyBacked && !genre.detailsLoaded && !genre.detailsLoading) {
       genre.detailsLoading = true;
@@ -544,12 +563,6 @@ function createHomePage({ likeTrack, renderGenreMap, renderMapSelection, setActi
     }
   }
 
-  function toggleGenreListExpansion() {
-    state.genreListExpanded = !state.genreListExpanded;
-    renderGenreList();
-    updateSearchStatus(buildSearchToken(state.searchQuery));
-  }
-
   function ensureGenreStub(name) {
     const id = slugify(name);
     const existing = state.genres.find(item => item.id === id);
@@ -586,13 +599,13 @@ function createHomePage({ likeTrack, renderGenreMap, renderMapSelection, setActi
 
   return {
     applySearch,
+    changeGenreListPage,
     focusHome,
     getCurrentGenreName,
     loadGenres,
     renderTracksForCurrentGenre,
     showGenre,
     showRandomGenre,
-    toggleGenreListExpansion,
   };
 }
 
