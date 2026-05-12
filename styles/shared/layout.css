@@ -338,8 +338,11 @@ body.theme-light .topbar {
 }
 
 .library-view,
-.map-view,
 .profile-view,
 .settings-view {
   margin-top: 12px;
+}
+
+.map-view {
+  margin-top: 4px;
 }

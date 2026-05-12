@@ -1,45 +1,24 @@
 .map-stage {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
   min-height: calc(100dvh - 136px);
-  padding: 18px;
+  padding: 0;
   background:
     radial-gradient(circle at 16% 18%, rgba(255, 140, 105, 0.08), transparent 24%),
     radial-gradient(circle at 84% 22%, rgba(49, 199, 234, 0.08), transparent 20%),
     radial-gradient(circle at 70% 78%, rgba(115, 214, 168, 0.08), transparent 24%),
     linear-gradient(180deg, rgba(255, 255, 255, 0.02), rgba(255, 255, 255, 0)),
     var(--bg-panel);
-}
-
-.map-stage-topbar {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 18px;
-}
-
-.map-stage-intro {
-  max-width: 560px;
-}
-
-.map-stage-intro h3 {
-  margin: 4px 0 0;
-  font-size: clamp(1.8rem, 2vw, 2.4rem);
-  letter-spacing: -0.06em;
-}
-
-.map-stage-note {
-  max-width: 48ch;
-  margin: 10px 0 0;
-  color: var(--text-soft);
-  line-height: 1.6;
+  overflow: hidden;
 }
 
 .map-stage-tools {
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  z-index: 5;
   display: grid;
-  justify-items: end;
   gap: 10px;
+  justify-items: start;
+  pointer-events: none;
 }
 
 .map-stats,
@@ -49,6 +28,24 @@
   align-items: center;
   gap: 8px;
   flex-wrap: wrap;
+}
+
+.map-stats,
+.map-zoom-controls {
+  padding: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: calc(var(--radius-sm) + 2px);
+  background: rgba(11, 14, 20, 0.72);
+  backdrop-filter: blur(12px);
+  box-shadow: 0 14px 30px rgba(4, 6, 10, 0.18);
+  pointer-events: auto;
+}
+
+body.theme-light .map-stats,
+body.theme-light .map-zoom-controls {
+  border-color: rgba(18, 23, 34, 0.08);
+  background: rgba(252, 253, 255, 0.8);
+  box-shadow: 0 12px 26px rgba(65, 76, 91, 0.1);
 }
 
 .map-stats .section-meta {
@@ -67,17 +64,16 @@
 
 .map-stage-body {
   position: relative;
-  flex: 1 1 auto;
-  min-height: 0;
+  min-height: calc(100dvh - 128px);
 }
 
 .genre-map-canvas {
   position: relative;
   height: 100%;
-  min-height: 0;
+  min-height: calc(100dvh - 128px);
   overflow: auto;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: calc(var(--radius-md) + 2px);
+  border: 0;
+  border-radius: 0;
   background: rgba(7, 10, 15, 0.84);
   cursor: grab;
   overscroll-behavior: contain;
@@ -124,7 +120,6 @@ body.theme-light .map-stage {
 }
 
 body.theme-light .genre-map-canvas {
-  border-color: rgba(18, 23, 34, 0.08);
   background: rgba(247, 249, 252, 0.88);
 }
 

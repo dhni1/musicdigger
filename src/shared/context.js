@@ -21,7 +21,7 @@ const MAP_SURFACE_WIDTH = 1800;
 const MAP_SURFACE_HEIGHT = 1280;
 const MAP_MIN_NODE_GAP = 16;
 const MAP_ZOOM_STEP = 0.2;
-const MAP_MIN_ZOOM = 0.7;
+const MAP_MIN_ZOOM = 0.24;
 const MAP_MAX_ZOOM = 2.2;
 const MAP_DRAG_THRESHOLD = 6;
 
@@ -216,6 +216,10 @@ const state = {
   usingBackendGenres: false,
   mapLayoutById: new Map(),
   mapZoom: {
+    main: 1,
+    modal: 1,
+  },
+  mapBaseZoom: {
     main: 1,
     modal: 1,
   },

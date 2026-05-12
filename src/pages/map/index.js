@@ -104,6 +104,7 @@ function createMapPage({ setActiveNav, showGenre, showView }) {
       label.textContent = family.label;
       label.style.left = `${Math.round((family.centerX / 100) * MAP_SURFACE_WIDTH * scale)}px`;
       label.style.top = `${Math.round((family.centerY / 100) * MAP_SURFACE_HEIGHT * scale)}px`;
+      label.style.fontSize = `${clamp(0.46 + scale * 0.5, 0.48, 1)}rem`;
       surface.appendChild(label);
     });
 
@@ -115,8 +116,7 @@ function createMapPage({ setActiveNav, showGenre, showView }) {
       button.textContent = item.genre.name;
       button.style.left = `${Math.round(item.x * scale)}px`;
       button.style.top = `${Math.round(item.y * scale)}px`;
-      button.style.fontSize =
-        `${(item.size * Math.max(0.9, Math.min(scale, 1.35))).toFixed(3)}rem`;
+      button.style.fontSize = `${(item.size * clamp(scale, 0.28, 1.35)).toFixed(3)}rem`;
       button.style.setProperty('--map-node-color', item.family.color);
       button.title = `${item.genre.name} · ${item.family.label} · ${relationCount} links`;
 
@@ -417,13 +417,64 @@ function createMapPage({ setActiveNav, showGenre, showView }) {
     return state.mapZoom[key] ?? 1;
   }
 
+  function getMapBaseZoom(key) {
+    return state.mapBaseZoom[key] ?? 1;
+  }
+
   function adjustMapZoom(key, delta) {
     setMapZoom(key, getMapZoom(key) + delta);
   }
 
+  function getMapViewport(key) {
+    return key === 'modal' ? elements.mapModalCanvas : elements.mapCanvas;
+  }
+
+  function getFitMapZoom(key) {
+    const viewport = getMapViewport(key);
+
+    if (!viewport) {
+      return 1;
+    }
+
+    const widthRatio = (viewport.clientWidth - MAP_INSPECTOR_MARGIN * 2) / MAP_SURFACE_WIDTH;
+    const heightRatio = (viewport.clientHeight - MAP_INSPECTOR_MARGIN * 2) / MAP_SURFACE_HEIGHT;
+
+    return clamp(Math.min(widthRatio, heightRatio, 1), MAP_MIN_ZOOM, MAP_MAX_ZOOM);
+  }
+
+  function centerViewportOnMap(viewport) {
+    if (!viewport) {
+      return;
+    }
+
+    viewport.scrollLeft = Math.max(0, (viewport.scrollWidth - viewport.clientWidth) / 2);
+    viewport.scrollTop = Math.max(0, (viewport.scrollHeight - viewport.clientHeight) / 2);
+  }
+
+  function fitMapToViewport(key) {
+    const viewport = getMapViewport(key);
+
+    if (!viewport) {
+      return;
+    }
+
+    state.mapBaseZoom[key] = Math.round(getFitMapZoom(key) * 100) / 100;
+    state.mapZoom[key] = getMapBaseZoom(key);
+    renderGenreMap();
+
+    window.requestAnimationFrame(() => {
+      centerViewportOnMap(viewport);
+      updateMapZoomUI(key);
+    });
+  }
+
   function setMapZoom(key, nextZoom) {
-    const viewport = key === 'modal' ? elements.mapModalCanvas : elements.mapCanvas;
-    const clampedZoom = clamp(Math.round(nextZoom * 100) / 100, MAP_MIN_ZOOM, MAP_MAX_ZOOM);
+    const viewport = getMapViewport(key);
+    const clampedZoom = clamp(
+      Math.round(nextZoom * 100) / 100,
+      Math.max(MAP_MIN_ZOOM, getMapBaseZoom(key)),
+      MAP_MAX_ZOOM,
+    );
     const previousZoom = getMapZoom(key);
 
     if (Math.abs(clampedZoom - previousZoom) < 0.001) {
@@ -453,7 +504,7 @@ function createMapPage({ setActiveNav, showGenre, showView }) {
     const label = key === 'modal' ? elements.mapModalZoomLevel : elements.mapZoomLevel;
 
     if (label) {
-      label.textContent = `${Math.round(getMapZoom(key) * 100)}%`;
+      label.textContent = `${Math.round((getMapZoom(key) / getMapBaseZoom(key)) * 100)}%`;
     }
   }
 
@@ -702,7 +753,7 @@ function createMapPage({ setActiveNav, showGenre, showView }) {
   }
 
   function ensureMapViewportReady(key) {
-    const viewport = key === 'modal' ? elements.mapModalCanvas : elements.mapCanvas;
+    const viewport = getMapViewport(key);
 
     if (!viewport || state.mapViewportReady[key]) {
       return;
@@ -710,10 +761,9 @@ function createMapPage({ setActiveNav, showGenre, showView }) {
 
     state.mapViewportReady[key] = true;
     window.requestAnimationFrame(() => {
-      viewport.scrollLeft = Math.max(0, (viewport.scrollWidth - viewport.clientWidth) / 2);
-      viewport.scrollTop = Math.max(0, (viewport.scrollHeight - viewport.clientHeight) / 2);
+      centerViewportOnMap(viewport);
 
-      if (state.currentGenreId) {
+      if (key === 'modal' && state.currentGenreId) {
         centerViewportOnGenre(viewport, state.currentGenreId);
       }
     });
@@ -771,16 +821,11 @@ function createMapPage({ setActiveNav, showGenre, showView }) {
     setActiveNav(elements.navMap);
     renderGenreMap();
     closeMapInspector();
+    fitMapToViewport('main');
 
     if (!state.currentGenreId && state.filteredGenres.length > 0) {
       void showGenre(state.filteredGenres[0].id);
       return;
-    }
-
-    if (state.currentGenreId) {
-      window.requestAnimationFrame(() => {
-        centerViewportOnGenre(elements.mapCanvas, state.currentGenreId);
-      });
     }
   }
 
