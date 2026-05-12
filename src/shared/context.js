@@ -14,7 +14,7 @@ const SPOTIFY_STORAGE_KEYS = {
   state: 'musicdigger.spotify.state',
 };
 
-const DEFAULT_VISIBLE_GENRES = 8;
+const DEFAULT_VISIBLE_GENRES = 10;
 const BACKEND_REQUEST_TIMEOUT_MS = 1800;
 const MAX_MAP_PREVIEW_TRACKS = 3;
 const MAP_SURFACE_WIDTH = 1800;
