@@ -183,16 +183,8 @@
         </section>
 
         <section id="map-view" class="app-view map-view">
-          <section class="panel-surface map-stage">
-            <div class="map-stage-topbar">
-              <div class="map-stage-intro">
-                <p class="section-kicker">Spread Out, Follow the Sound</p>
-                <h3>Noise Map</h3>
-                <p class="map-stage-note">
-                  거대한 장르 필드를 드래그하며 훑고, 이름을 눌러 연결된 흐름과 대표곡을 따라가보세요.
-                </p>
-              </div>
-
+          <section class="map-stage">
+            <div id="map-stage-body" class="map-stage-body">
               <div class="map-stage-tools">
                 <div class="map-stats">
                   <span class="section-meta">Visible <strong id="map-visible-count">0</strong></span>
@@ -205,14 +197,9 @@
                     <button id="map-zoom-in" class="secondary-button ghost-button" type="button">+</button>
                     <button id="map-zoom-reset" class="secondary-button ghost-button" type="button">Reset</button>
                   </div>
-                  <button id="map-open-modal" class="secondary-button ghost-button" type="button">
-                    Open Full Map
-                  </button>
                 </div>
               </div>
-            </div>
 
-            <div id="map-stage-body" class="map-stage-body">
               <div id="genre-map-canvas" class="genre-map-canvas" aria-label="장르 맵">
                 <div id="genre-map-surface" class="genre-map-surface"></div>
               </div>

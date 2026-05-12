@@ -319,7 +319,6 @@ const elements = {
   mapZoomOut: document.getElementById('map-zoom-out'),
   mapZoomReset: document.getElementById('map-zoom-reset'),
   mapZoomLevel: document.getElementById('map-zoom-level'),
-  mapOpenModal: document.getElementById('map-open-modal'),
   mapModal: document.getElementById('map-modal'),
   mapModalClose: document.getElementById('map-modal-close'),
   mapModalCanvas: document.getElementById('genre-map-modal-canvas'),
