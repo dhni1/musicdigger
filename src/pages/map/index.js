@@ -19,6 +19,8 @@ import {
 } from '../../shared/dom.js';
 import { clamp, hashString } from '../../shared/utils.js';
 
+const MAP_INSPECTOR_MARGIN = 18;
+
 function createMapPage({ setActiveNav, showGenre, showView }) {
   function renderGenreMap() {
     if (!elements.mapCanvas || !elements.mapSurface) {
@@ -39,6 +41,8 @@ function createMapPage({ setActiveNav, showGenre, showView }) {
         renderEmptyMapSurface(elements.mapModalSurface);
       }
       state.mapLayoutById = new Map();
+      renderMapSelection(null);
+      closeMapInspector();
       return;
     }
 
@@ -48,6 +52,10 @@ function createMapPage({ setActiveNav, showGenre, showView }) {
 
     if (elements.mapModalSurface) {
       renderMapSurface(elements.mapModalSurface, layout, 'modal');
+    }
+
+    if (state.mapInspector.isOpen) {
+      updateMapInspectorUI();
     }
   }
 
@@ -124,7 +132,10 @@ function createMapPage({ setActiveNav, showGenre, showView }) {
       button.addEventListener('click', event => {
         event.preventDefault();
         event.stopPropagation();
-        selectMapGenre(item.genre.id);
+        selectMapGenre(item.genre.id, {
+          openInspector: true,
+          anchorPoint: getStagePointFromEvent(event),
+        });
       });
 
       surface.appendChild(button);
@@ -449,7 +460,165 @@ function createMapPage({ setActiveNav, showGenre, showView }) {
   function selectMapGenre(genreId, options = {}) {
     showView('map', options);
     setActiveNav(elements.navMap);
-    void showGenre(genreId);
+    const selectionTask = showGenre(genreId);
+
+    if (options.openInspector) {
+      void Promise.resolve(selectionTask).then(() => {
+        openMapInspector(options.anchorPoint);
+      });
+    }
+  }
+
+  function getStagePointFromEvent(event) {
+    const container = elements.mapStageBody;
+
+    if (!container) {
+      return null;
+    }
+
+    const rect = container.getBoundingClientRect();
+    return {
+      x: event.clientX - rect.left,
+      y: event.clientY - rect.top,
+    };
+  }
+
+  function openMapInspector(anchorPoint = null) {
+    const nextAnchor = state.mapInspector.isOpen ? null : anchorPoint;
+    state.mapInspector.isOpen = true;
+    updateMapInspectorUI(nextAnchor);
+  }
+
+  function closeMapInspector() {
+    state.mapInspector.isOpen = false;
+    updateMapInspectorUI();
+  }
+
+  function updateMapInspectorUI(anchorPoint = null) {
+    const inspector = elements.mapInspector;
+
+    if (!inspector) {
+      return;
+    }
+
+    inspector.classList.toggle('is-hidden', !state.mapInspector.isOpen);
+    inspector.setAttribute('aria-hidden', String(!state.mapInspector.isOpen));
+
+    if (!state.mapInspector.isOpen) {
+      return;
+    }
+
+    window.requestAnimationFrame(() => {
+      positionMapInspector(anchorPoint);
+    });
+  }
+
+  function positionMapInspector(anchorPoint = null) {
+    const inspector = elements.mapInspector;
+    const container = elements.mapStageBody;
+
+    if (!inspector || !container) {
+      return;
+    }
+
+    const nextX = anchorPoint ? anchorPoint.x + 18 : state.mapInspector.x;
+    const nextY = anchorPoint ? anchorPoint.y + 18 : state.mapInspector.y;
+    const clamped = clampMapInspectorPosition(nextX, nextY);
+
+    state.mapInspector.x = clamped.x;
+    state.mapInspector.y = clamped.y;
+    inspector.style.left = `${clamped.x}px`;
+    inspector.style.top = `${clamped.y}px`;
+  }
+
+  function clampMapInspectorPosition(nextX, nextY) {
+    const inspector = elements.mapInspector;
+    const container = elements.mapStageBody;
+
+    if (!inspector || !container) {
+      return { x: nextX, y: nextY };
+    }
+
+    const maxX = Math.max(
+      MAP_INSPECTOR_MARGIN,
+      container.clientWidth - inspector.offsetWidth - MAP_INSPECTOR_MARGIN,
+    );
+    const maxY = Math.max(
+      MAP_INSPECTOR_MARGIN,
+      container.clientHeight - inspector.offsetHeight - MAP_INSPECTOR_MARGIN,
+    );
+
+    return {
+      x: clamp(Math.round(nextX), MAP_INSPECTOR_MARGIN, maxX),
+      y: clamp(Math.round(nextY), MAP_INSPECTOR_MARGIN, maxY),
+    };
+  }
+
+  function bindMapInspector() {
+    const handle = elements.mapInspectorHead;
+    const inspector = elements.mapInspector;
+
+    if (!handle || !inspector) {
+      return;
+    }
+
+    let isDragging = false;
+    let originX = 0;
+    let originY = 0;
+    let startX = 0;
+    let startY = 0;
+
+    handle.addEventListener('pointerdown', event => {
+      if (!state.mapInspector.isOpen || event.target.closest('button')) {
+        return;
+      }
+
+      isDragging = true;
+      startX = event.clientX;
+      startY = event.clientY;
+      originX = state.mapInspector.x;
+      originY = state.mapInspector.y;
+      inspector.classList.add('is-dragging');
+      handle.setPointerCapture(event.pointerId);
+      event.preventDefault();
+      event.stopPropagation();
+    });
+
+    handle.addEventListener('pointermove', event => {
+      if (!isDragging) {
+        return;
+      }
+
+      const deltaX = event.clientX - startX;
+      const deltaY = event.clientY - startY;
+      const nextPosition = clampMapInspectorPosition(originX + deltaX, originY + deltaY);
+
+      state.mapInspector.x = nextPosition.x;
+      state.mapInspector.y = nextPosition.y;
+      inspector.style.left = `${nextPosition.x}px`;
+      inspector.style.top = `${nextPosition.y}px`;
+    });
+
+    const stopDragging = event => {
+      if (!isDragging) {
+        return;
+      }
+
+      isDragging = false;
+      inspector.classList.remove('is-dragging');
+
+      if (event?.pointerId !== undefined && handle.hasPointerCapture(event.pointerId)) {
+        handle.releasePointerCapture(event.pointerId);
+      }
+    };
+
+    handle.addEventListener('pointerup', stopDragging);
+    handle.addEventListener('pointercancel', stopDragging);
+    window.addEventListener('resize', () => {
+      if (state.mapInspector.isOpen) {
+        updateMapInspectorUI();
+      }
+    });
   }
 
   function bindMapViewport(viewport, key) {
@@ -601,6 +770,7 @@ function createMapPage({ setActiveNav, showGenre, showView }) {
     showView('map', options);
     setActiveNav(elements.navMap);
     renderGenreMap();
+    closeMapInspector();
 
     if (!state.currentGenreId && state.filteredGenres.length > 0) {
       void showGenre(state.filteredGenres[0].id);
@@ -616,7 +786,9 @@ function createMapPage({ setActiveNav, showGenre, showView }) {
 
   return {
     adjustMapZoom,
+    bindMapInspector,
     bindMapViewport,
+    closeMapInspector,
     closeMapModal,
     openMapModal,
     openMapView,

@@ -85,6 +85,9 @@ function bindEvents() {
   addClick(elements.mapOpenHome, () => {
     homePage.focusHome();
   });
+  addClick(elements.mapInspectorClose, () => {
+    mapPage.closeMapInspector();
+  });
   addClick(elements.mapZoomIn, () => {
     mapPage.adjustMapZoom('main', MAP_ZOOM_STEP);
   });
@@ -133,6 +136,7 @@ function bindEvents() {
 
   mapPage.bindMapViewport(elements.mapCanvas, 'main');
   mapPage.bindMapViewport(elements.mapModalCanvas, 'modal');
+  mapPage.bindMapInspector();
 
   if (elements.searchInput) {
     elements.searchInput.addEventListener('input', event => {
@@ -161,6 +165,7 @@ function bindEvents() {
 
   document.addEventListener('keydown', event => {
     if (event.key === 'Escape') {
+      mapPage.closeMapInspector();
       setMenuOpen(false);
     }
   });

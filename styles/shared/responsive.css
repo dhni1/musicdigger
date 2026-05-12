@@ -32,19 +32,8 @@
     justify-items: start;
   }
 
-  .map-stage-body {
-    display: grid;
-    gap: 12px;
-  }
-
   .genre-map-canvas {
     min-height: 560px;
-  }
-
-  .map-inspector {
-    position: static;
-    width: 100%;
-    max-height: none;
   }
 
   .map-modal-shell {
@@ -129,8 +118,13 @@
   }
 
   .map-inspector-head {
-    align-items: flex-start;
-    flex-direction: column;
+    flex-wrap: wrap;
+  }
+
+  .map-inspector-actions {
+    width: 100%;
+    margin-left: 0;
+    justify-content: flex-start;
   }
 
   .spotlight-card {

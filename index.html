@@ -212,17 +212,27 @@
               </div>
             </div>
 
-            <div class="map-stage-body">
+            <div id="map-stage-body" class="map-stage-body">
               <div id="genre-map-canvas" class="genre-map-canvas" aria-label="장르 맵">
                 <div id="genre-map-surface" class="genre-map-surface"></div>
               </div>
 
-              <aside class="panel-surface map-inspector">
+              <aside id="map-inspector" class="panel-surface map-inspector is-hidden" aria-hidden="true">
                 <div class="map-inspector-head">
                   <span id="map-selection-badge" class="section-meta accent">Music Map</span>
-                  <button id="map-open-home" class="secondary-button ghost-button" type="button">
-                    Open In Home
-                  </button>
+                  <div class="map-inspector-actions">
+                    <button id="map-open-home" class="secondary-button ghost-button" type="button">
+                      Open In Home
+                    </button>
+                    <button
+                      id="map-inspector-close"
+                      class="secondary-button ghost-button map-inspector-close"
+                      type="button"
+                      aria-label="Close map popup"
+                    >
+                      Close
+                    </button>
+                  </div>
                 </div>
 
                 <div class="section-heading tight">
