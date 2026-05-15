@@ -21,6 +21,29 @@ const MAP_INSPECTOR_MARGIN = 18;
 const MAP_LAYOUT_MARGIN_X = 64;
 const MAP_LAYOUT_MARGIN_Y = 72;
 const MAP_FORCE_ITERATIONS = 140;
+const MAP_CORE_GENRE_IDS = new Set([
+  'hip-hop',
+  'jazz',
+  'pop',
+  'rock',
+  'reggaeton',
+  'electronic',
+  'latin',
+  'r-n-b',
+  'soul',
+  'dance',
+  'indie',
+  'afrobeats',
+  'ambient',
+  'folk',
+  'blues',
+  'classical',
+]);
+const MAP_PARENT_WEIGHT_BY_KIND = {
+  subgenre: 3.4,
+  fusion: 2.5,
+  similar: 1.4,
+};
 const MAP_HORIZONTAL_POSITIVE = [
   'dance',
   'drill',
@@ -260,7 +283,8 @@ function createMapPage({ setActiveNav, showGenre, showView }) {
     const descriptors = new Map(
       genres.map(genre => [genre.id, buildGenreDescriptor(genre, nameById)]),
     );
-    const projectedPositions = projectMapPositions(genres, descriptors);
+    const clusterContext = buildGenreClusterContext(genres);
+    const projectedPositions = projectMapPositions(genres, descriptors, clusterContext);
     const layout = [];
     const sortedGenres = [...genres].sort((left, right) => {
       return getGenreWeight(right) - getGenreWeight(left) || left.name.localeCompare(right.name);
@@ -469,8 +493,193 @@ function createMapPage({ setActiveNav, showGenre, showView }) {
     return normalized * magnitude;
   }
 
-  function projectMapPositions(genres, descriptors) {
-    const basePoints = genres.map(genre => {
+  function buildGenreClusterContext(genres) {
+    const genresById = new Map(genres.map(genre => [genre.id, genre]));
+    const visibleIds = new Set(genresById.keys());
+    const coreIds = getMapCoreGenreIds(genres);
+    const candidatesById = new Map(genres.map(genre => [genre.id, new Map()]));
+
+    genres.forEach(genre => {
+      (genre.subgenres ?? []).forEach(childId => {
+        addParentCandidate(candidatesById, visibleIds, childId, genre.id, 'subgenre');
+      });
+      (genre.fusion ?? []).forEach(childId => {
+        addParentCandidate(candidatesById, visibleIds, childId, genre.id, 'fusion');
+      });
+      (genre.similar ?? []).forEach(childId => {
+        addParentCandidate(candidatesById, visibleIds, childId, genre.id, 'similar', 0.78);
+      });
+    });
+
+    genres.forEach(genre => {
+      if (coreIds.has(genre.id)) {
+        return;
+      }
+
+      (genre.similar ?? []).forEach(parentId => {
+        addParentCandidate(
+          candidatesById,
+          visibleIds,
+          genre.id,
+          parentId,
+          'similar',
+          coreIds.has(parentId) ? 1.15 : 0.95,
+        );
+      });
+      (genre.fusion ?? []).forEach(parentId => {
+        addParentCandidate(
+          candidatesById,
+          visibleIds,
+          genre.id,
+          parentId,
+          'fusion',
+          coreIds.has(parentId) ? 1.08 : 0.92,
+        );
+      });
+    });
+
+    const clusters = new Map();
+
+    genres.forEach(genre => {
+      if (coreIds.has(genre.id)) {
+        clusters.set(genre.id, {
+          isCore: true,
+          orbitDistance: 0,
+          parents: [],
+        });
+        return;
+      }
+
+      const candidates = [...(candidatesById.get(genre.id)?.values() ?? [])]
+        .filter(candidate => visibleIds.has(candidate.id) && candidate.id !== genre.id)
+        .sort((left, right) => {
+          return (
+            right.score - left.score ||
+            getGenreWeight(genresById.get(right.id)) - getGenreWeight(genresById.get(left.id)) ||
+            left.id.localeCompare(right.id)
+          );
+        });
+
+      const bestScore = candidates[0]?.score ?? 0;
+      const parents = candidates
+        .filter(candidate => candidate.score >= Math.max(1.05, bestScore * 0.48))
+        .slice(0, 2);
+      const strongestKind = parents[0]?.kind ?? 'similar';
+
+      clusters.set(genre.id, {
+        isCore: false,
+        orbitDistance: getClusterOrbitDistance(strongestKind, parents.length),
+        parents,
+      });
+    });
+
+    const depthMemo = new Map();
+    genres.forEach(genre => {
+      const cluster = clusters.get(genre.id);
+      if (!cluster) {
+        return;
+      }
+
+      const depth = getClusterDepth(genre.id, clusters, depthMemo);
+      cluster.depth = depth;
+      if (!cluster.isCore && cluster.parents.length > 0) {
+        cluster.orbitDistance = Math.max(54, cluster.orbitDistance - depth * 8);
+      }
+    });
+
+    return clusters;
+  }
+
+  function getMapCoreGenreIds(genres) {
+    const explicitCoreIds = genres
+      .filter(genre => MAP_CORE_GENRE_IDS.has(genre.id))
+      .map(genre => genre.id);
+    const coreIds = new Set(explicitCoreIds);
+    const desiredCoreCount = Math.min(4, Math.max(2, Math.ceil(genres.length / 8)));
+
+    if (coreIds.size >= desiredCoreCount) {
+      return coreIds;
+    }
+
+    [...genres]
+      .sort((left, right) => {
+        return getGenreWeight(right) - getGenreWeight(left) || left.name.localeCompare(right.name);
+      })
+      .forEach(genre => {
+        if (coreIds.size < desiredCoreCount) {
+          coreIds.add(genre.id);
+        }
+      });
+
+    return coreIds;
+  }
+
+  function addParentCandidate(candidatesById, visibleIds, childId, parentId, kind, scale = 1) {
+    if (!visibleIds.has(childId) || !visibleIds.has(parentId) || childId === parentId) {
+      return;
+    }
+
+    const candidateMap = candidatesById.get(childId);
+    if (!candidateMap) {
+      return;
+    }
+
+    const nextScore = MAP_PARENT_WEIGHT_BY_KIND[kind] * scale;
+    const existing = candidateMap.get(parentId) ?? {
+      id: parentId,
+      kind,
+      score: 0,
+    };
+
+    existing.score += nextScore;
+
+    if (nextScore >= MAP_PARENT_WEIGHT_BY_KIND[existing.kind]) {
+      existing.kind = kind;
+    }
+
+    candidateMap.set(parentId, existing);
+  }
+
+  function getClusterOrbitDistance(kind, parentCount) {
+    if (parentCount > 1) {
+      return kind === 'fusion' ? 58 : 72;
+    }
+
+    if (kind === 'subgenre') {
+      return 96;
+    }
+
+    if (kind === 'fusion') {
+      return 112;
+    }
+
+    return 138;
+  }
+
+  function getClusterDepth(genreId, clusters, memo, stack = new Set()) {
+    if (memo.has(genreId)) {
+      return memo.get(genreId);
+    }
+
+    const cluster = clusters.get(genreId);
+    if (!cluster || cluster.isCore || cluster.parents.length === 0 || stack.has(genreId)) {
+      memo.set(genreId, 0);
+      return 0;
+    }
+
+    stack.add(genreId);
+    const depth =
+      1 +
+      Math.min(
+        ...cluster.parents.map(parent => getClusterDepth(parent.id, clusters, memo, stack)),
+      );
+    stack.delete(genreId);
+    memo.set(genreId, depth);
+    return depth;
+  }
+
+  function projectMapPositions(genres, descriptors, clusterContext) {
+    const descriptorPoints = genres.map(genre => {
       const descriptor = descriptors.get(genre.id);
 
       return {
@@ -479,10 +688,61 @@ function createMapPage({ setActiveNav, showGenre, showView }) {
         y: descriptor?.axisY ?? getDeterministicJitter(`${genre.id}-y`, 1),
       };
     });
+    const normalizedDescriptorPoints = normalizeProjectedPoints(descriptorPoints);
+    const descriptorMap = new Map(normalizedDescriptorPoints.map(point => [point.id, { x: point.x, y: point.y }]));
+    const clusterStates = new Map();
 
-    const normalizedBasePoints = normalizeProjectedPoints(basePoints);
-    const positions = new Map(normalizedBasePoints.map(point => [point.id, { x: point.x, y: point.y }]));
-    const anchors = new Map(normalizedBasePoints.map(point => [point.id, { x: point.x, y: point.y }]));
+    genres.forEach(genre => {
+      const cluster = clusterContext.get(genre.id) ?? {
+        isCore: false,
+        orbitDistance: 0,
+        parents: [],
+      };
+      const descriptorPoint = descriptorMap.get(genre.id) ?? {
+        x: MAP_SURFACE_WIDTH / 2,
+        y: MAP_SURFACE_HEIGHT / 2,
+      };
+      const parentCenter = getWeightedPoint(cluster.parents, descriptorMap) ?? descriptorPoint;
+
+      clusterStates.set(genre.id, {
+        ...cluster,
+        orbitVector: buildClusterOrbitVector(genre.id, cluster, parentCenter, descriptorPoint),
+      });
+    });
+
+    const basePoints = genres.map(genre => {
+      const descriptorPoint = descriptorMap.get(genre.id) ?? {
+        x: MAP_SURFACE_WIDTH / 2,
+        y: MAP_SURFACE_HEIGHT / 2,
+      };
+      const cluster = clusterStates.get(genre.id);
+
+      if (!cluster || cluster.isCore || cluster.parents.length === 0) {
+        return {
+          id: genre.id,
+          x: descriptorPoint.x,
+          y: descriptorPoint.y,
+        };
+      }
+
+      const parentCenter = getWeightedPoint(cluster.parents, descriptorMap) ?? descriptorPoint;
+      return {
+        id: genre.id,
+        x: clamp(
+          parentCenter.x + cluster.orbitVector.x,
+          MAP_LAYOUT_MARGIN_X,
+          MAP_SURFACE_WIDTH - MAP_LAYOUT_MARGIN_X,
+        ),
+        y: clamp(
+          parentCenter.y + cluster.orbitVector.y,
+          MAP_LAYOUT_MARGIN_Y,
+          MAP_SURFACE_HEIGHT - MAP_LAYOUT_MARGIN_Y,
+        ),
+      };
+    });
+
+    const positions = new Map(basePoints.map(point => [point.id, { x: point.x, y: point.y }]));
+    const anchors = new Map(basePoints.map(point => [point.id, { x: point.x, y: point.y }]));
     const similarities = buildSimilarityMatrix(genres, descriptors);
 
     for (let iteration = 0; iteration < MAP_FORCE_ITERATIONS; iteration += 1) {
@@ -509,10 +769,14 @@ function createMapPage({ setActiveNav, showGenre, showView }) {
           rightUpdate.y += directionY * repulsion;
 
           const similarity = similarities[index][otherIndex];
+          const leftCluster = clusterStates.get(leftId);
+          const rightCluster = clusterStates.get(rightId);
 
           if (similarity > 0.025) {
-            const targetDistance = 340 - similarity * 240;
-            const attraction = (distance - targetDistance) * similarity * 0.018;
+            const hasDerivedGenre =
+              Boolean(leftCluster?.parents.length) || Boolean(rightCluster?.parents.length);
+            const targetDistance = (hasDerivedGenre ? 296 : 340) - similarity * (hasDerivedGenre ? 204 : 240);
+            const attraction = (distance - targetDistance) * similarity * (hasDerivedGenre ? 0.013 : 0.018);
 
             leftUpdate.x += directionX * attraction;
             leftUpdate.y += directionY * attraction;
@@ -523,12 +787,49 @@ function createMapPage({ setActiveNav, showGenre, showView }) {
       }
 
       genres.forEach(genre => {
-        const point = positions.get(genre.id);
-        const anchor = anchors.get(genre.id);
-        const update = updates.get(genre.id);
+        const cluster = clusterStates.get(genre.id);
+        if (!cluster || cluster.parents.length === 0) {
+          return;
+        }
 
-        update.x += (anchor.x - point.x) * 0.12;
-        update.y += (anchor.y - point.y) * 0.12;
+        const childPoint = positions.get(genre.id);
+        const childUpdate = updates.get(genre.id);
+
+        cluster.parents.forEach(parent => {
+          const parentPoint = positions.get(parent.id);
+          const parentUpdate = updates.get(parent.id);
+
+          if (!parentPoint || !parentUpdate) {
+            return;
+          }
+
+          const deltaX = parentPoint.x - childPoint.x;
+          const deltaY = parentPoint.y - childPoint.y;
+          const distance = Math.max(18, Math.hypot(deltaX, deltaY));
+          const directionX = deltaX / distance;
+          const directionY = deltaY / distance;
+          const targetDistance = getParentLinkDistance(cluster, parent.kind);
+          const attraction = (distance - targetDistance) * parent.score * 0.014;
+
+          childUpdate.x += directionX * attraction;
+          childUpdate.y += directionY * attraction;
+          parentUpdate.x -= directionX * attraction * 0.22;
+          parentUpdate.y -= directionY * attraction * 0.22;
+        });
+      });
+
+      genres.forEach(genre => {
+        const point = positions.get(genre.id);
+        const cluster = clusterStates.get(genre.id);
+        const anchor =
+          getClusterHomePoint(genre.id, cluster, positions, anchors) ??
+          anchors.get(genre.id);
+        const update = updates.get(genre.id);
+        const anchorStrength =
+          cluster?.parents.length ? 0.22 : cluster?.isCore ? 0.12 : 0.1;
+
+        update.x += (anchor.x - point.x) * anchorStrength;
+        update.y += (anchor.y - point.y) * anchorStrength;
 
         point.x = clamp(point.x + clamp(update.x, -20, 20), MAP_LAYOUT_MARGIN_X, MAP_SURFACE_WIDTH - MAP_LAYOUT_MARGIN_X);
         point.y = clamp(
@@ -549,6 +850,97 @@ function createMapPage({ setActiveNav, showGenre, showView }) {
       accumulator.set(point.id, { x: point.x, y: point.y });
       return accumulator;
     }, new Map());
+  }
+
+  function getWeightedPoint(parents, pointMap) {
+    if (!parents || parents.length === 0) {
+      return null;
+    }
+
+    let totalWeight = 0;
+    let totalX = 0;
+    let totalY = 0;
+
+    parents.forEach(parent => {
+      const point = pointMap.get(parent.id);
+      if (!point) {
+        return;
+      }
+
+      totalWeight += parent.score;
+      totalX += point.x * parent.score;
+      totalY += point.y * parent.score;
+    });
+
+    if (totalWeight <= 0) {
+      return null;
+    }
+
+    return {
+      x: totalX / totalWeight,
+      y: totalY / totalWeight,
+    };
+  }
+
+  function buildClusterOrbitVector(genreId, cluster, parentCenter, descriptorPoint) {
+    if (!cluster || cluster.parents.length === 0 || cluster.orbitDistance <= 0) {
+      return { x: 0, y: 0 };
+    }
+
+    const descriptorDeltaX = descriptorPoint.x - parentCenter.x;
+    const descriptorDeltaY = descriptorPoint.y - parentCenter.y;
+    const descriptorDistance = Math.hypot(descriptorDeltaX, descriptorDeltaY);
+    const fallbackAngle = (hashString(`${genreId}-orbit`) % 360) * (Math.PI / 180);
+    const angle =
+      descriptorDistance > 18
+        ? Math.atan2(descriptorDeltaY, descriptorDeltaX)
+        : fallbackAngle;
+    const verticalScale = cluster.parents.length > 1 ? 0.72 : 0.84;
+
+    return {
+      x: Math.cos(angle) * cluster.orbitDistance,
+      y: Math.sin(angle) * cluster.orbitDistance * verticalScale,
+    };
+  }
+
+  function getParentLinkDistance(cluster, kind) {
+    if (cluster.parents.length > 1) {
+      return kind === 'fusion' ? 54 : 68;
+    }
+
+    if (kind === 'subgenre') {
+      return 84;
+    }
+
+    if (kind === 'fusion') {
+      return 104;
+    }
+
+    return 126;
+  }
+
+  function getClusterHomePoint(genreId, cluster, positions, anchors) {
+    if (!cluster || cluster.parents.length === 0) {
+      return anchors.get(genreId) ?? null;
+    }
+
+    const parentCenter = getWeightedPoint(cluster.parents, positions);
+    if (!parentCenter) {
+      return anchors.get(genreId) ?? null;
+    }
+
+    return {
+      x: clamp(
+        parentCenter.x + cluster.orbitVector.x,
+        MAP_LAYOUT_MARGIN_X,
+        MAP_SURFACE_WIDTH - MAP_LAYOUT_MARGIN_X,
+      ),
+      y: clamp(
+        parentCenter.y + cluster.orbitVector.y,
+        MAP_LAYOUT_MARGIN_Y,
+        MAP_SURFACE_HEIGHT - MAP_LAYOUT_MARGIN_Y,
+      ),
+    };
   }
 
   function normalizeProjectedPoints(points) {
