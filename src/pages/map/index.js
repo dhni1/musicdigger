@@ -20,30 +20,10 @@ import { clamp, hashString } from '../../shared/utils.js';
 const MAP_INSPECTOR_MARGIN = 18;
 const MAP_LAYOUT_MARGIN_X = 64;
 const MAP_LAYOUT_MARGIN_Y = 72;
-const MAP_FORCE_ITERATIONS = 140;
-const MAP_CORE_GENRE_IDS = new Set([
-  'hip-hop',
-  'jazz',
-  'pop',
-  'rock',
-  'reggaeton',
-  'electronic',
-  'latin',
-  'r-n-b',
-  'soul',
-  'dance',
-  'indie',
-  'afrobeats',
-  'ambient',
-  'folk',
-  'blues',
-  'classical',
-]);
-const MAP_PARENT_WEIGHT_BY_KIND = {
-  subgenre: 3.4,
-  fusion: 2.5,
-  similar: 1.4,
-};
+const MAP_CORE_RADIUS_MIN = 0.24;
+const MAP_CORE_RADIUS_MAX = 0.64;
+const MAP_DERIVED_RADIUS_MIN = 0.58;
+const MAP_DERIVED_RADIUS_MAX = 1.04;
 const MAP_HORIZONTAL_POSITIVE = [
   'dance',
   'drill',
@@ -99,6 +79,8 @@ const MAP_VERTICAL_NEGATIVE = [
 
 function createMapPage({ setActiveNav, showGenre, showView }) {
   let resizeBound = false;
+  let cachedLayoutSignature = '';
+  let cachedLayout = [];
 
   function renderGenreMap() {
     if (!elements.mapCanvas || !elements.mapSurface) {
@@ -118,13 +100,25 @@ function createMapPage({ setActiveNav, showGenre, showView }) {
       if (elements.mapModalSurface) {
         renderEmptyMapSurface(elements.mapModalSurface);
       }
+      cachedLayoutSignature = '';
+      cachedLayout = [];
       state.mapLayoutById = new Map();
       renderMapSelection(null);
       closeMapInspector();
       return;
     }
 
-    const layout = buildMapLayout(visibleGenres);
+    const layoutSignature = getMapLayoutSignature(visibleGenres);
+    const layout =
+      layoutSignature === cachedLayoutSignature
+        ? cachedLayout
+        : buildMapLayout(visibleGenres);
+
+    if (layoutSignature !== cachedLayoutSignature) {
+      cachedLayoutSignature = layoutSignature;
+      cachedLayout = layout;
+    }
+
     state.mapLayoutById = new Map(layout.map(item => [item.genre.id, item]));
     renderMapSurface(elements.mapSurface, layout, 'main');
 
@@ -283,8 +277,7 @@ function createMapPage({ setActiveNav, showGenre, showView }) {
     const descriptors = new Map(
       genres.map(genre => [genre.id, buildGenreDescriptor(genre, nameById)]),
     );
-    const clusterContext = buildGenreClusterContext(genres);
-    const projectedPositions = projectMapPositions(genres, descriptors, clusterContext);
+    const projectedPositions = projectMapPositions(genres, descriptors);
     const layout = [];
     const sortedGenres = [...genres].sort((left, right) => {
       return getGenreWeight(right) - getGenreWeight(left) || left.name.localeCompare(right.name);
@@ -493,540 +486,152 @@ function createMapPage({ setActiveNav, showGenre, showView }) {
     return normalized * magnitude;
   }
 
-  function buildGenreClusterContext(genres) {
-    const genresById = new Map(genres.map(genre => [genre.id, genre]));
-    const visibleIds = new Set(genresById.keys());
-    const coreIds = getMapCoreGenreIds(genres);
-    const candidatesById = new Map(genres.map(genre => [genre.id, new Map()]));
+  function getMapCoreGenreIds(genres) {
+    const derivedIds = new Set();
+
+    genres.forEach(genre => {
+      (genre.subgenres ?? []).forEach(id => derivedIds.add(id));
+      (genre.fusion ?? []).forEach(id => derivedIds.add(id));
+    });
+
+    const coreIds = genres
+      .filter(genre => !derivedIds.has(genre.id))
+      .map(genre => genre.id);
+
+    if (coreIds.length > 0) {
+      return new Set(coreIds);
+    }
+
+    return new Set(
+      [...genres]
+        .sort((left, right) => {
+          return getGenreWeight(right) - getGenreWeight(left) || left.name.localeCompare(right.name);
+        })
+        .slice(0, Math.min(8, Math.max(3, Math.ceil(genres.length / 4))))
+        .map(genre => genre.id),
+    );
+  }
+
+  function buildMapDepthContext(genres, coreIds) {
+    const parentIdsById = new Map(genres.map(genre => [genre.id, []]));
+    const relationKindsById = new Map(genres.map(genre => [genre.id, new Set()]));
 
     genres.forEach(genre => {
       (genre.subgenres ?? []).forEach(childId => {
-        addParentCandidate(candidatesById, visibleIds, childId, genre.id, 'subgenre');
-      });
-      (genre.fusion ?? []).forEach(childId => {
-        addParentCandidate(candidatesById, visibleIds, childId, genre.id, 'fusion');
-      });
-      (genre.similar ?? []).forEach(childId => {
-        addParentCandidate(candidatesById, visibleIds, childId, genre.id, 'similar', 0.78);
-      });
-    });
-
-    genres.forEach(genre => {
-      if (coreIds.has(genre.id)) {
-        return;
-      }
-
-      (genre.similar ?? []).forEach(parentId => {
-        addParentCandidate(
-          candidatesById,
-          visibleIds,
-          genre.id,
-          parentId,
-          'similar',
-          coreIds.has(parentId) ? 1.15 : 0.95,
-        );
-      });
-      (genre.fusion ?? []).forEach(parentId => {
-        addParentCandidate(
-          candidatesById,
-          visibleIds,
-          genre.id,
-          parentId,
-          'fusion',
-          coreIds.has(parentId) ? 1.08 : 0.92,
-        );
-      });
-    });
-
-    const clusters = new Map();
-
-    genres.forEach(genre => {
-      if (coreIds.has(genre.id)) {
-        clusters.set(genre.id, {
-          isCore: true,
-          orbitDistance: 0,
-          parents: [],
-        });
-        return;
-      }
-
-      const candidates = [...(candidatesById.get(genre.id)?.values() ?? [])]
-        .filter(candidate => visibleIds.has(candidate.id) && candidate.id !== genre.id)
-        .sort((left, right) => {
-          return (
-            right.score - left.score ||
-            getGenreWeight(genresById.get(right.id)) - getGenreWeight(genresById.get(left.id)) ||
-            left.id.localeCompare(right.id)
-          );
-        });
-
-      const bestScore = candidates[0]?.score ?? 0;
-      const parents = candidates
-        .filter(candidate => candidate.score >= Math.max(1.05, bestScore * 0.48))
-        .slice(0, 2);
-      const strongestKind = parents[0]?.kind ?? 'similar';
-
-      clusters.set(genre.id, {
-        isCore: false,
-        orbitDistance: getClusterOrbitDistance(strongestKind, parents.length),
-        parents,
-      });
-    });
-
-    const depthMemo = new Map();
-    genres.forEach(genre => {
-      const cluster = clusters.get(genre.id);
-      if (!cluster) {
-        return;
-      }
-
-      const depth = getClusterDepth(genre.id, clusters, depthMemo);
-      cluster.depth = depth;
-      if (!cluster.isCore && cluster.parents.length > 0) {
-        cluster.orbitDistance = Math.max(54, cluster.orbitDistance - depth * 8);
-      }
-    });
-
-    return clusters;
-  }
-
-  function getMapCoreGenreIds(genres) {
-    const explicitCoreIds = genres
-      .filter(genre => MAP_CORE_GENRE_IDS.has(genre.id))
-      .map(genre => genre.id);
-    const coreIds = new Set(explicitCoreIds);
-    const desiredCoreCount = Math.min(4, Math.max(2, Math.ceil(genres.length / 8)));
-
-    if (coreIds.size >= desiredCoreCount) {
-      return coreIds;
-    }
-
-    [...genres]
-      .sort((left, right) => {
-        return getGenreWeight(right) - getGenreWeight(left) || left.name.localeCompare(right.name);
-      })
-      .forEach(genre => {
-        if (coreIds.size < desiredCoreCount) {
-          coreIds.add(genre.id);
-        }
-      });
-
-    return coreIds;
-  }
-
-  function addParentCandidate(candidatesById, visibleIds, childId, parentId, kind, scale = 1) {
-    if (!visibleIds.has(childId) || !visibleIds.has(parentId) || childId === parentId) {
-      return;
-    }
-
-    const candidateMap = candidatesById.get(childId);
-    if (!candidateMap) {
-      return;
-    }
-
-    const nextScore = MAP_PARENT_WEIGHT_BY_KIND[kind] * scale;
-    const existing = candidateMap.get(parentId) ?? {
-      id: parentId,
-      kind,
-      score: 0,
-    };
-
-    existing.score += nextScore;
-
-    if (nextScore >= MAP_PARENT_WEIGHT_BY_KIND[existing.kind]) {
-      existing.kind = kind;
-    }
-
-    candidateMap.set(parentId, existing);
-  }
-
-  function getClusterOrbitDistance(kind, parentCount) {
-    if (parentCount > 1) {
-      return kind === 'fusion' ? 58 : 72;
-    }
-
-    if (kind === 'subgenre') {
-      return 96;
-    }
-
-    if (kind === 'fusion') {
-      return 112;
-    }
-
-    return 138;
-  }
-
-  function getClusterDepth(genreId, clusters, memo, stack = new Set()) {
-    if (memo.has(genreId)) {
-      return memo.get(genreId);
-    }
-
-    const cluster = clusters.get(genreId);
-    if (!cluster || cluster.isCore || cluster.parents.length === 0 || stack.has(genreId)) {
-      memo.set(genreId, 0);
-      return 0;
-    }
-
-    stack.add(genreId);
-    const depth =
-      1 +
-      Math.min(
-        ...cluster.parents.map(parent => getClusterDepth(parent.id, clusters, memo, stack)),
-      );
-    stack.delete(genreId);
-    memo.set(genreId, depth);
-    return depth;
-  }
-
-  function projectMapPositions(genres, descriptors, clusterContext) {
-    const descriptorPoints = genres.map(genre => {
-      const descriptor = descriptors.get(genre.id);
-
-      return {
-        id: genre.id,
-        x: descriptor?.axisX ?? getDeterministicJitter(genre.id, 1),
-        y: descriptor?.axisY ?? getDeterministicJitter(`${genre.id}-y`, 1),
-      };
-    });
-    const normalizedDescriptorPoints = normalizeProjectedPoints(descriptorPoints);
-    const descriptorMap = new Map(normalizedDescriptorPoints.map(point => [point.id, { x: point.x, y: point.y }]));
-    const clusterStates = new Map();
-
-    genres.forEach(genre => {
-      const cluster = clusterContext.get(genre.id) ?? {
-        isCore: false,
-        orbitDistance: 0,
-        parents: [],
-      };
-      const descriptorPoint = descriptorMap.get(genre.id) ?? {
-        x: MAP_SURFACE_WIDTH / 2,
-        y: MAP_SURFACE_HEIGHT / 2,
-      };
-      const parentCenter = getWeightedPoint(cluster.parents, descriptorMap) ?? descriptorPoint;
-
-      clusterStates.set(genre.id, {
-        ...cluster,
-        orbitVector: buildClusterOrbitVector(genre.id, cluster, parentCenter, descriptorPoint),
-      });
-    });
-
-    const basePoints = genres.map(genre => {
-      const descriptorPoint = descriptorMap.get(genre.id) ?? {
-        x: MAP_SURFACE_WIDTH / 2,
-        y: MAP_SURFACE_HEIGHT / 2,
-      };
-      const cluster = clusterStates.get(genre.id);
-
-      if (!cluster || cluster.isCore || cluster.parents.length === 0) {
-        return {
-          id: genre.id,
-          x: descriptorPoint.x,
-          y: descriptorPoint.y,
-        };
-      }
-
-      const parentCenter = getWeightedPoint(cluster.parents, descriptorMap) ?? descriptorPoint;
-      return {
-        id: genre.id,
-        x: clamp(
-          parentCenter.x + cluster.orbitVector.x,
-          MAP_LAYOUT_MARGIN_X,
-          MAP_SURFACE_WIDTH - MAP_LAYOUT_MARGIN_X,
-        ),
-        y: clamp(
-          parentCenter.y + cluster.orbitVector.y,
-          MAP_LAYOUT_MARGIN_Y,
-          MAP_SURFACE_HEIGHT - MAP_LAYOUT_MARGIN_Y,
-        ),
-      };
-    });
-
-    const positions = new Map(basePoints.map(point => [point.id, { x: point.x, y: point.y }]));
-    const anchors = new Map(basePoints.map(point => [point.id, { x: point.x, y: point.y }]));
-    const similarities = buildSimilarityMatrix(genres, descriptors);
-
-    for (let iteration = 0; iteration < MAP_FORCE_ITERATIONS; iteration += 1) {
-      const updates = new Map(genres.map(genre => [genre.id, { x: 0, y: 0 }]));
-
-      for (let index = 0; index < genres.length; index += 1) {
-        for (let otherIndex = index + 1; otherIndex < genres.length; otherIndex += 1) {
-          const leftId = genres[index].id;
-          const rightId = genres[otherIndex].id;
-          const leftPoint = positions.get(leftId);
-          const rightPoint = positions.get(rightId);
-          const deltaX = rightPoint.x - leftPoint.x;
-          const deltaY = rightPoint.y - leftPoint.y;
-          const distance = Math.max(18, Math.hypot(deltaX, deltaY));
-          const directionX = deltaX / distance;
-          const directionY = deltaY / distance;
-          const repulsion = 1800 / (distance * distance);
-          const leftUpdate = updates.get(leftId);
-          const rightUpdate = updates.get(rightId);
-
-          leftUpdate.x -= directionX * repulsion;
-          leftUpdate.y -= directionY * repulsion;
-          rightUpdate.x += directionX * repulsion;
-          rightUpdate.y += directionY * repulsion;
-
-          const similarity = similarities[index][otherIndex];
-          const leftCluster = clusterStates.get(leftId);
-          const rightCluster = clusterStates.get(rightId);
-
-          if (similarity > 0.025) {
-            const hasDerivedGenre =
-              Boolean(leftCluster?.parents.length) || Boolean(rightCluster?.parents.length);
-            const targetDistance = (hasDerivedGenre ? 296 : 340) - similarity * (hasDerivedGenre ? 204 : 240);
-            const attraction = (distance - targetDistance) * similarity * (hasDerivedGenre ? 0.013 : 0.018);
-
-            leftUpdate.x += directionX * attraction;
-            leftUpdate.y += directionY * attraction;
-            rightUpdate.x -= directionX * attraction;
-            rightUpdate.y -= directionY * attraction;
-          }
-        }
-      }
-
-      genres.forEach(genre => {
-        const cluster = clusterStates.get(genre.id);
-        if (!cluster || cluster.parents.length === 0) {
+        if (!parentIdsById.has(childId)) {
           return;
         }
 
-        const childPoint = positions.get(genre.id);
-        const childUpdate = updates.get(genre.id);
-
-        cluster.parents.forEach(parent => {
-          const parentPoint = positions.get(parent.id);
-          const parentUpdate = updates.get(parent.id);
-
-          if (!parentPoint || !parentUpdate) {
-            return;
-          }
-
-          const deltaX = parentPoint.x - childPoint.x;
-          const deltaY = parentPoint.y - childPoint.y;
-          const distance = Math.max(18, Math.hypot(deltaX, deltaY));
-          const directionX = deltaX / distance;
-          const directionY = deltaY / distance;
-          const targetDistance = getParentLinkDistance(cluster, parent.kind);
-          const attraction = (distance - targetDistance) * parent.score * 0.014;
-
-          childUpdate.x += directionX * attraction;
-          childUpdate.y += directionY * attraction;
-          parentUpdate.x -= directionX * attraction * 0.22;
-          parentUpdate.y -= directionY * attraction * 0.22;
-        });
+        parentIdsById.get(childId).push(genre.id);
+        relationKindsById.get(childId).add('subgenre');
       });
 
-      genres.forEach(genre => {
-        const point = positions.get(genre.id);
-        const cluster = clusterStates.get(genre.id);
-        const anchor =
-          getClusterHomePoint(genre.id, cluster, positions, anchors) ??
-          anchors.get(genre.id);
-        const update = updates.get(genre.id);
-        const anchorStrength =
-          cluster?.parents.length ? 0.22 : cluster?.isCore ? 0.12 : 0.1;
+      (genre.fusion ?? []).forEach(childId => {
+        if (!parentIdsById.has(childId)) {
+          return;
+        }
 
-        update.x += (anchor.x - point.x) * anchorStrength;
-        update.y += (anchor.y - point.y) * anchorStrength;
-
-        point.x = clamp(point.x + clamp(update.x, -20, 20), MAP_LAYOUT_MARGIN_X, MAP_SURFACE_WIDTH - MAP_LAYOUT_MARGIN_X);
-        point.y = clamp(
-          point.y + clamp(update.y, -20, 20),
-          MAP_LAYOUT_MARGIN_Y,
-          MAP_SURFACE_HEIGHT - MAP_LAYOUT_MARGIN_Y,
-        );
+        parentIdsById.get(childId).push(genre.id);
+        relationKindsById.get(childId).add('fusion');
       });
+    });
+
+    const depthById = new Map();
+
+    function resolveDepth(genreId, stack = new Set()) {
+      if (depthById.has(genreId)) {
+        return depthById.get(genreId);
+      }
+
+      if (coreIds.has(genreId) || stack.has(genreId)) {
+        depthById.set(genreId, 0);
+        return 0;
+      }
+
+      const parentIds = parentIdsById.get(genreId) ?? [];
+      if (parentIds.length === 0) {
+        depthById.set(genreId, 0);
+        return 0;
+      }
+
+      stack.add(genreId);
+      const depth = 1 + Math.min(...parentIds.map(parentId => resolveDepth(parentId, stack)));
+      stack.delete(genreId);
+      depthById.set(genreId, depth);
+      return depth;
     }
 
-    return normalizeProjectedPoints(
-      [...positions.entries()].map(([id, point]) => ({
-        id,
-        x: point.x,
-        y: point.y,
-      })),
-    ).reduce((accumulator, point) => {
-      accumulator.set(point.id, { x: point.x, y: point.y });
+    genres.forEach(genre => {
+      resolveDepth(genre.id);
+    });
+
+    return {
+      depthById,
+      relationKindsById,
+    };
+  }
+
+  function projectMapPositions(genres, descriptors) {
+    const axisPoints = normalizeAxisPoints(
+      genres.map(genre => {
+        const descriptor = descriptors.get(genre.id);
+
+        return {
+          id: genre.id,
+          x: descriptor?.axisX ?? getDeterministicJitter(genre.id, 1),
+          y: descriptor?.axisY ?? getDeterministicJitter(`${genre.id}-y`, 1),
+        };
+      }),
+    );
+    const coreIds = getMapCoreGenreIds(genres);
+    const { depthById, relationKindsById } = buildMapDepthContext(genres, coreIds);
+    const centerX = MAP_SURFACE_WIDTH / 2;
+    const centerY = MAP_SURFACE_HEIGHT / 2;
+    const radiusX = (MAP_SURFACE_WIDTH - MAP_LAYOUT_MARGIN_X * 2) / 2;
+    const radiusY = (MAP_SURFACE_HEIGHT - MAP_LAYOUT_MARGIN_Y * 2) / 2;
+
+    return axisPoints.reduce((accumulator, point) => {
+      const isCore = coreIds.has(point.id);
+      const depth = depthById.get(point.id) ?? 0;
+      const relationKinds = relationKindsById.get(point.id) ?? new Set();
+      const axisRadius = clamp(Math.hypot(point.x, point.y), 0, 1.2);
+      const baseAngle =
+        axisRadius > 0.04
+          ? Math.atan2(point.y, point.x)
+          : (hashString(`${point.id}-angle`) % 360) * (Math.PI / 180);
+      const angle = baseAngle + getDeterministicJitter(`${point.id}-angle`, isCore ? 0.18 : 0.12);
+      const radialBias = relationKinds.has('fusion') ? 0.08 : relationKinds.has('subgenre') ? -0.02 : 0;
+      const targetRadius = isCore
+        ? clamp(0.18 + axisRadius * 0.42, MAP_CORE_RADIUS_MIN, MAP_CORE_RADIUS_MAX)
+        : clamp(
+            0.56 + axisRadius * 0.24 + depth * 0.13 + radialBias,
+            MAP_DERIVED_RADIUS_MIN,
+            MAP_DERIVED_RADIUS_MAX,
+          );
+      const spreadX = Math.cos(angle) * targetRadius;
+      const spreadY = Math.sin(angle) * targetRadius * 0.92;
+
+      accumulator.set(point.id, {
+        x: clamp(centerX + spreadX * radiusX, MAP_LAYOUT_MARGIN_X, MAP_SURFACE_WIDTH - MAP_LAYOUT_MARGIN_X),
+        y: clamp(centerY + spreadY * radiusY, MAP_LAYOUT_MARGIN_Y, MAP_SURFACE_HEIGHT - MAP_LAYOUT_MARGIN_Y),
+      });
       return accumulator;
     }, new Map());
   }
 
-  function getWeightedPoint(parents, pointMap) {
-    if (!parents || parents.length === 0) {
-      return null;
-    }
-
-    let totalWeight = 0;
-    let totalX = 0;
-    let totalY = 0;
-
-    parents.forEach(parent => {
-      const point = pointMap.get(parent.id);
-      if (!point) {
-        return;
-      }
-
-      totalWeight += parent.score;
-      totalX += point.x * parent.score;
-      totalY += point.y * parent.score;
-    });
-
-    if (totalWeight <= 0) {
-      return null;
-    }
-
-    return {
-      x: totalX / totalWeight,
-      y: totalY / totalWeight,
-    };
-  }
-
-  function buildClusterOrbitVector(genreId, cluster, parentCenter, descriptorPoint) {
-    if (!cluster || cluster.parents.length === 0 || cluster.orbitDistance <= 0) {
-      return { x: 0, y: 0 };
-    }
-
-    const descriptorDeltaX = descriptorPoint.x - parentCenter.x;
-    const descriptorDeltaY = descriptorPoint.y - parentCenter.y;
-    const descriptorDistance = Math.hypot(descriptorDeltaX, descriptorDeltaY);
-    const fallbackAngle = (hashString(`${genreId}-orbit`) % 360) * (Math.PI / 180);
-    const angle =
-      descriptorDistance > 18
-        ? Math.atan2(descriptorDeltaY, descriptorDeltaX)
-        : fallbackAngle;
-    const verticalScale = cluster.parents.length > 1 ? 0.72 : 0.84;
-
-    return {
-      x: Math.cos(angle) * cluster.orbitDistance,
-      y: Math.sin(angle) * cluster.orbitDistance * verticalScale,
-    };
-  }
-
-  function getParentLinkDistance(cluster, kind) {
-    if (cluster.parents.length > 1) {
-      return kind === 'fusion' ? 54 : 68;
-    }
-
-    if (kind === 'subgenre') {
-      return 84;
-    }
-
-    if (kind === 'fusion') {
-      return 104;
-    }
-
-    return 126;
-  }
-
-  function getClusterHomePoint(genreId, cluster, positions, anchors) {
-    if (!cluster || cluster.parents.length === 0) {
-      return anchors.get(genreId) ?? null;
-    }
-
-    const parentCenter = getWeightedPoint(cluster.parents, positions);
-    if (!parentCenter) {
-      return anchors.get(genreId) ?? null;
-    }
-
-    return {
-      x: clamp(
-        parentCenter.x + cluster.orbitVector.x,
-        MAP_LAYOUT_MARGIN_X,
-        MAP_SURFACE_WIDTH - MAP_LAYOUT_MARGIN_X,
-      ),
-      y: clamp(
-        parentCenter.y + cluster.orbitVector.y,
-        MAP_LAYOUT_MARGIN_Y,
-        MAP_SURFACE_HEIGHT - MAP_LAYOUT_MARGIN_Y,
-      ),
-    };
-  }
-
-  function normalizeProjectedPoints(points) {
+  function normalizeAxisPoints(points) {
     if (points.length === 0) {
       return [];
     }
 
-    const xValues = points.map(point => point.x);
-    const yValues = points.map(point => point.y);
-    const minX = Math.min(...xValues);
-    const maxX = Math.max(...xValues);
-    const minY = Math.min(...yValues);
-    const maxY = Math.max(...yValues);
-    const xRange = Math.max(1, maxX - minX);
-    const yRange = Math.max(1, maxY - minY);
-    const width = MAP_SURFACE_WIDTH - MAP_LAYOUT_MARGIN_X * 2;
-    const height = MAP_SURFACE_HEIGHT - MAP_LAYOUT_MARGIN_Y * 2;
+    const maxAbsX = Math.max(...points.map(point => Math.abs(point.x)), 0.01);
+    const maxAbsY = Math.max(...points.map(point => Math.abs(point.y)), 0.01);
 
     return points.map(point => ({
       id: point.id,
-      x: MAP_LAYOUT_MARGIN_X + ((point.x - minX) / xRange) * width,
-      y: MAP_LAYOUT_MARGIN_Y + ((point.y - minY) / yRange) * height,
+      x: clamp(point.x / maxAbsX, -1, 1),
+      y: clamp(point.y / maxAbsY, -1, 1),
     }));
-  }
-
-  function buildSimilarityMatrix(genres, descriptors) {
-    return genres.map((genre, index) => {
-      const left = descriptors.get(genre.id);
-
-      return genres.map((otherGenre, otherIndex) => {
-        if (index === otherIndex) {
-          return 1;
-        }
-
-        const right = descriptors.get(otherGenre.id);
-        return getGenreSimilarity(left, right);
-      });
-    });
-  }
-
-  function getGenreSimilarity(left, right) {
-    const textSimilarity = getWeightedCosineSimilarity(left.tokenWeights, left.tokenNorm, right.tokenWeights, right.tokenNorm);
-    const relationSimilarity = getSetJaccard(left.relationIds, right.relationIds);
-    const seedSimilarity = getSetJaccard(left.seedTerms, right.seedTerms);
-    const directConnection =
-      left.relationIds.has(right.id) || right.relationIds.has(left.id) ? 1 : 0;
-
-    return clamp(
-      textSimilarity * 0.45 +
-        relationSimilarity * 0.2 +
-        seedSimilarity * 0.15 +
-        directConnection * 0.2,
-      0,
-      1,
-    );
-  }
-
-  function getWeightedCosineSimilarity(leftWeights, leftNorm, rightWeights, rightNorm) {
-    const [smaller, larger] =
-      leftWeights.size <= rightWeights.size ? [leftWeights, rightWeights] : [rightWeights, leftWeights];
-    let dot = 0;
-
-    smaller.forEach((weight, token) => {
-      dot += weight * (larger.get(token) ?? 0);
-    });
-
-    if (dot <= 0) {
-      return 0;
-    }
-
-    return dot / (leftNorm * rightNorm);
-  }
-
-  function getSetJaccard(left, right) {
-    if (left.size === 0 || right.size === 0) {
-      return 0;
-    }
-
-    let intersection = 0;
-    left.forEach(value => {
-      if (right.has(value)) {
-        intersection += 1;
-      }
-    });
-
-    return intersection / (left.size + right.size - intersection);
   }
 
   function getGenreWeight(genre) {
@@ -1054,6 +659,14 @@ function createMapPage({ setActiveNav, showGenre, showView }) {
     });
 
     return seenPairs.size;
+  }
+
+  function getMapLayoutSignature(genres) {
+    return genres
+      .map(genre => {
+        return `${genre.id}:${getMapConnectionIds(genre).length}:${(genre.tracks ?? []).length}`;
+      })
+      .join('|');
   }
 
   function getMapZoom(key) {
