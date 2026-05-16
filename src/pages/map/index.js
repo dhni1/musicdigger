@@ -20,10 +20,13 @@ import { clamp, hashString } from '../../shared/utils.js';
 const MAP_INSPECTOR_MARGIN = 18;
 const MAP_LAYOUT_MARGIN_X = 64;
 const MAP_LAYOUT_MARGIN_Y = 72;
-const MAP_CORE_RADIUS_MIN = 0.24;
-const MAP_CORE_RADIUS_MAX = 0.64;
-const MAP_DERIVED_RADIUS_MIN = 0.58;
-const MAP_DERIVED_RADIUS_MAX = 1.04;
+const MAP_CORE_RING_RADIUS_X = 0.34;
+const MAP_CORE_RING_RADIUS_Y = 0.28;
+const MAP_BRANCH_LENGTH_X = 196;
+const MAP_BRANCH_LENGTH_Y = 142;
+const MAP_BRANCH_LENGTH_DECAY = 18;
+const MAP_BRANCH_SPREAD_BASE = 0.88;
+const MAP_BRANCH_SPREAD_DECAY = 0.13;
 const MAP_HORIZONTAL_POSITIVE = [
   'dance',
   'drill',
@@ -512,65 +515,6 @@ function createMapPage({ setActiveNav, showGenre, showView }) {
     );
   }
 
-  function buildMapDepthContext(genres, coreIds) {
-    const parentIdsById = new Map(genres.map(genre => [genre.id, []]));
-    const relationKindsById = new Map(genres.map(genre => [genre.id, new Set()]));
-
-    genres.forEach(genre => {
-      (genre.subgenres ?? []).forEach(childId => {
-        if (!parentIdsById.has(childId)) {
-          return;
-        }
-
-        parentIdsById.get(childId).push(genre.id);
-        relationKindsById.get(childId).add('subgenre');
-      });
-
-      (genre.fusion ?? []).forEach(childId => {
-        if (!parentIdsById.has(childId)) {
-          return;
-        }
-
-        parentIdsById.get(childId).push(genre.id);
-        relationKindsById.get(childId).add('fusion');
-      });
-    });
-
-    const depthById = new Map();
-
-    function resolveDepth(genreId, stack = new Set()) {
-      if (depthById.has(genreId)) {
-        return depthById.get(genreId);
-      }
-
-      if (coreIds.has(genreId) || stack.has(genreId)) {
-        depthById.set(genreId, 0);
-        return 0;
-      }
-
-      const parentIds = parentIdsById.get(genreId) ?? [];
-      if (parentIds.length === 0) {
-        depthById.set(genreId, 0);
-        return 0;
-      }
-
-      stack.add(genreId);
-      const depth = 1 + Math.min(...parentIds.map(parentId => resolveDepth(parentId, stack)));
-      stack.delete(genreId);
-      depthById.set(genreId, depth);
-      return depth;
-    }
-
-    genres.forEach(genre => {
-      resolveDepth(genre.id);
-    });
-
-    return {
-      depthById,
-      relationKindsById,
-    };
-  }
-
   function projectMapPositions(genres, descriptors) {
     const axisPoints = normalizeAxisPoints(
       genres.map(genre => {
@@ -584,39 +528,49 @@ function createMapPage({ setActiveNav, showGenre, showView }) {
       }),
     );
     const coreIds = getMapCoreGenreIds(genres);
-    const { depthById, relationKindsById } = buildMapDepthContext(genres, coreIds);
+    const axisMap = new Map(axisPoints.map(point => [point.id, point]));
+    const hierarchy = buildMindMapHierarchy(genres, coreIds, axisMap);
     const centerX = MAP_SURFACE_WIDTH / 2;
     const centerY = MAP_SURFACE_HEIGHT / 2;
     const radiusX = (MAP_SURFACE_WIDTH - MAP_LAYOUT_MARGIN_X * 2) / 2;
     const radiusY = (MAP_SURFACE_HEIGHT - MAP_LAYOUT_MARGIN_Y * 2) / 2;
+    const positions = new Map();
+    const coreAngles = buildMindMapCoreAngles([...coreIds], axisMap);
 
-    return axisPoints.reduce((accumulator, point) => {
-      const isCore = coreIds.has(point.id);
-      const depth = depthById.get(point.id) ?? 0;
-      const relationKinds = relationKindsById.get(point.id) ?? new Set();
-      const axisRadius = clamp(Math.hypot(point.x, point.y), 0, 1.2);
-      const baseAngle =
-        axisRadius > 0.04
-          ? Math.atan2(point.y, point.x)
-          : (hashString(`${point.id}-angle`) % 360) * (Math.PI / 180);
-      const angle = baseAngle + getDeterministicJitter(`${point.id}-angle`, isCore ? 0.18 : 0.12);
-      const radialBias = relationKinds.has('fusion') ? 0.08 : relationKinds.has('subgenre') ? -0.02 : 0;
-      const targetRadius = isCore
-        ? clamp(0.18 + axisRadius * 0.42, MAP_CORE_RADIUS_MIN, MAP_CORE_RADIUS_MAX)
-        : clamp(
-            0.56 + axisRadius * 0.24 + depth * 0.13 + radialBias,
-            MAP_DERIVED_RADIUS_MIN,
-            MAP_DERIVED_RADIUS_MAX,
-          );
-      const spreadX = Math.cos(angle) * targetRadius;
-      const spreadY = Math.sin(angle) * targetRadius * 0.92;
-
-      accumulator.set(point.id, {
-        x: clamp(centerX + spreadX * radiusX, MAP_LAYOUT_MARGIN_X, MAP_SURFACE_WIDTH - MAP_LAYOUT_MARGIN_X),
-        y: clamp(centerY + spreadY * radiusY, MAP_LAYOUT_MARGIN_Y, MAP_SURFACE_HEIGHT - MAP_LAYOUT_MARGIN_Y),
+    coreAngles.forEach((angle, genreId) => {
+      positions.set(genreId, {
+        x: clamp(
+          centerX + Math.cos(angle) * radiusX * MAP_CORE_RING_RADIUS_X,
+          MAP_LAYOUT_MARGIN_X,
+          MAP_SURFACE_WIDTH - MAP_LAYOUT_MARGIN_X,
+        ),
+        y: clamp(
+          centerY + Math.sin(angle) * radiusY * MAP_CORE_RING_RADIUS_Y,
+          MAP_LAYOUT_MARGIN_Y,
+          MAP_SURFACE_HEIGHT - MAP_LAYOUT_MARGIN_Y,
+        ),
       });
-      return accumulator;
-    }, new Map());
+    });
+
+    [...coreIds]
+      .sort((left, right) => {
+        return (
+          getGenreWeight(hierarchy.genresById.get(right)) - getGenreWeight(hierarchy.genresById.get(left)) ||
+          left.localeCompare(right)
+        );
+      })
+      .forEach(coreId => {
+        placeMindMapBranch({
+          angleById: hierarchy.angleById,
+          childRefsById: hierarchy.childRefsById,
+          coreAngle: coreAngles.get(coreId) ?? 0,
+          depth: 1,
+          parentId: coreId,
+          positions,
+        });
+      });
+
+    return positions;
   }
 
   function normalizeAxisPoints(points) {
@@ -632,6 +586,221 @@ function createMapPage({ setActiveNav, showGenre, showView }) {
       x: clamp(point.x / maxAbsX, -1, 1),
       y: clamp(point.y / maxAbsY, -1, 1),
     }));
+  }
+
+  function buildMindMapHierarchy(genres, coreIds, axisMap) {
+    const genresById = new Map(genres.map(genre => [genre.id, genre]));
+    const parentRefsById = new Map(genres.map(genre => [genre.id, []]));
+    const childRefsById = new Map(genres.map(genre => [genre.id, []]));
+
+    genres.forEach(genre => {
+      (genre.subgenres ?? []).forEach(childId => {
+        if (!parentRefsById.has(childId)) {
+          return;
+        }
+
+        parentRefsById.get(childId).push({ id: genre.id, kind: 'subgenre' });
+      });
+
+      (genre.fusion ?? []).forEach(childId => {
+        if (!parentRefsById.has(childId)) {
+          return;
+        }
+
+        parentRefsById.get(childId).push({ id: genre.id, kind: 'fusion' });
+      });
+    });
+
+    const angleById = new Map();
+
+    genres.forEach(genre => {
+      const point = axisMap.get(genre.id);
+      angleById.set(
+        genre.id,
+        point && Math.hypot(point.x, point.y) > 0.04
+          ? Math.atan2(point.y, point.x)
+          : (hashString(`${genre.id}-mindmap-angle`) % 360) * (Math.PI / 180),
+      );
+    });
+
+    genres.forEach(genre => {
+      if (coreIds.has(genre.id)) {
+        return;
+      }
+
+      const parentRefs = [...(parentRefsById.get(genre.id) ?? [])].sort((left, right) => {
+        const kindScore =
+          getMindMapRelationWeight(right.kind) - getMindMapRelationWeight(left.kind);
+        if (kindScore !== 0) {
+          return kindScore;
+        }
+
+        const weightScore =
+          getGenreWeight(genresById.get(right.id)) - getGenreWeight(genresById.get(left.id));
+        if (weightScore !== 0) {
+          return weightScore;
+        }
+
+        return left.id.localeCompare(right.id);
+      });
+      const primaryParent = parentRefs[0];
+
+      if (!primaryParent) {
+        return;
+      }
+
+      childRefsById.get(primaryParent.id).push({
+        id: genre.id,
+        kind: primaryParent.kind,
+      });
+    });
+
+    childRefsById.forEach(children => {
+      children.sort((left, right) => {
+        const kindScore =
+          getMindMapRelationWeight(right.kind) - getMindMapRelationWeight(left.kind);
+        if (kindScore !== 0) {
+          return kindScore;
+        }
+
+        const angleScore = angleById.get(left.id) - angleById.get(right.id);
+        if (Math.abs(angleScore) > 0.001) {
+          return angleScore;
+        }
+
+        return left.id.localeCompare(right.id);
+      });
+    });
+
+    return {
+      angleById,
+      childRefsById,
+      genresById,
+    };
+  }
+
+  function getMindMapRelationWeight(kind) {
+    if (kind === 'subgenre') {
+      return 3;
+    }
+
+    if (kind === 'fusion') {
+      return 2;
+    }
+
+    return 1;
+  }
+
+  function buildMindMapCoreAngles(coreIds, axisMap) {
+    const sortedCoreIds = [...coreIds].sort((left, right) => {
+      const leftPoint = axisMap.get(left);
+      const rightPoint = axisMap.get(right);
+      const leftAngle =
+        leftPoint && Math.hypot(leftPoint.x, leftPoint.y) > 0.04
+          ? Math.atan2(leftPoint.y, leftPoint.x)
+          : 0;
+      const rightAngle =
+        rightPoint && Math.hypot(rightPoint.x, rightPoint.y) > 0.04
+          ? Math.atan2(rightPoint.y, rightPoint.x)
+          : 0;
+
+      return leftAngle - rightAngle || left.localeCompare(right);
+    });
+    const angles = new Map();
+    const count = Math.max(1, sortedCoreIds.length);
+
+    sortedCoreIds.forEach((genreId, index) => {
+      const point = axisMap.get(genreId);
+      const baseAngle =
+        point && Math.hypot(point.x, point.y) > 0.04
+          ? Math.atan2(point.y, point.x)
+          : (hashString(`${genreId}-core-angle`) % 360) * (Math.PI / 180);
+      const evenlySpacedAngle = -Math.PI / 2 + (Math.PI * 2 * index) / count;
+      angles.set(
+        genreId,
+        normalizeAngle(
+          evenlySpacedAngle * 0.72 +
+            baseAngle * 0.28 +
+            getDeterministicJitter(`${genreId}-core-angle-jitter`, 0.08),
+        ),
+      );
+    });
+
+    return angles;
+  }
+
+  function placeMindMapBranch({
+    angleById,
+    childRefsById,
+    coreAngle,
+    depth,
+    parentId,
+    positions,
+  }) {
+    const children = childRefsById.get(parentId) ?? [];
+    const parentPosition = positions.get(parentId);
+
+    if (children.length === 0 || !parentPosition) {
+      return;
+    }
+
+    const branchSpread = getMindMapBranchSpread(children.length, depth);
+    const step = children.length === 1 ? 0 : branchSpread / Math.max(1, children.length - 1);
+    const startOffset = children.length === 1 ? 0 : -branchSpread / 2;
+
+    children.forEach((child, index) => {
+      const offset = startOffset + step * index;
+      const localAngleBias =
+        normalizeAngle(angleById.get(child.id) - coreAngle) * Math.max(0.12, 0.32 - depth * 0.06);
+      const nextAngle = normalizeAngle(coreAngle + offset + localAngleBias);
+      const branchLengthX =
+        Math.max(116, MAP_BRANCH_LENGTH_X - (depth - 1) * MAP_BRANCH_LENGTH_DECAY) +
+        (child.kind === 'fusion' ? 18 : 0);
+      const branchLengthY =
+        Math.max(90, MAP_BRANCH_LENGTH_Y - (depth - 1) * (MAP_BRANCH_LENGTH_DECAY - 4)) +
+        (child.kind === 'fusion' ? 14 : 0);
+      const nextPosition = {
+        x: clamp(
+          parentPosition.x + Math.cos(nextAngle) * branchLengthX,
+          MAP_LAYOUT_MARGIN_X,
+          MAP_SURFACE_WIDTH - MAP_LAYOUT_MARGIN_X,
+        ),
+        y: clamp(
+          parentPosition.y + Math.sin(nextAngle) * branchLengthY,
+          MAP_LAYOUT_MARGIN_Y,
+          MAP_SURFACE_HEIGHT - MAP_LAYOUT_MARGIN_Y,
+        ),
+      };
+
+      positions.set(child.id, nextPosition);
+      placeMindMapBranch({
+        angleById,
+        childRefsById,
+        coreAngle: nextAngle,
+        depth: depth + 1,
+        parentId: child.id,
+        positions,
+      });
+    });
+  }
+
+  function getMindMapBranchSpread(childCount, depth) {
+    const baseSpread = Math.max(0.22, MAP_BRANCH_SPREAD_BASE - (depth - 1) * MAP_BRANCH_SPREAD_DECAY);
+    return Math.min(1.28, baseSpread + Math.max(0, childCount - 2) * 0.12);
+  }
+
+  function normalizeAngle(angle) {
+    let nextAngle = angle;
+
+    while (nextAngle <= -Math.PI) {
+      nextAngle += Math.PI * 2;
+    }
+
+    while (nextAngle > Math.PI) {
+      nextAngle -= Math.PI * 2;
+    }
+
+    return nextAngle;
   }
 
   function getGenreWeight(genre) {
@@ -799,9 +968,8 @@ function createMapPage({ setActiveNav, showGenre, showView }) {
   }
 
   function openMapInspector(anchorPoint = null) {
-    const nextAnchor = state.mapInspector.isOpen ? null : anchorPoint;
     state.mapInspector.isOpen = true;
-    updateMapInspectorUI(nextAnchor);
+    updateMapInspectorUI(anchorPoint);
   }
 
   function closeMapInspector() {
