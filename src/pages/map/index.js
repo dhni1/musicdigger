@@ -20,17 +20,17 @@ import { clamp, hashString } from '../../shared/utils.js';
 const MAP_INSPECTOR_MARGIN = 18;
 const MAP_LAYOUT_MARGIN_X = 64;
 const MAP_LAYOUT_MARGIN_Y = 72;
-const MAP_CORE_RING_RADIUS_X = 0.34;
-const MAP_CORE_RING_RADIUS_Y = 0.28;
-const MAP_BRANCH_LENGTH_X = 228;
-const MAP_BRANCH_LENGTH_Y = 166;
+const MAP_CORE_RING_RADIUS_X = 0.58;
+const MAP_CORE_RING_RADIUS_Y = 0.5;
+const MAP_BRANCH_LENGTH_X = 268;
+const MAP_BRANCH_LENGTH_Y = 196;
 const MAP_BRANCH_LENGTH_DECAY = 22;
 const MAP_BRANCH_SPREAD_BASE = 0.96;
 const MAP_BRANCH_SPREAD_DECAY = 0.11;
 const MAP_LAYOUT_RELAX_ITERATIONS = 180;
-const MAP_LAYOUT_REPULSION = 5200;
-const MAP_LAYOUT_MAX_STEP = 26;
-const MAP_LAYOUT_ANCHOR_STRENGTH = 0.06;
+const MAP_LAYOUT_REPULSION = 9200;
+const MAP_LAYOUT_MAX_STEP = 30;
+const MAP_LAYOUT_ANCHOR_STRENGTH = 0.03;
 const MAP_HORIZONTAL_POSITIVE = [
   'dance',
   'drill',
@@ -363,8 +363,8 @@ function createMapPage({ setActiveNav, showGenre, showView }) {
       const ring = Math.floor(attempt / 8);
       const slot = attempt % 8;
       const angle = baseAngle + ring * 0.42 + slot * 0.78 + index * 0.06;
-      const radiusX = ring * 18 + (hash % 11);
-      const radiusY = ring * 16 + ((hash >> 4) % 9);
+      const radiusX = ring * 22 + (hash % 13);
+      const radiusY = ring * 20 + ((hash >> 4) % 11);
       const candidateX = clamp(
         centerX + Math.cos(angle) * radiusX,
         width / 2 + MAP_LAYOUT_MARGIN_X,
@@ -607,7 +607,7 @@ function createMapPage({ setActiveNav, showGenre, showView }) {
       });
 
     const graph = buildMapRelationGraph(genres);
-    return relaxMapPositions(genres, seedPositions, graph);
+    return spreadMapPositions(relaxMapPositions(genres, seedPositions, graph, coreIds), coreIds);
   }
 
   function normalizeAxisPoints(points) {
@@ -881,7 +881,7 @@ function createMapPage({ setActiveNav, showGenre, showView }) {
     return links;
   }
 
-  function relaxMapPositions(genres, seedPositions, links) {
+  function relaxMapPositions(genres, seedPositions, links, coreIds) {
     const positions = new Map(
       genres.map(genre => {
         const seed = seedPositions.get(genre.id) ?? {
@@ -907,7 +907,9 @@ function createMapPage({ setActiveNav, showGenre, showView }) {
           const distance = Math.max(28, Math.hypot(deltaX, deltaY));
           const directionX = deltaX / distance;
           const directionY = deltaY / distance;
-          const repulsion = MAP_LAYOUT_REPULSION / (distance * distance);
+          const repulsionBoost =
+            coreIds?.has(leftId) && coreIds?.has(rightId) ? 1.6 : coreIds?.has(leftId) || coreIds?.has(rightId) ? 1.12 : 1;
+          const repulsion = (MAP_LAYOUT_REPULSION * repulsionBoost) / (distance * distance);
           const leftUpdate = updates.get(leftId);
           const rightUpdate = updates.get(rightId);
 
@@ -960,28 +962,69 @@ function createMapPage({ setActiveNav, showGenre, showView }) {
     return positions;
   }
 
+  function spreadMapPositions(positions, coreIds) {
+    if (positions.size === 0) {
+      return positions;
+    }
+
+    const entries = [...positions.entries()];
+    const minX = Math.min(...entries.map(([, point]) => point.x));
+    const maxX = Math.max(...entries.map(([, point]) => point.x));
+    const minY = Math.min(...entries.map(([, point]) => point.y));
+    const maxY = Math.max(...entries.map(([, point]) => point.y));
+    const currentWidth = Math.max(1, maxX - minX);
+    const currentHeight = Math.max(1, maxY - minY);
+    const layoutCenterX = (minX + maxX) / 2;
+    const layoutCenterY = (minY + maxY) / 2;
+    const surfaceCenterX = MAP_SURFACE_WIDTH / 2;
+    const surfaceCenterY = MAP_SURFACE_HEIGHT / 2;
+    const targetWidth = (MAP_SURFACE_WIDTH - MAP_LAYOUT_MARGIN_X * 2) * 0.92;
+    const targetHeight = (MAP_SURFACE_HEIGHT - MAP_LAYOUT_MARGIN_Y * 2) * 0.88;
+    const scaleX = clamp(targetWidth / currentWidth, 1.08, 1.75);
+    const scaleY = clamp(targetHeight / currentHeight, 1.08, 1.72);
+    const spreadPositions = new Map();
+
+    entries.forEach(([genreId, point]) => {
+      const coreScale = coreIds?.has(genreId) ? 1.1 : 1;
+      spreadPositions.set(genreId, {
+        x: clamp(
+          surfaceCenterX + (point.x - layoutCenterX) * scaleX * coreScale,
+          MAP_LAYOUT_MARGIN_X,
+          MAP_SURFACE_WIDTH - MAP_LAYOUT_MARGIN_X,
+        ),
+        y: clamp(
+          surfaceCenterY + (point.y - layoutCenterY) * scaleY * coreScale,
+          MAP_LAYOUT_MARGIN_Y,
+          MAP_SURFACE_HEIGHT - MAP_LAYOUT_MARGIN_Y,
+        ),
+      });
+    });
+
+    return spreadPositions;
+  }
+
   function getMapRelationStrength(kind) {
     if (kind === 'subgenre') {
-      return 1.26;
+      return 1.32;
     }
 
     if (kind === 'fusion') {
-      return 0.94;
+      return 1.02;
     }
 
-    return 0.58;
+    return 0.44;
   }
 
   function getMapTargetDistance(kind) {
     if (kind === 'subgenre') {
-      return 124;
+      return 136;
     }
 
     if (kind === 'fusion') {
-      return 156;
+      return 182;
     }
 
-    return 208;
+    return 268;
   }
 
   function buildVisibleMapLinks(layout) {
