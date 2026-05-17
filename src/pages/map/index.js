@@ -22,11 +22,15 @@ const MAP_LAYOUT_MARGIN_X = 64;
 const MAP_LAYOUT_MARGIN_Y = 72;
 const MAP_CORE_RING_RADIUS_X = 0.34;
 const MAP_CORE_RING_RADIUS_Y = 0.28;
-const MAP_BRANCH_LENGTH_X = 196;
-const MAP_BRANCH_LENGTH_Y = 142;
-const MAP_BRANCH_LENGTH_DECAY = 18;
-const MAP_BRANCH_SPREAD_BASE = 0.88;
-const MAP_BRANCH_SPREAD_DECAY = 0.13;
+const MAP_BRANCH_LENGTH_X = 228;
+const MAP_BRANCH_LENGTH_Y = 166;
+const MAP_BRANCH_LENGTH_DECAY = 22;
+const MAP_BRANCH_SPREAD_BASE = 0.96;
+const MAP_BRANCH_SPREAD_DECAY = 0.11;
+const MAP_LAYOUT_RELAX_ITERATIONS = 180;
+const MAP_LAYOUT_REPULSION = 5200;
+const MAP_LAYOUT_MAX_STEP = 26;
+const MAP_LAYOUT_ANCHOR_STRENGTH = 0.06;
 const MAP_HORIZONTAL_POSITIVE = [
   'dance',
   'drill',
@@ -566,11 +570,11 @@ function createMapPage({ setActiveNav, showGenre, showView }) {
     const centerY = MAP_SURFACE_HEIGHT / 2;
     const radiusX = (MAP_SURFACE_WIDTH - MAP_LAYOUT_MARGIN_X * 2) / 2;
     const radiusY = (MAP_SURFACE_HEIGHT - MAP_LAYOUT_MARGIN_Y * 2) / 2;
-    const positions = new Map();
+    const seedPositions = new Map();
     const coreAngles = buildMindMapCoreAngles([...coreIds], axisMap);
 
     coreAngles.forEach((angle, genreId) => {
-      positions.set(genreId, {
+      seedPositions.set(genreId, {
         x: clamp(
           centerX + Math.cos(angle) * radiusX * MAP_CORE_RING_RADIUS_X,
           MAP_LAYOUT_MARGIN_X,
@@ -598,11 +602,12 @@ function createMapPage({ setActiveNav, showGenre, showView }) {
           coreAngle: coreAngles.get(coreId) ?? 0,
           depth: 1,
           parentId: coreId,
-          positions,
+          positions: seedPositions,
         });
       });
 
-    return positions;
+    const graph = buildMapRelationGraph(genres);
+    return relaxMapPositions(genres, seedPositions, graph);
   }
 
   function normalizeAxisPoints(points) {
@@ -842,6 +847,141 @@ function createMapPage({ setActiveNav, showGenre, showView }) {
 
   function getMapConnectionIds(genre) {
     return [...new Set([...(genre.subgenres ?? []), ...(genre.similar ?? []), ...(genre.fusion ?? [])])];
+  }
+
+  function buildMapRelationGraph(genres) {
+    const genreById = new Map(genres.map(genre => [genre.id, genre]));
+    const pairKeys = new Set();
+    const links = [];
+
+    genres.forEach(genre => {
+      getMapConnectionIds(genre).forEach(targetId => {
+        const targetGenre = genreById.get(targetId);
+        if (!targetGenre) {
+          return;
+        }
+
+        const pairKey = [genre.id, targetId].sort().join('::');
+        if (pairKeys.has(pairKey)) {
+          return;
+        }
+
+        pairKeys.add(pairKey);
+        const kind = getMapRelationKind(genre, targetGenre);
+        links.push({
+          leftId: genre.id,
+          rightId: targetId,
+          kind,
+          strength: getMapRelationStrength(kind),
+          targetDistance: getMapTargetDistance(kind),
+        });
+      });
+    });
+
+    return links;
+  }
+
+  function relaxMapPositions(genres, seedPositions, links) {
+    const positions = new Map(
+      genres.map(genre => {
+        const seed = seedPositions.get(genre.id) ?? {
+          x: MAP_SURFACE_WIDTH / 2,
+          y: MAP_SURFACE_HEIGHT / 2,
+        };
+
+        return [genre.id, { x: seed.x, y: seed.y }];
+      }),
+    );
+
+    for (let iteration = 0; iteration < MAP_LAYOUT_RELAX_ITERATIONS; iteration += 1) {
+      const updates = new Map(genres.map(genre => [genre.id, { x: 0, y: 0 }]));
+
+      for (let index = 0; index < genres.length; index += 1) {
+        for (let otherIndex = index + 1; otherIndex < genres.length; otherIndex += 1) {
+          const leftId = genres[index].id;
+          const rightId = genres[otherIndex].id;
+          const leftPoint = positions.get(leftId);
+          const rightPoint = positions.get(rightId);
+          const deltaX = rightPoint.x - leftPoint.x;
+          const deltaY = rightPoint.y - leftPoint.y;
+          const distance = Math.max(28, Math.hypot(deltaX, deltaY));
+          const directionX = deltaX / distance;
+          const directionY = deltaY / distance;
+          const repulsion = MAP_LAYOUT_REPULSION / (distance * distance);
+          const leftUpdate = updates.get(leftId);
+          const rightUpdate = updates.get(rightId);
+
+          leftUpdate.x -= directionX * repulsion;
+          leftUpdate.y -= directionY * repulsion;
+          rightUpdate.x += directionX * repulsion;
+          rightUpdate.y += directionY * repulsion;
+        }
+      }
+
+      links.forEach(link => {
+        const leftPoint = positions.get(link.leftId);
+        const rightPoint = positions.get(link.rightId);
+        const leftUpdate = updates.get(link.leftId);
+        const rightUpdate = updates.get(link.rightId);
+        const deltaX = rightPoint.x - leftPoint.x;
+        const deltaY = rightPoint.y - leftPoint.y;
+        const distance = Math.max(24, Math.hypot(deltaX, deltaY));
+        const directionX = deltaX / distance;
+        const directionY = deltaY / distance;
+        const attraction = (distance - link.targetDistance) * link.strength * 0.022;
+
+        leftUpdate.x += directionX * attraction;
+        leftUpdate.y += directionY * attraction;
+        rightUpdate.x -= directionX * attraction;
+        rightUpdate.y -= directionY * attraction;
+      });
+
+      genres.forEach(genre => {
+        const point = positions.get(genre.id);
+        const update = updates.get(genre.id);
+        const anchor = seedPositions.get(genre.id) ?? point;
+
+        update.x += (anchor.x - point.x) * MAP_LAYOUT_ANCHOR_STRENGTH;
+        update.y += (anchor.y - point.y) * MAP_LAYOUT_ANCHOR_STRENGTH;
+
+        point.x = clamp(
+          point.x + clamp(update.x, -MAP_LAYOUT_MAX_STEP, MAP_LAYOUT_MAX_STEP),
+          MAP_LAYOUT_MARGIN_X,
+          MAP_SURFACE_WIDTH - MAP_LAYOUT_MARGIN_X,
+        );
+        point.y = clamp(
+          point.y + clamp(update.y, -MAP_LAYOUT_MAX_STEP, MAP_LAYOUT_MAX_STEP),
+          MAP_LAYOUT_MARGIN_Y,
+          MAP_SURFACE_HEIGHT - MAP_LAYOUT_MARGIN_Y,
+        );
+      });
+    }
+
+    return positions;
+  }
+
+  function getMapRelationStrength(kind) {
+    if (kind === 'subgenre') {
+      return 1.26;
+    }
+
+    if (kind === 'fusion') {
+      return 0.94;
+    }
+
+    return 0.58;
+  }
+
+  function getMapTargetDistance(kind) {
+    if (kind === 'subgenre') {
+      return 124;
+    }
+
+    if (kind === 'fusion') {
+      return 156;
+    }
+
+    return 208;
   }
 
   function buildVisibleMapLinks(layout) {
