@@ -142,6 +142,38 @@ function createMapPage({ setActiveNav, showGenre, showView }) {
 
     const activeLayout = state.currentGenreId ? state.mapLayoutById.get(state.currentGenreId) : null;
     const activeConnections = new Set(activeLayout ? getMapConnectionIds(activeLayout.genre) : []);
+    const links = buildVisibleMapLinks(layout);
+
+    if (links.length > 0) {
+      const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      svg.setAttribute('class', 'map-links');
+      svg.setAttribute('width', String(Math.round(MAP_SURFACE_WIDTH * scale)));
+      svg.setAttribute('height', String(Math.round(MAP_SURFACE_HEIGHT * scale)));
+      svg.setAttribute('viewBox', `0 0 ${Math.round(MAP_SURFACE_WIDTH * scale)} ${Math.round(MAP_SURFACE_HEIGHT * scale)}`);
+      svg.setAttribute('aria-hidden', 'true');
+
+      links.forEach(link => {
+        const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        line.setAttribute('x1', String(Math.round(link.from.x * scale)));
+        line.setAttribute('y1', String(Math.round(link.from.y * scale)));
+        line.setAttribute('x2', String(Math.round(link.to.x * scale)));
+        line.setAttribute('y2', String(Math.round(link.to.y * scale)));
+        line.setAttribute('class', `map-link is-${link.kind}`);
+
+        if (
+          state.currentGenreId &&
+          (link.from.genre.id === state.currentGenreId || link.to.genre.id === state.currentGenreId)
+        ) {
+          line.classList.add('is-active');
+        } else if (state.currentGenreId) {
+          line.classList.add('is-muted');
+        }
+
+        svg.appendChild(line);
+      });
+
+      surface.appendChild(svg);
+    }
 
     layout.forEach(item => {
       const button = document.createElement('button');
@@ -810,6 +842,52 @@ function createMapPage({ setActiveNav, showGenre, showView }) {
 
   function getMapConnectionIds(genre) {
     return [...new Set([...(genre.subgenres ?? []), ...(genre.similar ?? []), ...(genre.fusion ?? [])])];
+  }
+
+  function buildVisibleMapLinks(layout) {
+    const layoutById = new Map(layout.map(item => [item.genre.id, item]));
+    const pairKeys = new Set();
+    const links = [];
+
+    layout.forEach(item => {
+      getMapConnectionIds(item.genre).forEach(targetId => {
+        const target = layoutById.get(targetId);
+
+        if (!target) {
+          return;
+        }
+
+        const pairKey = [item.genre.id, targetId].sort().join('::');
+        if (pairKeys.has(pairKey)) {
+          return;
+        }
+
+        pairKeys.add(pairKey);
+        links.push({
+          from: item,
+          to: target,
+          kind: getMapRelationKind(item.genre, target.genre),
+        });
+      });
+    });
+
+    return links;
+  }
+
+  function getMapRelationKind(sourceGenre, targetGenre) {
+    if (hasGenreRelation(sourceGenre, targetGenre.id, 'subgenres') || hasGenreRelation(targetGenre, sourceGenre.id, 'subgenres')) {
+      return 'subgenre';
+    }
+
+    if (hasGenreRelation(sourceGenre, targetGenre.id, 'fusion') || hasGenreRelation(targetGenre, sourceGenre.id, 'fusion')) {
+      return 'fusion';
+    }
+
+    return 'similar';
+  }
+
+  function hasGenreRelation(genre, targetId, key) {
+    return (genre[key] ?? []).includes(targetId);
   }
 
   function countVisibleMapConnections(genres) {

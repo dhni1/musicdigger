@@ -105,6 +105,43 @@ body.theme-light .map-zoom-controls {
     #0c1018;
 }
 
+.map-links {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.map-link {
+  fill: none;
+  stroke-width: 1.5;
+  opacity: 0.24;
+  transition: opacity 160ms ease, stroke-width 160ms ease, stroke 160ms ease;
+}
+
+.map-link.is-subgenre {
+  stroke: rgba(255, 210, 120, 0.58);
+}
+
+.map-link.is-fusion {
+  stroke: rgba(115, 214, 168, 0.56);
+  stroke-dasharray: 8 7;
+}
+
+.map-link.is-similar {
+  stroke: rgba(126, 190, 255, 0.42);
+}
+
+.map-link.is-active {
+  opacity: 0.92;
+  stroke-width: 2.4;
+}
+
+.map-link.is-muted {
+  opacity: 0.12;
+}
+
 .genre-map-surface::before {
   content: "";
   position: absolute;
@@ -146,6 +183,18 @@ body.theme-light .genre-map-surface::before {
     linear-gradient(rgba(18, 23, 34, 0.05) 1px, transparent 1px),
     linear-gradient(90deg, rgba(18, 23, 34, 0.045) 1px, transparent 1px);
   background-size: 100% 92px, 92px 100%;
+}
+
+body.theme-light .map-link.is-subgenre {
+  stroke: rgba(193, 139, 20, 0.4);
+}
+
+body.theme-light .map-link.is-fusion {
+  stroke: rgba(52, 156, 115, 0.42);
+}
+
+body.theme-light .map-link.is-similar {
+  stroke: rgba(58, 121, 194, 0.3);
 }
 
 .map-zoom-controls .ghost-button {
