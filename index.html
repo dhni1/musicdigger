@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link
-    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;700&display=swap"
+    href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap"
     rel="stylesheet"
   >
   <link rel="stylesheet" href="design.css">
@@ -24,15 +24,35 @@
 
   <div class="app-shell">
     <aside id="app-dock" class="dock panel-surface" aria-hidden="true">
+      <div class="dock-head">
+        <span class="brand-mark" aria-hidden="true"><span></span></span>
+        <div>
+          <strong class="dock-brand">MUSICDIGGER</strong>
+          <span class="dock-caption">Follow the sound</span>
+        </div>
+      </div>
+
+      <p class="dock-label">Explore</p>
       <nav class="dock-nav" aria-label="기본 탐색">
-        <button id="nav-home" class="dock-link is-current" type="button">Home</button>
-        <button id="nav-map" class="dock-link" type="button">Map</button>
-        <button id="nav-library" class="dock-link" type="button">Library</button>
-        <button id="nav-playlists" class="dock-link" type="button">Playlists</button>
+        <button id="nav-home" class="dock-link is-current" type="button" aria-label="Home">
+          <span class="dock-icon" aria-hidden="true">⌂</span><span>Home</span>
+        </button>
+        <button id="nav-map" class="dock-link" type="button" aria-label="Map">
+          <span class="dock-icon" aria-hidden="true">◎</span><span>Map</span>
+        </button>
+        <button id="nav-library" class="dock-link" type="button" aria-label="Library">
+          <span class="dock-icon" aria-hidden="true">♫</span><span>Library</span>
+        </button>
+        <button id="nav-playlists" class="dock-link" type="button" aria-label="Playlists">
+          <span class="dock-icon" aria-hidden="true">＋</span><span>Playlists</span>
+        </button>
       </nav>
 
       <div class="dock-footer">
-        <button id="nav-profile" class="dock-mini" type="button">Profile</button>
+        <p class="dock-label">Account</p>
+        <button id="nav-profile" class="dock-mini" type="button" aria-label="Profile">
+          <span class="dock-icon" aria-hidden="true">◉</span><span>Profile</span>
+        </button>
       </div>
     </aside>
 
@@ -51,7 +71,10 @@
             <span></span>
             <span></span>
           </button>
-          <strong class="brand">MUSICDIGGER</strong>
+          <strong class="brand">
+            <span class="brand-mark" aria-hidden="true"><span></span></span>
+            <span class="brand-wordmark">MUSICDIGGER</span>
+          </strong>
         </div>
 
         <div class="topbar-center">
@@ -61,18 +84,20 @@
             <input
               id="genre-search"
               type="search"
-              placeholder="Search genres and styles"
+              placeholder="Search genres, moods and scenes"
               autocomplete="off"
             >
           </div>
           <button id="sidebar-random" class="secondary-button ghost-button topbar-random" type="button">
-            Random Dig
+            <span aria-hidden="true">↝</span>
+            <span>Random Dig</span>
           </button>
         </div>
 
         <div class="topbar-right">
           <button id="profile-slot" class="profile-slot" type="button" aria-label="프로필">
             <span id="profile-avatar" class="profile-avatar" aria-hidden="true"></span>
+            <span class="profile-status-dot" aria-hidden="true"></span>
           </button>
         </div>
       </header>
@@ -81,7 +106,7 @@
         <section id="home-view" class="app-view is-active">
           <section class="hero">
             <div class="hero-copy">
-              <p class="eyebrow">Discover Beyond The Obvious</p>
+              <p class="eyebrow"><span></span> Discover beyond the obvious</p>
               <h2 id="genre-title">장르를 선택해보세요</h2>
               <p id="genre-desc" class="hero-description">
                 MUSICDIGGER는 장르를 따라가며 비슷한 결을 발견하는 탐색형 음악 아카이브입니다.
@@ -112,8 +137,8 @@
             <section class="panel-surface browse-panel">
               <div class="section-heading">
                 <div>
-                  <p class="section-kicker">Trending Now</p>
-                  <h3>Genre Library</h3>
+                  <p class="section-kicker">Explore</p>
+                  <h3>Browse genres</h3>
                 </div>
                 <div class="section-tools">
                   <button id="genre-page-prev" class="secondary-button ghost-button" type="button">
@@ -132,8 +157,8 @@
             <section class="panel-surface detail-panel">
               <div class="section-heading">
                 <div>
-                  <p class="section-kicker">Now Playing</p>
-                  <h3>Representative Major Tracks</h3>
+                  <p class="section-kicker">Selected genre</p>
+                  <h3>Essential tracks</h3>
                 </div>
                 <span id="current-genre-chip" class="section-meta accent">No Genre</span>
               </div>
@@ -143,7 +168,7 @@
                   <div class="art-core"></div>
                 </div>
                 <div class="spotlight-copy">
-                  <span class="spotlight-label">Selected Sound</span>
+                  <span class="spotlight-label">Now digging</span>
                   <strong id="player-track-title">Select a genre</strong>
                   <p id="player-track-artist">Track information will appear here.</p>
                 </div>
@@ -156,7 +181,7 @@
               <section class="side-block">
                 <div class="section-heading tight">
                   <div>
-                    <p class="section-kicker">Connections</p>
+                    <p class="section-kicker">Go deeper</p>
                     <h3>Subgenres</h3>
                   </div>
                 </div>
@@ -166,7 +191,7 @@
               <section class="side-block">
                 <div class="section-heading tight">
                   <div>
-                    <p class="section-kicker">Connections</p>
+                    <p class="section-kicker">Same energy</p>
                     <h3>Similar</h3>
                   </div>
                 </div>
@@ -176,7 +201,7 @@
               <section class="side-block">
                 <div class="section-heading tight">
                   <div>
-                    <p class="section-kicker">Connections</p>
+                    <p class="section-kicker">Cross-pollinated</p>
                     <h3>Fusion</h3>
                   </div>
                 </div>

@@ -9,9 +9,10 @@ import {
   clearChildren,
   createElement,
   createEmptyState,
+  sanitizeHttpUrl,
   createTextBlock,
 } from '../../shared/dom.js';
-import { makeTrackKey, slugify } from '../../shared/utils.js';
+import { hashString, makeTrackKey, slugify } from '../../shared/utils.js';
 
 function createHomePage({ likeTrack, renderGenreMap, renderMapSelection, setActiveNav, showView }) {
   async function loadGenres() {
@@ -452,20 +453,28 @@ function createHomePage({ likeTrack, renderGenreMap, renderMapSelection, setActi
     tracks.forEach((track, index) => {
       const saved = state.spotify.likedTrackKeys.has(makeTrackKey(track));
       const item = document.createElement('li');
-      const info = createElement('div');
+      const info = createElement('div', { className: 'track-info' });
+      const secondaryText = track.album
+        ? `${track.artist} · ${track.album}`
+        : track.artist;
       const actionButton = createElement('button', {
         className: `track-action${saved ? ' is-saved' : ''}`,
         text: saved ? 'Liked' : 'Like',
+        attributes: {
+          'aria-label': saved ? `${track.title} 좋아요 완료` : `${track.title} 좋아요`,
+          title: saved ? 'Liked' : 'Like on Spotify',
+        },
       });
       actionButton.type = 'button';
 
       item.appendChild(
         createTextBlock('span', String(index + 1).padStart(2, '0'), 'track-order'),
       );
+      item.appendChild(createTrackCover(track));
       info.appendChild(createTextBlock('span', track.title, 'track-title'));
-      info.appendChild(createTextBlock('span', track.artist, 'track-artist'));
+      info.appendChild(createTextBlock('span', secondaryText, 'track-artist'));
       item.appendChild(info);
-      item.appendChild(createTextBlock('span', makeDuration(index), 'track-duration'));
+      item.appendChild(createTextBlock('span', formatDuration(track.durationMs), 'track-duration'));
       item.appendChild(actionButton);
 
       actionButton.addEventListener('click', () => {
@@ -474,6 +483,56 @@ function createHomePage({ likeTrack, renderGenreMap, renderMapSelection, setActi
 
       elements.trackList.appendChild(item);
     });
+  }
+
+  function createTrackCover(track) {
+    const cover = createElement('div', {
+      className: 'track-cover',
+      attributes: { 'aria-hidden': 'true' },
+    });
+    const imageUrl = sanitizeHttpUrl(track.albumImage ?? track.imageUrl ?? track.image);
+
+    if (!imageUrl) {
+      applyFallbackTrackCover(cover, track);
+      return cover;
+    }
+
+    const image = createElement('img', {
+      attributes: {
+        src: imageUrl,
+        alt: '',
+        loading: 'lazy',
+        decoding: 'async',
+      },
+    });
+    cover.classList.add('has-image');
+    cover.appendChild(image);
+
+    image.addEventListener('error', () => {
+      image.remove();
+      applyFallbackTrackCover(cover, track);
+    });
+
+    return cover;
+  }
+
+  function applyFallbackTrackCover(cover, track) {
+    const hue = hashString(`${track.title}::${track.artist}`) % 360;
+    const monogram = getTrackMonogram(track.title);
+    cover.classList.remove('has-image');
+    cover.classList.add('is-fallback');
+    cover.style.setProperty('--cover-hue', String(hue));
+    cover.appendChild(createTextBlock('span', monogram, 'track-cover-mark'));
+  }
+
+  function getTrackMonogram(title) {
+    const words = String(title ?? '')
+      .replace(/[^a-zA-Z0-9가-힣]+/g, ' ')
+      .trim()
+      .split(/\s+/)
+      .filter(Boolean);
+
+    return words.slice(0, 2).map(word => word[0]).join('').toUpperCase() || 'MD';
   }
 
   function renderButtons(container, ids) {
@@ -586,10 +645,16 @@ function createHomePage({ likeTrack, renderGenreMap, renderMapSelection, setActi
     return genre.id;
   }
 
-  function makeDuration(index) {
-    const minutes = 3 + (index % 3);
-    const seconds = 10 + index * 17;
-    return `${String(minutes).padStart(2, '0')}:${String(seconds % 60).padStart(2, '0')}`;
+  function formatDuration(durationMs) {
+    const totalSeconds = Math.round(Number(durationMs) / 1000);
+
+    if (!Number.isFinite(totalSeconds) || totalSeconds <= 0) {
+      return '--:--';
+    }
+
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = totalSeconds % 60;
+    return `${minutes}:${String(seconds).padStart(2, '0')}`;
   }
 
   function getCurrentGenreName() {

@@ -118,6 +118,7 @@ function updateProfileSlot({ elements, state }) {
 
   const imageUrl = state.spotify.profile?.images?.[0]?.url;
   elements.profileSlot.title = state.spotify.profile?.display_name ?? '프로필 화면 열기';
+  elements.profileSlot.classList.toggle('is-connected', Boolean(state.spotify.profile));
   const safeImageUrl = sanitizeHttpUrl(imageUrl);
   elements.profileAvatar.style.backgroundImage = safeImageUrl ? `url("${safeImageUrl}")` : '';
   elements.profileAvatar.classList.toggle('has-image', Boolean(safeImageUrl));

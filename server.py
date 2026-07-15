@@ -551,11 +551,16 @@ def is_public_asset(relative_path):
 
 def map_track(item):
     artist = item.get("artists", [{}])[0]
+    album = item.get("album", {}) or {}
+    album_images = album.get("images", []) or []
+    album_image = album_images[0].get("url") if album_images else None
     return {
         "title": item.get("name", "Unknown Track"),
         "artist": artist.get("name", "Unknown Artist"),
         "artistId": artist.get("id"),
-        "album": item.get("album", {}).get("name", ""),
+        "album": album.get("name", ""),
+        "albumImage": album_image,
+        "durationMs": item.get("duration_ms"),
         "spotifyUri": item.get("uri"),
         "spotifyUrl": item.get("external_urls", {}).get("spotify"),
         "popularity": item.get("popularity", 0),

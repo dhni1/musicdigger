@@ -1,21 +1,39 @@
 .library-panel {
-  padding: 14px;
+  position: relative;
+  min-height: 560px;
+  padding: clamp(22px, 3vw, 34px);
+  overflow: hidden;
 }
 
-.library-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
+.library-panel::before {
+  content: "";
+  position: absolute;
+  top: -160px;
+  right: -90px;
+  width: 420px;
+  height: 420px;
+  border-radius: 50%;
+  background: radial-gradient(circle, color-mix(in srgb, var(--accent-3) 13%, transparent), transparent 68%);
+  pointer-events: none;
+}
+
+.library-panel > * {
+  position: relative;
 }
 
 .library-grid {
   display: grid;
-  grid-template-columns: minmax(240px, 0.9fr) minmax(280px, 1fr) minmax(280px, 1fr);
-  gap: 12px;
+  grid-template-columns: minmax(240px, 0.8fr) minmax(300px, 1fr) minmax(300px, 1fr);
+  gap: 14px;
+  margin-top: 24px;
 }
 
 .library-block {
   min-width: 0;
+  padding: 20px;
+  border: 1px solid var(--line);
+  border-radius: 17px;
+  background: color-mix(in srgb, var(--bg-panel-2) 56%, transparent);
 }
 
 .playlist-list,
@@ -26,31 +44,49 @@
 
 .playlist-item,
 .liked-track-item {
+  position: relative;
   display: grid;
-  gap: 4px;
-  padding: 12px;
+  gap: 3px;
+  min-width: 0;
+  padding: 13px 14px;
   border: 1px solid var(--line);
-  border-radius: var(--radius-sm);
-  background: var(--bg-panel-2);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--bg-panel-solid) 56%, transparent);
+  transition: border-color 150ms ease, background 150ms ease, transform 150ms ease;
+}
+
+.playlist-item:hover,
+.liked-track-item:hover {
+  border-color: var(--line-strong);
+  background: color-mix(in srgb, var(--bg-panel-solid) 82%, transparent);
+  transform: translateY(-1px);
 }
 
 .playlist-item strong,
 .liked-track-item strong {
-  font-size: 0.94rem;
+  overflow: hidden;
+  font-size: 0.9rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .playlist-item span,
 .liked-track-item span {
+  overflow: hidden;
   color: var(--text-soft);
-  font-size: 0.82rem;
+  font-size: 0.78rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .playlist-link,
 .liked-track-link {
-  color: var(--accent-2);
-  text-decoration: none;
-  font-size: 0.78rem;
+  width: fit-content;
+  margin-top: 6px;
+  color: var(--accent);
+  font-size: 0.72rem;
   font-weight: 700;
+  text-decoration: none;
 }
 
 .playlist-link:hover,

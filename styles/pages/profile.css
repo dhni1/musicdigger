@@ -1,67 +1,112 @@
 .profile-hero,
-.profile-block,
-.settings-hero,
-.settings-block {
-  padding: 14px;
+.settings-hero {
+  position: relative;
+  min-height: 190px;
+  padding: clamp(26px, 4vw, 44px);
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 88% 18%, color-mix(in srgb, var(--accent-2) 18%, transparent), transparent 34%),
+    linear-gradient(135deg, color-mix(in srgb, var(--accent) 6%, transparent), transparent 46%),
+    var(--bg-panel);
+}
+
+.profile-hero::after,
+.settings-hero::after {
+  content: "";
+  position: absolute;
+  top: -105px;
+  right: 6%;
+  width: 270px;
+  height: 270px;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 42px rgba(255, 255, 255, 0.012), inset 0 0 0 43px var(--line);
+  pointer-events: none;
+}
+
+.profile-hero .section-heading h3,
+.settings-hero .section-heading h3 {
+  font-size: clamp(2rem, 4vw, 3.2rem);
 }
 
 .profile-copy {
-  max-width: 720px;
+  position: relative;
+  max-width: 680px;
 }
 
 .profile-grid {
   display: grid;
-  grid-template-columns: minmax(280px, 1.1fr) minmax(220px, 0.9fr) minmax(220px, 0.9fr);
-  gap: 12px;
-  margin-top: 12px;
+  grid-template-columns: minmax(300px, 1.1fr) minmax(240px, 0.9fr) minmax(240px, 0.8fr);
+  gap: 14px;
+  margin-top: 16px;
 }
 
 .settings-grid {
   display: grid;
-  grid-template-columns: minmax(280px, 1fr) minmax(220px, 0.9fr);
-  gap: 12px;
-  margin-top: 12px;
+  grid-template-columns: minmax(300px, 1fr) minmax(240px, 0.8fr);
+  gap: 14px;
+  margin-top: 16px;
+}
+
+.profile-block,
+.settings-block {
+  min-width: 0;
+  padding: 22px;
 }
 
 .profile-detail-stack {
   display: grid;
-  gap: 12px;
+  gap: 16px;
 }
 
 .profile-detail-grid,
 .profile-summary {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-  gap: 8px;
+  gap: 9px;
 }
 
 .detail-chip,
 .summary-card {
-  padding: 12px;
+  padding: 15px;
   border: 1px solid var(--line);
-  border-radius: var(--radius-sm);
-  background: var(--bg-panel-2);
+  border-radius: 13px;
+  background: color-mix(in srgb, var(--bg-panel-2) 64%, transparent);
 }
 
 .detail-chip span,
 .summary-card span {
   display: block;
   color: var(--text-dim);
-  font-size: 0.74rem;
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.11em;
   text-transform: uppercase;
-  letter-spacing: 0.12em;
 }
 
 .detail-chip strong,
 .summary-card strong {
   display: block;
-  margin-top: 8px;
+  margin-top: 10px;
+  overflow: hidden;
   font-family: "Space Grotesk", sans-serif;
-  font-size: 1.1rem;
-  letter-spacing: -0.04em;
+  font-size: 1.12rem;
+  font-weight: 600;
+  letter-spacing: -0.035em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.summary-card:first-child strong {
+  color: var(--accent);
 }
 
 .profile-settings {
   display: grid;
-  gap: 8px;
+  gap: 9px;
+}
+
+.profile-settings .secondary-button {
+  justify-self: stretch;
+  text-align: left;
 }
