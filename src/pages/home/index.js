@@ -15,6 +15,9 @@ import {
 import { hashString, makeTrackKey, slugify } from '../../shared/utils.js';
 
 function createHomePage({ likeTrack, renderGenreMap, renderMapSelection, setActiveNav, showView }) {
+  const GENRE_DETAIL_RETRY_MS = 60_000;
+  const genreDetailRequests = new Map();
+
   async function loadGenres() {
     try {
       const bootstrapGenres = await fetchLocalGenres();
@@ -33,7 +36,7 @@ function createHomePage({ likeTrack, renderGenreMap, renderMapSelection, setActi
   }
 
   async function fetchLocalGenres() {
-    const response = await fetch('data/genres.json');
+    const response = await fetch('data/genres.json', { cache: 'no-cache' });
 
     if (!response.ok) {
       throw new Error('local genres unavailable');
@@ -59,13 +62,30 @@ function createHomePage({ likeTrack, renderGenreMap, renderMapSelection, setActi
 
   function commitGenreCatalog(genres, options = {}) {
     const { usingBackendGenres = false } = options;
-    state.genres = cloneGenres(genres);
+    const existingGenres = new Map(state.genres.map(genre => [genre.id, genre]));
+    const nextGenres = cloneGenres(genres);
+
+    if (usingBackendGenres) {
+      nextGenres.forEach(genre => {
+        const existing = existingGenres.get(genre.id);
+        if (existing) {
+          genre.tracks = mergeTrackDetails(existing.tracks, genre.tracks);
+        }
+      });
+    }
+
+    state.genres = nextGenres;
     state.usingBackendGenres = usingBackendGenres;
     elements.genreCount.textContent = String(state.genres.length);
     applySearch(state.searchQuery);
   }
 
   async function refreshGenresFromBackend() {
+    const prefetchedGenreId = state.currentGenreId ?? state.filteredGenres[0]?.id;
+    const prefetchedDetailRequest = prefetchedGenreId
+      ? requestGenreDetails(prefetchedGenreId).catch(() => null)
+      : null;
+
     try {
       const backendGenres = await fetchBackendGenres();
       commitGenreCatalog(backendGenres, { usingBackendGenres: true });
@@ -76,7 +96,10 @@ function createHomePage({ likeTrack, renderGenreMap, renderMapSelection, setActi
           : state.filteredGenres[0]?.id;
 
       if (targetGenreId) {
-        void showGenre(targetGenreId);
+        void showGenre(
+          targetGenreId,
+          targetGenreId === prefetchedGenreId ? prefetchedDetailRequest : null,
+        );
       }
     } catch {
       updateSearchStatus(buildSearchToken(state.searchQuery));
@@ -109,6 +132,22 @@ function createHomePage({ likeTrack, renderGenreMap, renderMapSelection, setActi
 
     const data = await response.json();
     return data.genre;
+  }
+
+  function requestGenreDetails(genreId) {
+    const existingRequest = genreDetailRequests.get(genreId);
+
+    if (existingRequest) {
+      return existingRequest;
+    }
+
+    const request = fetchGenreDetails(genreId).finally(() => {
+      if (genreDetailRequests.get(genreId) === request) {
+        genreDetailRequests.delete(genreId);
+      }
+    });
+    genreDetailRequests.set(genreId, request);
+    return request;
   }
 
   function applySearch(query) {
@@ -336,7 +375,7 @@ function createHomePage({ likeTrack, renderGenreMap, renderMapSelection, setActi
     updateGenrePagination(Boolean(buildSearchToken(state.searchQuery).normalized));
   }
 
-  async function showGenre(id) {
+  async function showGenre(id, prefetchedDetailRequest = null) {
     const genre = state.genres.find(item => item.id === id);
 
     if (!genre) {
@@ -346,7 +385,14 @@ function createHomePage({ likeTrack, renderGenreMap, renderMapSelection, setActi
     state.currentGenreId = genre.id;
     ensureGenreVisibleInPage(genre.id);
 
-    if (genre.spotifyBacked && !genre.detailsLoaded && !genre.detailsLoading) {
+    const shouldLoadDetails =
+      genre.spotifyBacked &&
+      (!genre.detailsLoaded || genre.detailsComplete === false) &&
+      !genre.detailsLoading &&
+      Date.now() >= (genre.detailsRetryAt ?? 0) &&
+      state.usingBackendGenres;
+
+    if (shouldLoadDetails) {
       genre.detailsLoading = true;
       if (
         !genre.description ||
@@ -360,15 +406,23 @@ function createHomePage({ likeTrack, renderGenreMap, renderMapSelection, setActi
     applyGenreToUI(genre);
     renderGenreList();
 
-    if (!genre.spotifyBacked || genre.detailsLoaded || !state.usingBackendGenres) {
+    if (!shouldLoadDetails) {
       return;
     }
 
     try {
-      const detail = await fetchGenreDetails(genre.id);
+      const detail = await (prefetchedDetailRequest ?? requestGenreDetails(genre.id));
+      if (!detail) {
+        throw new Error('genre details unavailable');
+      }
+      const detailsComplete = detail.tracksComplete !== false;
+      const mergedTracks = mergeTrackDetails(genre.tracks, detail.tracks);
       Object.assign(genre, detail, {
-        detailsLoaded: detail.tracksComplete !== false,
+        tracks: mergedTracks,
+        detailsLoaded: true,
+        detailsComplete,
         detailsLoading: false,
+        detailsRetryAt: detailsComplete ? 0 : Date.now() + GENRE_DETAIL_RETRY_MS,
       });
 
       if (detail.relatedNames?.length) {
@@ -376,7 +430,7 @@ function createHomePage({ likeTrack, renderGenreMap, renderMapSelection, setActi
       }
     } catch {
       genre.detailsLoading = false;
-      genre.detailsLoaded = false;
+      genre.detailsRetryAt = Date.now() + GENRE_DETAIL_RETRY_MS;
       if (!genre.description) {
         genre.description = `${genre.name} 장르 상세 정보를 불러오지 못했습니다.`;
       }
@@ -386,6 +440,23 @@ function createHomePage({ likeTrack, renderGenreMap, renderMapSelection, setActi
       applyGenreToUI(genre);
       renderGenreList();
     }
+  }
+
+  function mergeTrackDetails(existingTracks = [], incomingTracks = []) {
+    const existingByKey = new Map(existingTracks.map(track => [makeTrackKey(track), track]));
+
+    return incomingTracks.map(track => {
+      const existing = existingByKey.get(makeTrackKey(track)) ?? {};
+      return {
+        ...existing,
+        ...track,
+        album: track.album || existing.album || '',
+        albumImage: track.albumImage || existing.albumImage,
+        durationMs: track.durationMs ?? existing.durationMs,
+        spotifyUri: track.spotifyUri || existing.spotifyUri,
+        spotifyUrl: track.spotifyUrl || existing.spotifyUrl,
+      };
+    });
   }
 
   function applyGenreToUI(genre) {
@@ -472,7 +543,7 @@ function createHomePage({ likeTrack, renderGenreMap, renderMapSelection, setActi
       item.appendChild(
         createTextBlock('span', String(index + 1).padStart(2, '0'), 'track-order'),
       );
-      item.appendChild(createTrackCover(track));
+      item.appendChild(createTrackCover(track, index));
       info.appendChild(createTextBlock('span', track.title, 'track-title'));
       info.appendChild(createTextBlock('span', secondaryText, 'track-artist'));
       item.appendChild(info);
@@ -487,33 +558,42 @@ function createHomePage({ likeTrack, renderGenreMap, renderMapSelection, setActi
     });
   }
 
-  function createTrackCover(track) {
+  function createTrackCover(track, index) {
     const cover = createElement('div', {
       className: 'track-cover',
       attributes: { 'aria-hidden': 'true' },
     });
     const imageUrl = sanitizeHttpUrl(track.albumImage ?? track.imageUrl ?? track.image);
 
+    applyFallbackTrackCover(cover, track);
+
     if (!imageUrl) {
-      applyFallbackTrackCover(cover, track);
       return cover;
     }
 
     const image = createElement('img', {
       attributes: {
-        src: imageUrl,
         alt: '',
-        loading: 'lazy',
+        loading: index < 3 ? 'eager' : 'lazy',
         decoding: 'async',
+        fetchpriority: index === 0 ? 'high' : 'auto',
       },
     });
-    cover.classList.add('has-image');
     cover.appendChild(image);
 
-    image.addEventListener('error', () => {
-      image.remove();
-      applyFallbackTrackCover(cover, track);
+    watchImage(image, {
+      onReady: () => {
+        if (image.parentElement !== cover) {
+          return;
+        }
+        cover.classList.add('has-image');
+        image.classList.add('is-ready');
+      },
+      onError: () => {
+        image.remove();
+      },
     });
+    image.src = imageUrl;
 
     return cover;
   }
@@ -523,28 +603,68 @@ function createHomePage({ likeTrack, renderGenreMap, renderMapSelection, setActi
     elements.playerAlbumArt.classList.remove('has-image', 'is-fallback');
     const imageUrl = sanitizeHttpUrl(track?.albumImage ?? track?.imageUrl ?? track?.image);
 
+    applySpotlightFallback(track);
+
     if (!imageUrl) {
-      applySpotlightFallback(track);
       return;
     }
 
     const image = createElement('img', {
       attributes: {
-        src: imageUrl,
         alt: '',
+        loading: 'eager',
         decoding: 'async',
+        fetchpriority: 'high',
       },
     });
-    elements.playerAlbumArt.classList.add('has-image');
     elements.playerAlbumArt.appendChild(image);
 
-    image.addEventListener('error', () => {
-      if (elements.playerAlbumArt.firstElementChild !== image) {
+    watchImage(image, {
+      onReady: () => {
+        if (image.parentElement !== elements.playerAlbumArt) {
+          return;
+        }
+        elements.playerAlbumArt.classList.add('has-image');
+        image.classList.add('is-ready');
+      },
+      onError: () => {
+        if (image.parentElement === elements.playerAlbumArt) {
+          image.remove();
+        }
+      },
+    });
+    image.src = imageUrl;
+  }
+
+  function watchImage(image, { onReady, onError }) {
+    let settled = false;
+
+    const handleReady = async () => {
+      if (settled) {
         return;
       }
-      clearChildren(elements.playerAlbumArt);
-      applySpotlightFallback(track);
-    });
+      settled = true;
+
+      try {
+        if (typeof image.decode === 'function') {
+          await image.decode();
+        }
+      } catch {
+        // The load event already confirmed that pixels are available.
+      }
+
+      onReady();
+    };
+    const handleError = () => {
+      if (settled) {
+        return;
+      }
+      settled = true;
+      onError();
+    };
+
+    image.addEventListener('load', () => void handleReady(), { once: true });
+    image.addEventListener('error', handleError, { once: true });
   }
 
   function applySpotlightFallback(track) {

@@ -9,6 +9,7 @@ import os
 import re
 import threading
 import time
+import unicodedata
 
 
 ROOT = Path(__file__).resolve().parent
@@ -20,11 +21,13 @@ SPOTIFY_MARKET = os.environ.get("SPOTIFY_MARKET", "US")
 TRACKS_PER_GENRE = 8
 SEARCH_LIMIT = 10
 TRACK_METADATA_SEARCH_LIMIT = 5
-TRACK_METADATA_WORKERS = 4
+TRACK_METADATA_WORKERS = 8
 SPOTIFY_REQUEST_TIMEOUT_SECONDS = 6
 TRACK_METADATA_CACHE_TTL = 86400
 TRACK_METADATA_MISS_TTL = 300
+TRACK_METADATA_ERROR_TTL = 30
 GENRE_DETAIL_CACHE_TTL = 1800
+GENRE_DETAIL_PARTIAL_CACHE_TTL = 60
 GENRE_DETAIL_CACHE_MAX_ITEMS = 256
 GENRE_QUERY_MAX_LENGTH = 80
 RATE_LIMIT_WINDOW_SECONDS = 60
@@ -45,7 +48,9 @@ TRACK_METADATA_TASK_SLOTS = threading.BoundedSemaphore(TRACK_METADATA_WORKERS * 
 
 
 def submit_track_metadata_task(callback, *args):
-    if not TRACK_METADATA_TASK_SLOTS.acquire(blocking=False):
+    if not TRACK_METADATA_TASK_SLOTS.acquire(
+        timeout=SPOTIFY_REQUEST_TIMEOUT_SECONDS
+    ):
         return None
 
     try:
@@ -85,9 +90,12 @@ class SpotifyCatalog:
         self._genres_cache = None
         self._genres_cache_time = 0
         self._genre_detail_cache = {}
+        self._genre_detail_cache_guard = threading.Lock()
+        self._genre_detail_locks = tuple(threading.Lock() for _ in range(32))
         self._track_metadata_cache = {}
         self._track_metadata_locks = {}
         self._track_metadata_locks_guard = threading.Lock()
+        self._token_lock = threading.Lock()
 
     def configured(self):
         return bool(SPOTIFY_CLIENT_ID and SPOTIFY_CLIENT_SECRET)
@@ -103,10 +111,19 @@ class SpotifyCatalog:
 
     def get_genre_details(self, genre):
         cache_key = genre.lower()
-        self._prune_genre_detail_cache()
-        cached = self._genre_detail_cache.get(cache_key)
+        detail_lock = self._get_genre_detail_lock(cache_key)
 
-        if cached and time.time() - cached["time"] < GENRE_DETAIL_CACHE_TTL:
+        with detail_lock:
+            return self._get_genre_details_locked(genre, cache_key)
+
+    def _get_genre_details_locked(self, genre, cache_key):
+        self._prune_genre_detail_cache()
+        with self._genre_detail_cache_guard:
+            cached = self._genre_detail_cache.get(cache_key)
+
+        if cached and time.time() - cached["time"] < cached.get(
+            "ttl", GENRE_DETAIL_CACHE_TTL
+        ):
             return cached["data"]
 
         local_genre = find_local_genre(genre, spotify_backed=self.configured())
@@ -169,19 +186,28 @@ class SpotifyCatalog:
             "relatedNames": related_names[:8],
         }
 
-        if tracks_complete or not self.configured():
+        with self._genre_detail_cache_guard:
             self._genre_detail_cache[cache_key] = {
                 "time": time.time(),
+                "ttl": (
+                    GENRE_DETAIL_CACHE_TTL
+                    if tracks_complete or not self.configured()
+                    else GENRE_DETAIL_PARTIAL_CACHE_TTL
+                ),
                 "data": data,
             }
         return data
 
     def _prune_genre_detail_cache(self):
+        with self._genre_detail_cache_guard:
+            self._prune_genre_detail_cache_locked()
+
+    def _prune_genre_detail_cache_locked(self):
         now = time.time()
         expired_keys = [
             key
             for key, cached in self._genre_detail_cache.items()
-            if now - cached["time"] >= GENRE_DETAIL_CACHE_TTL
+            if now - cached["time"] >= cached.get("ttl", GENRE_DETAIL_CACHE_TTL)
         ]
 
         for key in expired_keys:
@@ -198,6 +224,9 @@ class SpotifyCatalog:
 
         for key in oldest_keys:
             self._genre_detail_cache.pop(key, None)
+
+    def _get_genre_detail_lock(self, cache_key):
+        return self._genre_detail_locks[hash(cache_key) % len(self._genre_detail_locks)]
 
     def _popular_tracks_for_genre(self, search_terms):
         return self._search_tracks_for_genre(search_terms)
@@ -222,6 +251,9 @@ class SpotifyCatalog:
         return enriched_tracks
 
     def _enrich_local_track(self, track):
+        if track.get("albumImage") and track.get("album"):
+            return track
+
         cache_key = make_track_identity(track)
         if not cache_key:
             return track
@@ -235,6 +267,10 @@ class SpotifyCatalog:
             try:
                 metadata = self._fetch_local_track_metadata(track)
             except RuntimeError:
+                self._track_metadata_cache[cache_key] = {
+                    "expiresAt": time.time() + TRACK_METADATA_ERROR_TTL,
+                    "metadata": {},
+                }
                 return track
             ttl = TRACK_METADATA_CACHE_TTL if metadata else TRACK_METADATA_MISS_TTL
             self._track_metadata_cache[cache_key] = {
@@ -371,32 +407,36 @@ class SpotifyCatalog:
         if self._token and time.time() < self._expires_at - 60:
             return self._token
 
-        raw = f"{SPOTIFY_CLIENT_ID}:{SPOTIFY_CLIENT_SECRET}".encode("utf-8")
-        basic = base64.b64encode(raw).decode("utf-8")
-        body = parse.urlencode({"grant_type": "client_credentials"}).encode("utf-8")
-        req = request.Request(
-            "https://accounts.spotify.com/api/token",
-            data=body,
-            headers={
-                "Authorization": f"Basic {basic}",
-                "Content-Type": "application/x-www-form-urlencoded",
-            },
-            method="POST",
-        )
+        with self._token_lock:
+            if self._token and time.time() < self._expires_at - 60:
+                return self._token
 
-        try:
-            with request.urlopen(req, timeout=SPOTIFY_REQUEST_TIMEOUT_SECONDS) as response:
-                data = json.loads(response.read().decode("utf-8"))
-        except error.HTTPError as exc:
-            payload = exc.read().decode("utf-8", errors="ignore")
-            raise RuntimeError(payload or "Failed to fetch Spotify token") from exc
-        except (error.URLError, TimeoutError) as exc:
-            reason = getattr(exc, "reason", str(exc))
-            raise RuntimeError(f"Spotify token request failed: {reason}") from exc
+            raw = f"{SPOTIFY_CLIENT_ID}:{SPOTIFY_CLIENT_SECRET}".encode("utf-8")
+            basic = base64.b64encode(raw).decode("utf-8")
+            body = parse.urlencode({"grant_type": "client_credentials"}).encode("utf-8")
+            req = request.Request(
+                "https://accounts.spotify.com/api/token",
+                data=body,
+                headers={
+                    "Authorization": f"Basic {basic}",
+                    "Content-Type": "application/x-www-form-urlencoded",
+                },
+                method="POST",
+            )
 
-        self._token = data["access_token"]
-        self._expires_at = time.time() + int(data.get("expires_in", 3600))
-        return self._token
+            try:
+                with request.urlopen(req, timeout=SPOTIFY_REQUEST_TIMEOUT_SECONDS) as response:
+                    data = json.loads(response.read().decode("utf-8"))
+            except error.HTTPError as exc:
+                payload = exc.read().decode("utf-8", errors="ignore")
+                raise RuntimeError(payload or "Failed to fetch Spotify token") from exc
+            except (error.URLError, TimeoutError) as exc:
+                reason = getattr(exc, "reason", str(exc))
+                raise RuntimeError(f"Spotify token request failed: {reason}") from exc
+
+            self._token = data["access_token"]
+            self._expires_at = time.time() + int(data.get("expires_in", 3600))
+            return self._token
 
 
 catalog = SpotifyCatalog()
@@ -465,7 +505,11 @@ class Handler(SimpleHTTPRequestHandler):
         except RuntimeError as exc:
             return self._send_json(502, {"error": str(exc)})
 
-        return self._send_json(200, {"genres": genres})
+        return self._send_json(
+            200,
+            {"genres": genres},
+            cache_control="public, max-age=3600, stale-while-revalidate=86400",
+        )
 
     def _handle_genre_details(self, query):
         if not catalog.configured():
@@ -488,13 +532,27 @@ class Handler(SimpleHTTPRequestHandler):
         except RuntimeError as exc:
             return self._send_json(502, {"error": str(exc)})
 
-        return self._send_json(200, {"genre": detail})
+        cache_control = (
+            f"public, max-age={GENRE_DETAIL_CACHE_TTL}, stale-while-revalidate=86400"
+            if detail.get("tracksComplete")
+            else (
+                f"public, max-age={GENRE_DETAIL_PARTIAL_CACHE_TTL}, "
+                f"stale-while-revalidate={GENRE_DETAIL_PARTIAL_CACHE_TTL}"
+            )
+        )
+        return self._send_json(
+            200,
+            {"genre": detail},
+            cache_control=cache_control,
+        )
 
-    def _send_json(self, status, payload):
+    def _send_json(self, status, payload, cache_control=None):
         data = json.dumps(payload, ensure_ascii=False).encode("utf-8")
         self.send_response(status)
         self.send_header("Content-Type", "application/json; charset=utf-8")
         self.send_header("Content-Length", str(len(data)))
+        if cache_control:
+            self.send_header("Cache-Control", cache_control)
         self._apply_cors_headers()
         self.end_headers()
         self.wfile.write(data)
@@ -780,7 +838,14 @@ def spotify_search_phrase(value):
 
 
 def normalize_track_text(value):
-    return re.sub(r"[^\w]+", " ", str(value or "").casefold(), flags=re.UNICODE).strip()
+    decomposed = unicodedata.normalize("NFKD", str(value or "").casefold())
+    without_marks = "".join(
+        character
+        for character in decomposed
+        if unicodedata.category(character) != "Mn"
+    )
+    normalized = unicodedata.normalize("NFC", without_marks)
+    return re.sub(r"[^\w]+", " ", normalized, flags=re.UNICODE).strip()
 
 
 def score_track_match(target, candidate):

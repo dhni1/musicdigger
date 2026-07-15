@@ -17,7 +17,15 @@
         { "title": "In Da Club", "artist": "50 Cent" },
         { "title": "Lose Yourself", "artist": "Eminem" },
         { "title": "Stronger", "artist": "Kanye West" },
-        { "title": "Empire State Of Mind", "artist": "JAY-Z feat. Alicia Keys" },
+        {
+          "title": "Empire State Of Mind",
+          "artist": "JAY-Z feat. Alicia Keys",
+          "album": "The Blueprint 3",
+          "albumImage": "https://image-cdn-fa.spotifycdn.com/image/ab67616d00001e02fec1b815bb3c50a64a90fd10",
+          "durationMs": 276920,
+          "spotifyUri": "spotify:track:69yVxyuRahEzs2taFMVVoO",
+          "spotifyUrl": "https://open.spotify.com/track/69yVxyuRahEzs2taFMVVoO"
+        },
         { "title": "Hot In Herre", "artist": "Nelly" }
       ]
     },
