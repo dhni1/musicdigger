@@ -1310,7 +1310,8 @@ def track_titles_match(target, candidate):
         return True
     if candidate_versions and candidate_versions == target_versions:
         return True
-    if suffix_tokens & {"feat", "featuring", "ft", "with"}:
+    feature_connectors = {"feat", "featuring", "ft", "with"}
+    if suffix.split(maxsplit=1)[0] in feature_connectors:
         return True
 
     candidate_artist_tokens = get_artist_tokens(

@@ -21,6 +21,7 @@ import {
 
 function createHomePage({ likeTrack, renderGenreMap, renderMapSelection, setActiveNav, showView }) {
   const GENRE_DETAIL_RETRY_MS = 60_000;
+  const COVER_IMAGE_RETRY_DELAY_MS = 750;
   const genreDetailRequests = new Map();
   const spotifyOembedCoverRequests = new Map();
 
@@ -677,7 +678,9 @@ function createHomePage({ likeTrack, renderGenreMap, renderMapSelection, setActi
     const image = createElement('img', {
       attributes: {
         alt: '',
-        loading: index < 3 ? 'eager' : 'lazy',
+        // A genre only renders eight covers. Loading the complete visible list
+        // immediately avoids placeholders lingering inside the scroll panel.
+        loading: 'eager',
         decoding: 'async',
         fetchpriority: index === 0 ? 'high' : 'auto',
       },
@@ -804,6 +807,8 @@ function createHomePage({ likeTrack, renderGenreMap, renderMapSelection, setActi
     const imageUrls = [...initialImageUrls];
     let imageIndex = 0;
     let recoveryAttempted = false;
+    let retryAttempted = false;
+    let requestVersion = 0;
 
     const loadNextImage = async () => {
       if (imageIndex >= imageUrls.length) {
@@ -817,11 +822,25 @@ function createHomePage({ likeTrack, renderGenreMap, renderMapSelection, setActi
       }
 
       if (imageIndex >= imageUrls.length) {
+        if (!retryAttempted && imageUrls.length) {
+          retryAttempted = true;
+          imageIndex = 0;
+          window.setTimeout(() => {
+            if (image.isConnected) {
+              void loadNextImage();
+            }
+          }, COVER_IMAGE_RETRY_DELAY_MS);
+          return;
+        }
         onError();
         return;
       }
 
+      const requestId = ++requestVersion;
       image.onload = async () => {
+        if (requestId !== requestVersion || !image.isConnected) {
+          return;
+        }
         try {
           if (typeof image.decode === 'function') {
             await image.decode();
@@ -829,9 +848,15 @@ function createHomePage({ likeTrack, renderGenreMap, renderMapSelection, setActi
         } catch {
           // The load event already confirmed that pixels are available.
         }
+        if (requestId !== requestVersion || !image.isConnected) {
+          return;
+        }
         onReady();
       };
       image.onerror = () => {
+        if (requestId !== requestVersion) {
+          return;
+        }
         imageIndex += 1;
         void loadNextImage();
       };

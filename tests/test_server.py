@@ -407,6 +407,20 @@ class TrackMatchingTests(unittest.TestCase):
         self.assertFalse(server.is_strict_track_match(target, sequel))
         self.assertFalse(server.is_strict_track_match(target, remix))
 
+    def test_feature_suffix_does_not_hide_a_numbered_sequel(self):
+        target = {"title": "Tech Noir", "artist": "Gunship"}
+        sequel = {
+            "name": "Tech Noir 2 (feat. John Carpenter, Charlie Simpson)",
+            "artists": [
+                {"name": "Gunship"},
+                {"name": "Charlie Simpson"},
+                {"name": "John Carpenter"},
+            ],
+        }
+
+        self.assertFalse(server.track_titles_match(target, sequel))
+        self.assertFalse(server.is_strict_track_match(target, sequel))
+
     def test_search_rejects_tribute_artist(self):
         target = {"title": "Representative Song", "artist": "Original Artist"}
         tribute = {

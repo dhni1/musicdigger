@@ -18,6 +18,9 @@ class VinylAnimationPerformanceTests(unittest.TestCase):
         cls.spotify_js = (ROOT / "src/services/spotify/index.js").read_text(
             encoding="utf-8"
         )
+        cls.home_js = (ROOT / "src/pages/home/index.js").read_text(
+            encoding="utf-8"
+        )
 
     def test_progress_animation_is_compositor_only(self):
         self.assertNotIn("fill.style.width", self.spotify_js)
@@ -55,6 +58,27 @@ class VinylAnimationPerformanceTests(unittest.TestCase):
         self.assertIn("animation: none !important", reduced_motion.group("body"))
         self.assertIn("transition: none !important", reduced_motion.group("body"))
         self.assertIn("reducedMotion", self.spotify_js)
+
+    def test_album_art_uses_all_spotify_sizes_and_retries_transient_errors(self):
+        self.assertIn("albumImages: (images ?? [])", self.spotify_js)
+        self.assertIn("playback?.albumImages?.length", self.spotify_js)
+        self.assertIn("VINYL_ARTWORK_RETRY_MS", self.spotify_js)
+        self.assertIn("image.dataset.loadState = 'error'", self.spotify_js)
+
+    def test_pause_state_is_polled_quickly_and_modal_open_polls_immediately(self):
+        self.assertIn("const PLAYBACK_POLL_INTERVAL_MS = 1000;", self.spotify_js)
+        self.assertIn("const PLAYBACK_MODAL_POLL_INTERVAL_MS = 500;", self.spotify_js)
+        modal_open = re.search(
+            r"function openVinylPlayerModal\(\)\s*\{(?P<body>[\s\S]+?)\n  \}",
+            self.spotify_js,
+        )
+        self.assertIsNotNone(modal_open)
+        self.assertIn("requestImmediatePlaybackPoll();", modal_open.group("body"))
+
+    def test_all_eight_genre_covers_start_loading_and_get_one_retry(self):
+        self.assertIn("loading: 'eager'", self.home_js)
+        self.assertIn("COVER_IMAGE_RETRY_DELAY_MS", self.home_js)
+        self.assertIn("retryAttempted", self.home_js)
 
 
 if __name__ == "__main__":

@@ -19,11 +19,12 @@ import {
   updateProfileSlot,
 } from '../../pages/profile/index.js';
 
-const PLAYBACK_POLL_INTERVAL_MS = 12000;
-const PLAYBACK_MODAL_POLL_INTERVAL_MS = 1000;
+const PLAYBACK_POLL_INTERVAL_MS = 1000;
+const PLAYBACK_MODAL_POLL_INTERVAL_MS = 500;
 const PLAYBACK_BUSY_RETRY_MS = 1200;
 const PLAYBACK_RATE_LIMIT_FALLBACK_MS = 30000;
 const PLAYBACK_PROGRESS_RESYNC_THRESHOLD_MS = 1500;
+const VINYL_ARTWORK_RETRY_MS = 30000;
 
 function createSpotifyService({
   getCurrentGenreName,
@@ -428,55 +429,99 @@ function createSpotifyService({
     renderVinylArtworkTarget(
       elements.vinylAlbumArt,
       elements.vinylLabelFallback,
-      playback?.albumImage,
+      playback?.albumImages?.length ? playback.albumImages : playback?.albumImage,
     );
     renderVinylArtworkTarget(
       elements.vinylModalAlbumArt,
       elements.vinylModalLabelFallback,
-      playback?.albumImage,
+      playback?.albumImages?.length ? playback.albumImages : playback?.albumImage,
     );
     renderVinylProgress(playback, { force: forceProgressSync });
   }
 
-  function renderVinylArtworkTarget(image, fallback, imageUrl) {
+  function renderVinylArtworkTarget(image, fallback, imageSources) {
     if (!image || !fallback) {
       return;
     }
 
-    const safeImageUrl = sanitizeHttpUrl(imageUrl);
-    if (!safeImageUrl) {
-      if (image.dataset.source === '') {
-        return;
-      }
+    const imageUrls = [...new Set(
+      (Array.isArray(imageSources) ? imageSources : [imageSources])
+        .map(sanitizeHttpUrl)
+        .filter(Boolean),
+    )];
+    const artworkKey = imageUrls.join('|');
+
+    if (!imageUrls.length) {
       image.hidden = true;
       image.removeAttribute('src');
       image.dataset.source = '';
+      image.dataset.artworkKey = '';
+      image.dataset.loadState = '';
+      image.dataset.retryAt = '';
       fallback.hidden = false;
       return;
     }
 
-    if (image.dataset.source === safeImageUrl) {
+    const isSameArtwork = image.dataset.artworkKey === artworkKey;
+    const retryAt = Number(image.dataset.retryAt) || 0;
+    if (
+      isSameArtwork &&
+      (image.dataset.loadState === 'loading' ||
+        image.dataset.loadState === 'ready' ||
+        Date.now() < retryAt)
+    ) {
       return;
     }
 
     image.hidden = true;
+    image.removeAttribute('src');
     fallback.hidden = false;
-    image.dataset.source = safeImageUrl;
-    image.onload = () => {
-      if (image.dataset.source !== safeImageUrl) {
+    image.dataset.artworkKey = artworkKey;
+    image.dataset.loadState = 'loading';
+    image.dataset.retryAt = '';
+    let imageIndex = 0;
+
+    const loadNextImage = () => {
+      if (image.dataset.artworkKey !== artworkKey) {
         return;
       }
-      image.hidden = false;
-      fallback.hidden = true;
-    };
-    image.onerror = () => {
-      if (image.dataset.source !== safeImageUrl) {
+
+      if (imageIndex >= imageUrls.length) {
+        image.hidden = true;
+        fallback.hidden = false;
+        image.dataset.loadState = 'error';
+        image.dataset.retryAt = String(Date.now() + VINYL_ARTWORK_RETRY_MS);
         return;
       }
-      image.hidden = true;
-      fallback.hidden = false;
+
+      const imageUrl = imageUrls[imageIndex];
+      image.dataset.source = imageUrl;
+      image.onload = () => {
+        if (
+          image.dataset.artworkKey !== artworkKey ||
+          image.dataset.source !== imageUrl
+        ) {
+          return;
+        }
+        image.hidden = false;
+        fallback.hidden = true;
+        image.dataset.loadState = 'ready';
+        image.dataset.retryAt = '';
+      };
+      image.onerror = () => {
+        if (
+          image.dataset.artworkKey !== artworkKey ||
+          image.dataset.source !== imageUrl
+        ) {
+          return;
+        }
+        imageIndex += 1;
+        loadNextImage();
+      };
+      image.src = imageUrl;
     };
-    image.src = safeImageUrl;
+
+    loadNextImage();
   }
 
   function renderVinylProgress(playback, { force = false } = {}) {
@@ -811,6 +856,7 @@ function createSpotifyService({
       artist,
       album,
       albumImage: images?.[0]?.url ?? '',
+      albumImages: (images ?? []).map(image => image?.url).filter(Boolean),
       durationMs,
       progressMs: Math.min(durationMs, Math.max(0, Number(payload.progress_ms) || 0)),
       isPlaying: Boolean(payload.is_playing),
