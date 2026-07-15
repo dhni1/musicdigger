@@ -1,7 +1,7 @@
 @import "./styles/shared/tokens.css";
-@import "./styles/shared/layout.css?v=20260715-4";
+@import "./styles/shared/layout.css?v=20260715-5";
 @import "./styles/shared/components.css";
-@import "./styles/shared/vinyl-modal.css";
+@import "./styles/shared/vinyl-modal.css?v=20260715-5";
 @import "./styles/pages/home.css";
 @import "./styles/pages/library.css";
 @import "./styles/pages/profile.css";

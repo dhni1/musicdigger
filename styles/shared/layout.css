@@ -393,6 +393,8 @@ body.is-nav-open {
   overflow: hidden;
   border-radius: 12px;
   background: color-mix(in srgb, var(--text-main) 4%, transparent);
+  contain: layout paint;
+  isolation: isolate;
 }
 
 .vinyl-record {
@@ -405,6 +407,8 @@ body.is-nav-open {
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.055);
   animation: vinyl-spin 4.2s linear infinite;
   animation-play-state: paused;
+  backface-visibility: hidden;
+  transform-origin: 50% 50%;
 }
 
 .vinyl-album-art,
@@ -499,6 +503,7 @@ body.is-nav-open {
 
 .vinyl-surface[data-state="playing"] .vinyl-record {
   animation-play-state: running;
+  will-change: transform;
 }
 
 .vinyl-surface[data-state="playing"] .vinyl-tonearm {
@@ -565,10 +570,13 @@ body.is-nav-open {
 
 .vinyl-progress > span {
   display: block;
-  width: 0;
+  width: 100%;
   height: 100%;
   border-radius: inherit;
   background: var(--accent);
+  transform: scaleX(0);
+  transform-origin: left center;
+  will-change: transform;
 }
 
 @media (min-width: 821px) {
@@ -580,8 +588,12 @@ body.is-nav-open {
 }
 
 @keyframes vinyl-spin {
+  from {
+    transform: translate3d(0, 0, 0) rotate(0turn);
+  }
+
   to {
-    transform: rotate(1turn);
+    transform: translate3d(0, 0, 0) rotate(1turn);
   }
 }
 

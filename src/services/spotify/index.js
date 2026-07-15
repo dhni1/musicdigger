@@ -11,7 +11,7 @@ import {
   makeTrackKey,
   makeTrackKeyFromSpotify,
   safeJson,
-} from '../../shared/utils.js?v=20260715-6';
+} from '../../shared/utils.js?v=20260715-7';
 import { renderLikedTracks, renderPlaylistList } from '../../pages/library/index.js';
 import {
   renderProfileCard,
@@ -23,6 +23,7 @@ const PLAYBACK_POLL_INTERVAL_MS = 12000;
 const PLAYBACK_MODAL_POLL_INTERVAL_MS = 1000;
 const PLAYBACK_BUSY_RETRY_MS = 1200;
 const PLAYBACK_RATE_LIMIT_FALLBACK_MS = 30000;
+const PLAYBACK_PROGRESS_RESYNC_THRESHOLD_MS = 1500;
 
 function createSpotifyService({
   getCurrentGenreName,
@@ -36,6 +37,9 @@ function createSpotifyService({
     scopes: window.SPOTIFY_CONFIG?.scopes ?? SPOTIFY_SCOPES,
   };
   const storage = window.sessionStorage;
+  const reducedMotionQuery = typeof window.matchMedia === 'function'
+    ? window.matchMedia('(prefers-reduced-motion: reduce)')
+    : null;
   let playbackPollTimer = null;
   let playbackRequestInFlight = false;
   let playbackPollingActive = false;
@@ -44,6 +48,7 @@ function createSpotifyService({
   let playbackSessionVersion = 0;
   let playbackRateLimitedUntil = 0;
   let progressAnimationFrame = null;
+  let vinylProgressVisual = null;
   let spotifyRefreshPromise = null;
   let vinylModalTrigger = null;
 
@@ -125,12 +130,12 @@ function createSpotifyService({
       document.activeElement instanceof HTMLElement
         ? document.activeElement
         : elements.vinylPlayer;
-    renderVinylPlayer();
 
     if (!elements.vinylModal.open) {
       elements.vinylModal.showModal();
     }
     elements.body.classList.add('is-vinyl-modal-open');
+    renderVinylPlayer({ forceProgressSync: true });
     elements.vinylModalClose?.focus({ preventScroll: true });
     requestImmediatePlaybackPoll();
   }
@@ -354,7 +359,7 @@ function createSpotifyService({
     renderVinylPlayer();
   }
 
-  function renderVinylPlayer() {
+  function renderVinylPlayer({ forceProgressSync = false } = {}) {
     if (!elements.vinylPlayer) {
       return;
     }
@@ -400,17 +405,19 @@ function createSpotifyService({
       ariaLabel = `${playback.isPlaying ? '재생 중' : '일시정지'}: ${playback.title}. Vinyl Player 크게 열기`;
     }
 
-    elements.vinylPlayer.dataset.state = playerState;
+    setDatasetValueIfChanged(elements.vinylPlayer, 'state', playerState);
     if (elements.vinylPlayer.getAttribute('aria-label') !== ariaLabel) {
       elements.vinylPlayer.setAttribute('aria-label', ariaLabel);
     }
-    elements.vinylPlayer.title = ariaLabel;
+    if (elements.vinylPlayer.title !== ariaLabel) {
+      elements.vinylPlayer.title = ariaLabel;
+    }
     setTextIfChanged(elements.vinylPlayerStatus, status);
     setTextIfChanged(elements.vinylPlayerTitle, title);
     setTextIfChanged(elements.vinylPlayerArtist, secondary);
 
     if (elements.vinylModalCard) {
-      elements.vinylModalCard.dataset.state = playerState;
+      setDatasetValueIfChanged(elements.vinylModalCard, 'state', playerState);
     }
     setTextIfChanged(elements.vinylModalStatus, status);
     setTextIfChanged(elements.vinylModalTitle, title);
@@ -428,7 +435,7 @@ function createSpotifyService({
       elements.vinylModalLabelFallback,
       playback?.albumImage,
     );
-    renderVinylProgress(playback);
+    renderVinylProgress(playback, { force: forceProgressSync });
   }
 
   function renderVinylArtworkTarget(image, fallback, imageUrl) {
@@ -438,17 +445,17 @@ function createSpotifyService({
 
     const safeImageUrl = sanitizeHttpUrl(imageUrl);
     if (!safeImageUrl) {
+      if (image.dataset.source === '') {
+        return;
+      }
       image.hidden = true;
       image.removeAttribute('src');
-      delete image.dataset.source;
+      image.dataset.source = '';
       fallback.hidden = false;
       return;
     }
 
     if (image.dataset.source === safeImageUrl) {
-      const imageReady = image.complete && image.naturalWidth > 0;
-      image.hidden = !imageReady;
-      fallback.hidden = imageReady;
       return;
     }
 
@@ -472,30 +479,21 @@ function createSpotifyService({
     image.src = safeImageUrl;
   }
 
-  function renderVinylProgress(playback) {
+  function renderVinylProgress(playback, { force = false } = {}) {
     const fills = [elements.vinylProgressFill, elements.vinylModalProgressFill].filter(Boolean);
     if (!fills.length) {
       return;
     }
 
-    if (progressAnimationFrame !== null) {
-      window.cancelAnimationFrame(progressAnimationFrame);
-      progressAnimationFrame = null;
-    }
-
     const durationMs = Math.max(0, Number(playback?.durationMs) || 0);
+    const now = Date.now();
     const observedAt = Number(playback?.observedAt) || Date.now();
-    const elapsedMs = playback?.isPlaying ? Math.max(0, Date.now() - observedAt) : 0;
+    const elapsedMs = playback?.isPlaying ? Math.max(0, now - observedAt) : 0;
     const progressMs = Math.min(
       durationMs,
       Math.max(0, Number(playback?.progressMs) || 0) + elapsedMs,
     );
     const progressPercent = durationMs > 0 ? (progressMs / durationMs) * 100 : 0;
-
-    fills.forEach(fill => {
-      fill.style.transition = 'none';
-      fill.style.width = `${progressPercent}%`;
-    });
     if (elements.vinylModalProgress) {
       elements.vinylModalProgress.setAttribute(
         'aria-valuenow',
@@ -505,20 +503,103 @@ function createSpotifyService({
     setTextIfChanged(elements.vinylModalElapsed, formatPlaybackTime(progressMs));
     setTextIfChanged(elements.vinylModalDuration, formatPlaybackTime(durationMs));
 
-    if (!playback?.isPlaying || durationMs <= progressMs || document.hidden) {
+    const reducedMotion = Boolean(reducedMotionQuery?.matches);
+    const trackKey = getPlaybackProgressKey(playback);
+    const shouldSync = shouldSyncVinylProgress({
+      durationMs,
+      force,
+      isPlaying: Boolean(playback?.isPlaying),
+      now,
+      progressMs,
+      reducedMotion,
+      trackKey,
+    });
+
+    if (!shouldSync) {
+      return;
+    }
+
+    if (progressAnimationFrame !== null) {
+      window.cancelAnimationFrame(progressAnimationFrame);
+      progressAnimationFrame = null;
+    }
+
+    const progressScale = durationMs > 0 ? progressMs / durationMs : 0;
+    fills.forEach(fill => {
+      fill.style.transition = 'none';
+      fill.style.transform = `scaleX(${progressScale})`;
+    });
+    vinylProgressVisual = {
+      durationMs,
+      isPlaying: Boolean(playback?.isPlaying),
+      observedAt: now,
+      progressMs,
+      trackKey,
+    };
+
+    if (
+      reducedMotion ||
+      !playback?.isPlaying ||
+      durationMs <= progressMs ||
+      document.hidden
+    ) {
       return;
     }
 
     progressAnimationFrame = window.requestAnimationFrame(() => {
       if (state.spotify.currentPlayback !== playback) {
+        vinylProgressVisual = null;
         return;
       }
       fills.forEach(fill => {
-        fill.style.transition = `width ${durationMs - progressMs}ms linear`;
-        fill.style.width = '100%';
+        fill.style.transition = `transform ${durationMs - progressMs}ms linear`;
+        fill.style.transform = 'scaleX(1)';
       });
       progressAnimationFrame = null;
     });
+  }
+
+  function getPlaybackProgressKey(playback) {
+    if (!playback) {
+      return '';
+    }
+    return [
+      playback.spotifyUri || playback.spotifyUrl || playback.type,
+      playback.title,
+      playback.artist,
+      playback.durationMs,
+    ].join('::');
+  }
+
+  function shouldSyncVinylProgress({
+    durationMs,
+    force,
+    isPlaying,
+    now,
+    progressMs,
+    reducedMotion,
+    trackKey,
+  }) {
+    if (
+      force ||
+      reducedMotion ||
+      !vinylProgressVisual ||
+      vinylProgressVisual.trackKey !== trackKey ||
+      vinylProgressVisual.durationMs !== durationMs ||
+      vinylProgressVisual.isPlaying !== isPlaying
+    ) {
+      return true;
+    }
+
+    const expectedProgressMs = Math.min(
+      durationMs,
+      vinylProgressVisual.progressMs +
+        (vinylProgressVisual.isPlaying
+          ? Math.max(0, now - vinylProgressVisual.observedAt)
+          : 0),
+    );
+    return Math.abs(expectedProgressMs - progressMs) >
+      PLAYBACK_PROGRESS_RESYNC_THRESHOLD_MS;
   }
 
   function formatPlaybackTime(durationMs) {
@@ -536,10 +617,15 @@ function createSpotifyService({
     document.addEventListener('visibilitychange', () => {
       clearPlaybackPollTimer();
       if (!document.hidden && playbackPollingActive && !playbackPollingBlocked) {
+        vinylProgressVisual = null;
         requestImmediatePlaybackPoll();
       }
     });
     window.addEventListener('focus', requestImmediatePlaybackPoll);
+    reducedMotionQuery?.addEventListener?.('change', () => {
+      vinylProgressVisual = null;
+      renderVinylProgress(state.spotify.currentPlayback, { force: true });
+    });
     playbackVisibilityBound = true;
   }
 
@@ -749,6 +835,12 @@ function createSpotifyService({
   function setTextIfChanged(element, value) {
     if (element && element.textContent !== value) {
       element.textContent = value;
+    }
+  }
+
+  function setDatasetValueIfChanged(element, key, value) {
+    if (element && element.dataset[key] !== value) {
+      element.dataset[key] = value;
     }
   }
 

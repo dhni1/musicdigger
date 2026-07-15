@@ -22,8 +22,7 @@ body.is-vinyl-modal-open {
 }
 
 .vinyl-player-modal::backdrop {
-  background: rgba(3, 5, 9, 0.78);
-  backdrop-filter: blur(10px);
+  background: rgba(3, 5, 9, 0.86);
 }
 
 .vinyl-modal-card {
@@ -33,7 +32,11 @@ body.is-vinyl-modal-open {
   overflow: auto;
   border-color: var(--line-strong);
   border-radius: 26px;
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.025), transparent 42%),
+    var(--bg-panel-solid);
   box-shadow: 0 30px 90px rgba(0, 0, 0, 0.48);
+  backdrop-filter: none;
 }
 
 .vinyl-modal-head {
@@ -79,6 +82,8 @@ body.is-vinyl-modal-open {
   display: grid;
   min-width: 0;
   place-items: center;
+  contain: layout paint;
+  isolation: isolate;
 }
 
 .vinyl-deck.vinyl-deck--modal {
@@ -201,10 +206,33 @@ body.is-vinyl-modal-open {
 
 .vinyl-modal-progress > span {
   display: block;
-  width: 0;
+  width: 100%;
   height: 100%;
   border-radius: inherit;
   background: var(--accent);
+  transform: scaleX(0);
+  transform-origin: left center;
+  will-change: transform;
+}
+
+body.is-vinyl-modal-open
+  .vinyl-player[data-state="playing"]
+  .vinyl-record {
+  animation-play-state: paused;
+  will-change: auto;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .vinyl-record {
+    animation: none !important;
+    transform: none !important;
+    will-change: auto;
+  }
+
+  .vinyl-progress > span,
+  .vinyl-modal-progress > span {
+    transition: none !important;
+  }
 }
 
 .vinyl-modal-times {

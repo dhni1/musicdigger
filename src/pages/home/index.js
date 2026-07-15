@@ -17,7 +17,7 @@ import {
   hashString,
   makeTrackKey,
   slugify,
-} from '../../shared/utils.js?v=20260715-6';
+} from '../../shared/utils.js?v=20260715-7';
 
 function createHomePage({ likeTrack, renderGenreMap, renderMapSelection, setActiveNav, showView }) {
   const GENRE_DETAIL_RETRY_MS = 60_000;
