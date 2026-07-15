@@ -20,6 +20,7 @@
         {
           "title": "Empire State Of Mind",
           "artist": "JAY-Z feat. Alicia Keys",
+          "spotifyTrackId": "69yVxyuRahEzs2taFMVVoO",
           "album": "The Blueprint 3",
           "albumImage": "https://i.scdn.co/image/ab67616d00001e02fec1b815bb3c50a64a90fd10",
           "durationMs": 276920,
@@ -145,6 +146,7 @@
         {
           "title": "Know Better",
           "artist": "Headie One",
+          "spotifyTrackId": "0IX9PL2dUVCHp6L4JQ9Rzq",
           "album": "The One",
           "albumImage": "https://i.scdn.co/image/ab67616d00001e02a8bec1dedf76481968706cc3",
           "durationMs": 210000,
@@ -271,7 +273,7 @@
       "fusion": ["synthwave"],
       "tracks": [
         { "title": "An Ending (Ascent)", "artist": "Brian Eno" },
-        { "title": "Weird Fishes/Arpeggi", "artist": "Lusine" },
+        { "title": "Structures from Silence", "artist": "Steve Roach" },
         { "title": "Weightless", "artist": "Marconi Union" },
         { "title": "Xtal", "artist": "Aphex Twin" },
         { "title": "#3", "artist": "Aphex Twin" },
@@ -648,7 +650,11 @@
       "similar": ["electronic", "dance", "techno"],
       "fusion": [],
       "tracks": [
-        { "title": "Turn Me On", "artist": "Riton x Oliver Heldens" },
+        {
+          "title": "Turn Me On (feat. Vula)",
+          "artist": "Riton, Oliver Heldens & Vula",
+          "spotifyTrackId": "0qaWEvPkts34WF68r8Dzx9"
+        },
         { "title": "Cola", "artist": "CamelPhat & Elderbrook" },
         { "title": "Show Me Love", "artist": "Robin S." },
         { "title": "Intoxicated", "artist": "Martin Solveig & GTA" },
@@ -696,8 +702,8 @@
         { "title": "Strings of Life", "artist": "Rhythim Is Rhythim" },
         { "title": "Energy Flash", "artist": "Joey Beltram" },
         { "title": "Higher State Of Consciousness", "artist": "Josh Wink" },
-        { "title": "Age Of Love", "artist": "Charlotte de Witte & Enrico Sangiuliano" },
-        { "title": "Children", "artist": "Robert Miles" }
+        { "title": "The Age Of Love (Charlotte de Witte & Enrico Sangiuliano Remix)", "artist": "Age Of Love" },
+        { "title": "Domino", "artist": "Oxia" }
       ]
     },
     {
@@ -823,7 +829,11 @@
         { "title": "Adiwele", "artist": "Young Stunna feat. Kabza De Small & DJ Maphorisa" },
         { "title": "Dali Nguwe", "artist": "Master KG feat. Nkosazana Daughter" },
         { "title": "Hamba Wena", "artist": "Deep London feat. Boohle" },
-        { "title": "Bhele", "artist": "Kamo Mphela, Khalil Harrison, Tyler ICU & Baby S.O.N" }
+        {
+          "title": "Dalie (feat. Baby S.O.N)",
+          "artist": "Kamo Mphela, Khalil Harrison, Tyler ICU & Baby S.O.N",
+          "spotifyTrackId": "4URabg9AGHasjFEVdTbWcC"
+        }
       ]
     },
     {
@@ -865,7 +875,11 @@
         { "title": "Baila Baila Baila", "artist": "Ozuna" },
         { "title": "Con Altura", "artist": "ROSALIA & J Balvin feat. El Guincho" },
         { "title": "Provenza", "artist": "KAROL G" },
-        { "title": "Mayor Que Yo", "artist": "Luny Tunes & Daddy Yankee, Wisin & Yandel, Baby Ranks, Hector El Father" }
+        {
+          "title": "Mayor Que Yo",
+          "artist": "Baby Ranks, Daddy Yankee, Tonny Tun Tun, Wisin & Yandel, Héctor El Father",
+          "spotifyTrackId": "7pMWE6h8thBOq9YnFzBEpy"
+        }
       ]
     },
     {
@@ -900,7 +914,11 @@
       "similar": ["jazz", "latin", "salsa"],
       "fusion": [],
       "tracks": [
-        { "title": "The Girl From Ipanema", "artist": "Stan Getz & Joao Gilberto" },
+        {
+          "title": "The Girl From Ipanema",
+          "artist": "Stan Getz, João Gilberto & Astrud Gilberto",
+          "spotifyTrackId": "6gfKHUGFBRiGe3bqmnOqFR"
+        },
         { "title": "Corcovado", "artist": "Stan Getz & Astrud Gilberto" },
         { "title": "Agua de Beber", "artist": "Astrud Gilberto" },
         { "title": "Mas Que Nada", "artist": "Jorge Ben Jor" },
@@ -1011,7 +1029,11 @@
         { "title": "He's a Pirate", "artist": "Klaus Badelt" },
         { "title": "City of Stars", "artist": "Ryan Gosling & Emma Stone" },
         { "title": "My Heart Will Go On", "artist": "Celine Dion" },
-        { "title": "Now We Are Free", "artist": "Hans Zimmer & Lisa Gerrard" },
+        {
+          "title": "Now We Are Free",
+          "artist": "Hans Zimmer feat. Lisa Gerrard",
+          "spotifyTrackId": "1ucCVtG5dKmgvCnXHAnhR9"
+        },
         { "title": "Let It Go", "artist": "Idina Menzel" }
       ]
     }

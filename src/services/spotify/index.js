@@ -7,10 +7,11 @@ import {
 import { clearChildren, createEmptyState, sanitizeHttpUrl } from '../../shared/dom.js';
 import {
   createRandomString,
+  getSpotifyTrackId,
   makeTrackKey,
   makeTrackKeyFromSpotify,
   safeJson,
-} from '../../shared/utils.js';
+} from '../../shared/utils.js?v=20260715-6';
 import { renderLikedTracks, renderPlaylistList } from '../../pages/library/index.js';
 import {
   renderProfileCard,
@@ -19,6 +20,7 @@ import {
 } from '../../pages/profile/index.js';
 
 const PLAYBACK_POLL_INTERVAL_MS = 12000;
+const PLAYBACK_MODAL_POLL_INTERVAL_MS = 1000;
 const PLAYBACK_BUSY_RETRY_MS = 1200;
 const PLAYBACK_RATE_LIMIT_FALLBACK_MS = 30000;
 
@@ -40,6 +42,7 @@ function createSpotifyService({
   let playbackPollingBlocked = false;
   let playbackVisibilityBound = false;
   let playbackSessionVersion = 0;
+  let playbackRateLimitedUntil = 0;
   let progressAnimationFrame = null;
   let spotifyRefreshPromise = null;
   let vinylModalTrigger = null;
@@ -129,6 +132,7 @@ function createSpotifyService({
     }
     elements.body.classList.add('is-vinyl-modal-open');
     elements.vinylModalClose?.focus({ preventScroll: true });
+    requestImmediatePlaybackPoll();
   }
 
   function closeVinylPlayerModal() {
@@ -138,6 +142,7 @@ function createSpotifyService({
 
     elements.vinylModal.close();
     elements.body.classList.remove('is-vinyl-modal-open');
+    schedulePlaybackPoll();
     const focusTarget = vinylModalTrigger;
     vinylModalTrigger = null;
     window.requestAnimationFrame(() => {
@@ -531,10 +536,36 @@ function createSpotifyService({
     document.addEventListener('visibilitychange', () => {
       clearPlaybackPollTimer();
       if (!document.hidden && playbackPollingActive && !playbackPollingBlocked) {
-        void runPlaybackPoll();
+        requestImmediatePlaybackPoll();
       }
     });
+    window.addEventListener('focus', requestImmediatePlaybackPoll);
     playbackVisibilityBound = true;
+  }
+
+  function getPlaybackPollDelay() {
+    return elements.vinylModal?.open
+      ? PLAYBACK_MODAL_POLL_INTERVAL_MS
+      : PLAYBACK_POLL_INTERVAL_MS;
+  }
+
+  function requestImmediatePlaybackPoll() {
+    if (
+      !playbackPollingActive ||
+      playbackPollingBlocked ||
+      !state.spotify.accessToken ||
+      document.hidden
+    ) {
+      return;
+    }
+
+    clearPlaybackPollTimer();
+    const rateLimitDelay = getPlaybackRateLimitDelay();
+    if (rateLimitDelay > 0) {
+      schedulePlaybackPoll(rateLimitDelay);
+      return;
+    }
+    void runPlaybackPoll();
   }
 
   function startPlaybackPolling() {
@@ -542,14 +573,13 @@ function createSpotifyService({
     playbackPollingBlocked = false;
     clearPlaybackPollTimer();
 
-    if (!document.hidden) {
-      void runPlaybackPoll();
-    }
+    requestImmediatePlaybackPoll();
   }
 
   function stopPlaybackPolling() {
     playbackPollingActive = false;
     playbackPollingBlocked = false;
+    playbackRateLimitedUntil = 0;
     playbackSessionVersion += 1;
     clearPlaybackPollTimer();
   }
@@ -561,7 +591,7 @@ function createSpotifyService({
     }
   }
 
-  function schedulePlaybackPoll(delayMs = PLAYBACK_POLL_INTERVAL_MS) {
+  function schedulePlaybackPoll(delayMs = getPlaybackPollDelay()) {
     clearPlaybackPollTimer();
     if (
       !playbackPollingActive ||
@@ -578,6 +608,10 @@ function createSpotifyService({
     }, delayMs);
   }
 
+  function getPlaybackRateLimitDelay() {
+    return Math.max(0, playbackRateLimitedUntil - Date.now());
+  }
+
   async function runPlaybackPoll() {
     if (
       !playbackPollingActive ||
@@ -588,6 +622,12 @@ function createSpotifyService({
       return;
     }
 
+    const rateLimitDelay = getPlaybackRateLimitDelay();
+    if (rateLimitDelay > 0) {
+      schedulePlaybackPoll(rateLimitDelay);
+      return;
+    }
+
     if (playbackRequestInFlight) {
       schedulePlaybackPoll(PLAYBACK_BUSY_RETRY_MS);
       return;
@@ -595,7 +635,7 @@ function createSpotifyService({
 
     playbackRequestInFlight = true;
     const sessionVersion = playbackSessionVersion;
-    let nextPollDelay = PLAYBACK_POLL_INTERVAL_MS;
+    let nextPollDelay = null;
 
     try {
       if (!(await ensureSpotifyReady(false))) {
@@ -609,6 +649,7 @@ function createSpotifyService({
 
       state.spotify.currentPlayback = normalizeCurrentlyPlaying(payload);
       state.spotify.playbackNeedsReconnect = false;
+      playbackRateLimitedUntil = 0;
       renderVinylPlayer();
     } catch (error) {
       if (sessionVersion !== playbackSessionVersion) {
@@ -625,11 +666,15 @@ function createSpotifyService({
           PLAYBACK_RATE_LIMIT_FALLBACK_MS,
           Number(error.retryAfterMs) || 0,
         );
+        playbackRateLimitedUntil = Math.max(
+          playbackRateLimitedUntil,
+          Date.now() + nextPollDelay,
+        );
       }
     } finally {
       playbackRequestInFlight = false;
       if (sessionVersion === playbackSessionVersion) {
-        schedulePlaybackPoll(nextPollDelay);
+        schedulePlaybackPoll(nextPollDelay ?? getPlaybackPollDelay());
       }
     }
   }
@@ -917,6 +962,11 @@ function createSpotifyService({
   async function resolveTrackUri(track) {
     if (track.spotifyUri) {
       return track.spotifyUri;
+    }
+
+    const spotifyTrackId = getSpotifyTrackId(track);
+    if (spotifyTrackId) {
+      return `spotify:track:${spotifyTrackId}`;
     }
 
     const key = makeTrackKey(track);

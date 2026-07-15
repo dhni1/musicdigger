@@ -506,7 +506,8 @@ body.is-nav-open {
 }
 
 .vinyl-surface[data-state="paused"] .vinyl-tonearm {
-  transform: rotate(-27deg);
+  transform: rotate(-10deg);
+  transition-duration: 0ms;
 }
 
 .vinyl-player-copy {

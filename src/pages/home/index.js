@@ -12,11 +12,17 @@ import {
   sanitizeHttpUrl,
   createTextBlock,
 } from '../../shared/dom.js';
-import { hashString, makeTrackKey, slugify } from '../../shared/utils.js';
+import {
+  getSpotifyTrackId,
+  hashString,
+  makeTrackKey,
+  slugify,
+} from '../../shared/utils.js?v=20260715-6';
 
 function createHomePage({ likeTrack, renderGenreMap, renderMapSelection, setActiveNav, showView }) {
   const GENRE_DETAIL_RETRY_MS = 60_000;
   const genreDetailRequests = new Map();
+  const spotifyOembedCoverRequests = new Map();
 
   async function loadGenres() {
     try {
@@ -36,14 +42,32 @@ function createHomePage({ likeTrack, renderGenreMap, renderMapSelection, setActi
   }
 
   async function fetchLocalGenres() {
-    const response = await fetch('data/genres.json', { cache: 'no-cache' });
+    const [baseGenres, expandedGenres] = await Promise.all([
+      fetchGenreFile('data/genres.json'),
+      fetchGenreFile('data/genre-expansion.json').catch(() => []),
+    ]);
+    return cloneGenres(attachParentGenres([...baseGenres, ...expandedGenres]));
+  }
 
+  async function fetchGenreFile(path) {
+    const response = await fetch(path, { cache: 'no-cache' });
     if (!response.ok) {
-      throw new Error('local genres unavailable');
+      throw new Error(`${path} unavailable`);
     }
-
     const data = await response.json();
-    return cloneGenres(data.genres ?? []);
+    return data.genres ?? [];
+  }
+
+  function attachParentGenres(genres) {
+    const byId = new Map(genres.map(genre => [genre.id, genre]));
+    genres.forEach(genre => {
+      const parent = byId.get(genre.parent);
+      if (!parent) {
+        return;
+      }
+      parent.subgenres = [...new Set([...(parent.subgenres ?? []), genre.id])];
+    });
+    return genres;
   }
 
   function cloneGenres(genres) {
@@ -56,14 +80,17 @@ function createHomePage({ likeTrack, renderGenreMap, renderMapSelection, setActi
       spotifySeedGenres: [...(genre.spotifySeedGenres ?? [])],
       spotifySearchTerms: [...(genre.spotifySearchTerms ?? [])],
       relatedNames: [...(genre.relatedNames ?? [])],
-      tracks: (genre.tracks ?? []).map(track => ({ ...track })),
+      tracks: (genre.tracks ?? []).map(track => ({
+        ...track,
+        albumImages: [...(track.albumImages ?? [])],
+      })),
     }));
   }
 
   function commitGenreCatalog(genres, options = {}) {
     const { usingBackendGenres = false } = options;
     const existingGenres = new Map(state.genres.map(genre => [genre.id, genre]));
-    const nextGenres = cloneGenres(genres);
+    let nextGenres = cloneGenres(genres);
 
     if (usingBackendGenres) {
       nextGenres.forEach(genre => {
@@ -72,6 +99,12 @@ function createHomePage({ likeTrack, renderGenreMap, renderMapSelection, setActi
           genre.tracks = mergeTrackDetails(existing.tracks, genre.tracks);
         }
       });
+
+      const incomingIds = new Set(nextGenres.map(genre => genre.id));
+      const localOnlyGenres = [...existingGenres.values()]
+        .filter(genre => !incomingIds.has(genre.id))
+        .map(genre => ({ ...genre, spotifyBacked: true }));
+      nextGenres = attachParentGenres([...nextGenres, ...cloneGenres(localOnlyGenres)]);
     }
 
     state.genres = nextGenres;
@@ -420,7 +453,25 @@ function createHomePage({ likeTrack, renderGenreMap, renderMapSelection, setActi
       }
       const detailsComplete = detail.tracksComplete !== false;
       const mergedTracks = mergeTrackDetails(genre.tracks, detail.tracks);
+      const preservedMetadata = {
+        name: genre.name || detail.name,
+        description: genre.description || detail.description || '',
+        parent: genre.parent || detail.parent || '',
+        subgenres: mergeUniqueValues(genre.subgenres, detail.subgenres),
+        similar: mergeUniqueValues(genre.similar, detail.similar),
+        fusion: mergeUniqueValues(genre.fusion, detail.fusion),
+        aliases: mergeUniqueValues(genre.aliases, detail.aliases),
+        spotifySeedGenres: mergeUniqueValues(
+          genre.spotifySeedGenres,
+          detail.spotifySeedGenres,
+        ),
+        spotifySearchTerms: mergeUniqueValues(
+          genre.spotifySearchTerms,
+          detail.spotifySearchTerms,
+        ),
+      };
       Object.assign(genre, detail, {
+        ...preservedMetadata,
         tracks: mergedTracks,
         detailsLoaded: true,
         detailsComplete,
@@ -429,7 +480,10 @@ function createHomePage({ likeTrack, renderGenreMap, renderMapSelection, setActi
       });
 
       if (detail.relatedNames?.length) {
-        genre.similar = detail.relatedNames.slice(0, 6).map(name => ensureGenreStub(name));
+        genre.similar = mergeUniqueValues(
+          genre.similar,
+          detail.relatedNames.map(name => ensureGenreStub(name)),
+        ).slice(0, 8);
       }
     } catch {
       genre.detailsLoading = false;
@@ -446,20 +500,65 @@ function createHomePage({ likeTrack, renderGenreMap, renderMapSelection, setActi
   }
 
   function mergeTrackDetails(existingTracks = [], incomingTracks = []) {
-    const existingByKey = new Map(existingTracks.map(track => [makeTrackKey(track), track]));
+    if (!existingTracks.length) {
+      return incomingTracks.map(track => ({
+        ...track,
+        albumImages: [...(track.albumImages ?? [])],
+      }));
+    }
 
-    return incomingTracks.map(track => {
-      const existing = existingByKey.get(makeTrackKey(track)) ?? {};
+    const incomingByIdentity = new Map();
+    incomingTracks.forEach(track => {
+      incomingByIdentity.set(makeTrackKey(track), track);
+      incomingByIdentity.set(makeDisplayTrackKey(track), track);
+    });
+
+    return existingTracks.map(existing => {
+      const existingSpotifyTrackId = getSpotifyTrackId(existing);
+      const incoming =
+        incomingByIdentity.get(makeTrackKey(existing)) ??
+        (!existingSpotifyTrackId
+          ? incomingByIdentity.get(makeDisplayTrackKey(existing))
+          : null);
+
+      if (!incoming) {
+        return {
+          ...existing,
+          albumImages: [...(existing.albumImages ?? [])],
+        };
+      }
+
+      const albumImages = mergeUniqueValues(
+        incoming.albumImages,
+        incoming.albumImage ? [incoming.albumImage] : [],
+        existing.albumImages,
+        existing.albumImage ? [existing.albumImage] : [],
+      );
       return {
         ...existing,
-        ...track,
-        album: existing.album || track.album || '',
-        albumImage: existing.albumImage || track.albumImage,
-        durationMs: existing.durationMs ?? track.durationMs,
-        spotifyUri: existing.spotifyUri || track.spotifyUri,
-        spotifyUrl: existing.spotifyUrl || track.spotifyUrl,
+        album: existing.album || incoming.album || '',
+        albumId: incoming.albumId || existing.albumId,
+        albumUrl: incoming.albumUrl || existing.albumUrl,
+        albumImage: incoming.albumImage || existing.albumImage,
+        albumImages,
+        durationMs: existing.durationMs ?? incoming.durationMs,
+        spotifyTrackId: incoming.spotifyTrackId || existing.spotifyTrackId,
+        spotifyUri: incoming.spotifyUri || existing.spotifyUri,
+        spotifyUrl: incoming.spotifyUrl || existing.spotifyUrl,
+        isrc: incoming.isrc || existing.isrc,
       };
     });
+  }
+
+  function makeDisplayTrackKey(track) {
+    return `${track?.title ?? ''}::${track?.artist ?? ''}`
+      .toLowerCase()
+      .replace(/\s+/g, ' ')
+      .trim();
+  }
+
+  function mergeUniqueValues(...groups) {
+    return [...new Set(groups.flatMap(group => group ?? []).filter(Boolean))];
   }
 
   function applyGenreToUI(genre) {
@@ -566,11 +665,12 @@ function createHomePage({ likeTrack, renderGenreMap, renderMapSelection, setActi
       className: 'track-cover',
       attributes: { 'aria-hidden': 'true' },
     });
-    const imageUrl = sanitizeHttpUrl(track.albumImage ?? track.imageUrl ?? track.image);
+    const imageUrls = getTrackImageUrls(track);
+    const recoverImageUrl = getSpotifyCoverRecovery(track);
 
     applyFallbackTrackCover(cover, track);
 
-    if (!imageUrl) {
+    if (!imageUrls.length && !recoverImageUrl) {
       return cover;
     }
 
@@ -584,7 +684,8 @@ function createHomePage({ likeTrack, renderGenreMap, renderMapSelection, setActi
     });
     cover.appendChild(image);
 
-    watchImage(image, {
+    loadImageWithFallback(image, imageUrls, {
+      recoverImageUrl,
       onReady: () => {
         if (image.parentElement !== cover) {
           return;
@@ -596,19 +697,18 @@ function createHomePage({ likeTrack, renderGenreMap, renderMapSelection, setActi
         image.remove();
       },
     });
-    image.src = imageUrl;
-
     return cover;
   }
 
   function renderSpotlightCover(track) {
     clearChildren(elements.playerAlbumArt);
     elements.playerAlbumArt.classList.remove('has-image', 'is-fallback');
-    const imageUrl = sanitizeHttpUrl(track?.albumImage ?? track?.imageUrl ?? track?.image);
+    const imageUrls = getTrackImageUrls(track);
+    const recoverImageUrl = getSpotifyCoverRecovery(track);
 
     applySpotlightFallback(track);
 
-    if (!imageUrl) {
+    if (!imageUrls.length && !recoverImageUrl) {
       return;
     }
 
@@ -622,7 +722,8 @@ function createHomePage({ likeTrack, renderGenreMap, renderMapSelection, setActi
     });
     elements.playerAlbumArt.appendChild(image);
 
-    watchImage(image, {
+    loadImageWithFallback(image, imageUrls, {
+      recoverImageUrl,
       onReady: () => {
         if (image.parentElement !== elements.playerAlbumArt) {
           return;
@@ -636,38 +737,108 @@ function createHomePage({ likeTrack, renderGenreMap, renderMapSelection, setActi
         }
       },
     });
-    image.src = imageUrl;
   }
 
-  function watchImage(image, { onReady, onError }) {
-    let settled = false;
+  function getTrackImageUrls(track) {
+    return [...new Set([
+      track?.albumImage,
+      ...(track?.albumImages ?? []),
+      track?.imageUrl,
+      track?.image,
+    ].map(sanitizeHttpUrl).filter(Boolean))];
+  }
 
-    const handleReady = async () => {
-      if (settled) {
-        return;
-      }
-      settled = true;
+  function getSpotifyCoverRecovery(track) {
+    const spotifyTrackId = getSpotifyTrackId(track);
+    const spotifyUrl = sanitizeHttpUrl(
+      spotifyTrackId
+        ? `https://open.spotify.com/track/${spotifyTrackId}`
+        : track?.spotifyUrl,
+    );
+    if (!spotifyUrl || !isSpotifyTrackUrl(spotifyUrl)) {
+      return null;
+    }
+    return () => fetchSpotifyOembedCover(spotifyUrl);
+  }
 
-      try {
-        if (typeof image.decode === 'function') {
-          await image.decode();
+  function isSpotifyTrackUrl(value) {
+    try {
+      const url = new URL(value);
+      const parts = url.pathname.split('/').filter(Boolean);
+      const trackIndex = parts.indexOf('track');
+      return (
+        url.protocol === 'https:' &&
+        url.hostname === 'open.spotify.com' &&
+        trackIndex >= 0 &&
+        /^[a-zA-Z0-9]{22}$/.test(parts[trackIndex + 1] ?? '')
+      );
+    } catch {
+      return false;
+    }
+  }
+
+  function fetchSpotifyOembedCover(spotifyUrl) {
+    if (!spotifyOembedCoverRequests.has(spotifyUrl)) {
+      const request = fetchWithTimeout(
+        `https://open.spotify.com/oembed?url=${encodeURIComponent(spotifyUrl)}`,
+        5000,
+      )
+        .then(response => (response.ok ? response.json() : null))
+        .then(data => sanitizeHttpUrl(data?.thumbnail_url))
+        .catch(() => null);
+      spotifyOembedCoverRequests.set(spotifyUrl, request);
+      void request.then(coverUrl => {
+        if (!coverUrl && spotifyOembedCoverRequests.get(spotifyUrl) === request) {
+          spotifyOembedCoverRequests.delete(spotifyUrl);
         }
-      } catch {
-        // The load event already confirmed that pixels are available.
+      });
+    }
+    return spotifyOembedCoverRequests.get(spotifyUrl);
+  }
+
+  function loadImageWithFallback(
+    image,
+    initialImageUrls,
+    { recoverImageUrl, onReady, onError },
+  ) {
+    const imageUrls = [...initialImageUrls];
+    let imageIndex = 0;
+    let recoveryAttempted = false;
+
+    const loadNextImage = async () => {
+      if (imageIndex >= imageUrls.length) {
+        if (!recoveryAttempted && recoverImageUrl) {
+          recoveryAttempted = true;
+          const recoveredUrl = sanitizeHttpUrl(await recoverImageUrl());
+          if (recoveredUrl && !imageUrls.includes(recoveredUrl)) {
+            imageUrls.push(recoveredUrl);
+          }
+        }
       }
 
-      onReady();
-    };
-    const handleError = () => {
-      if (settled) {
+      if (imageIndex >= imageUrls.length) {
+        onError();
         return;
       }
-      settled = true;
-      onError();
+
+      image.onload = async () => {
+        try {
+          if (typeof image.decode === 'function') {
+            await image.decode();
+          }
+        } catch {
+          // The load event already confirmed that pixels are available.
+        }
+        onReady();
+      };
+      image.onerror = () => {
+        imageIndex += 1;
+        void loadNextImage();
+      };
+      image.src = imageUrls[imageIndex];
     };
 
-    image.addEventListener('load', () => void handleReady(), { once: true });
-    image.addEventListener('error', handleError, { once: true });
+    void loadNextImage();
   }
 
   function applySpotlightFallback(track) {
