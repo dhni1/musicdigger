@@ -5,6 +5,7 @@ const SPOTIFY_SCOPES = [
   'playlist-read-private',
   'playlist-modify-private',
   'playlist-modify-public',
+  'user-read-currently-playing',
 ];
 
 const SPOTIFY_STORAGE_KEYS = {
@@ -174,6 +175,8 @@ const state = {
     likedTracks: [],
     likedTrackKeys: new Set(),
     trackUriCache: new Map(),
+    currentPlayback: null,
+    playbackNeedsReconnect: false,
   },
 };
 
@@ -204,6 +207,13 @@ const elements = {
   searchInput: document.getElementById('genre-search'),
   menuToggle: document.getElementById('menu-toggle'),
   sidebarRandom: document.getElementById('sidebar-random'),
+  vinylPlayer: document.getElementById('vinyl-player'),
+  vinylAlbumArt: document.getElementById('vinyl-album-art'),
+  vinylLabelFallback: document.getElementById('vinyl-label-fallback'),
+  vinylPlayerStatus: document.getElementById('vinyl-player-status'),
+  vinylPlayerTitle: document.getElementById('vinyl-player-title'),
+  vinylPlayerArtist: document.getElementById('vinyl-player-artist'),
+  vinylProgressFill: document.getElementById('vinyl-progress-fill'),
   playerAlbumArt: document.getElementById('player-album-art'),
   playerTrackTitle: document.getElementById('player-track-title'),
   playerTrackArtist: document.getElementById('player-track-artist'),

@@ -105,6 +105,7 @@
 
   .topbar-right {
     grid-column: 3;
+    gap: 8px;
   }
 
   .topbar-center {
@@ -137,6 +138,32 @@
 
   .topbar-random > span:first-child {
     font-size: 1.35rem;
+  }
+
+  .vinyl-player {
+    --vinyl-size: 38px;
+    --vinyl-label-size: 16px;
+    width: clamp(132px, 30vw, 210px);
+    height: 42px;
+    gap: 8px;
+    padding: 1px 8px 1px 1px;
+    border-radius: 13px;
+  }
+
+  .vinyl-deck {
+    border-radius: 11px;
+  }
+
+  .vinyl-player-artist {
+    display: none;
+  }
+
+  .vinyl-player-status {
+    display: block;
+  }
+
+  .vinyl-progress {
+    margin-top: 5px;
   }
 
   .page-shell {
@@ -287,6 +314,16 @@
   .profile-slot {
     width: 42px;
     height: 42px;
+  }
+
+  .vinyl-player {
+    --vinyl-size: 40px;
+    --vinyl-label-size: 16px;
+    grid-template-columns: var(--vinyl-size) minmax(0, 1fr);
+    width: clamp(112px, 29vw, 132px);
+    height: 42px;
+    gap: 6px;
+    padding: 0 7px 0 1px;
   }
 
   .topbar-search input,
@@ -469,5 +506,11 @@
 
   .modal-card {
     padding: 20px;
+  }
+}
+
+@media (max-width: 420px) {
+  .brand-wordmark {
+    display: none;
   }
 }

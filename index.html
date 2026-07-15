@@ -95,6 +95,32 @@
         </div>
 
         <div class="topbar-right">
+          <button
+            id="vinyl-player"
+            class="vinyl-player"
+            type="button"
+            data-state="idle"
+            aria-label="Spotify 연결"
+          >
+            <span class="vinyl-deck" aria-hidden="true">
+              <span class="vinyl-record">
+                <img id="vinyl-album-art" class="vinyl-album-art" alt="" hidden>
+                <span id="vinyl-label-fallback" class="vinyl-label-fallback">MD</span>
+                <span class="vinyl-spindle"></span>
+              </span>
+              <span class="vinyl-tonearm"><span></span></span>
+            </span>
+            <span class="vinyl-player-copy" aria-live="polite" aria-atomic="true">
+              <span id="vinyl-player-status" class="vinyl-player-status">VINYL PLAYER</span>
+              <strong id="vinyl-player-title" class="vinyl-player-title">Spotify 연결</strong>
+              <span id="vinyl-player-artist" class="vinyl-player-artist">
+                현재 곡을 LP로 표시해요
+              </span>
+              <span class="vinyl-progress" aria-hidden="true">
+                <span id="vinyl-progress-fill"></span>
+              </span>
+            </span>
+          </button>
           <button id="profile-slot" class="profile-slot" type="button" aria-label="프로필">
             <span id="profile-avatar" class="profile-avatar" aria-hidden="true"></span>
             <span class="profile-status-dot" aria-hidden="true"></span>

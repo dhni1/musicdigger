@@ -4,7 +4,7 @@ import {
   elements,
   state,
 } from '../../shared/context.js';
-import { clearChildren, createEmptyState } from '../../shared/dom.js';
+import { clearChildren, createEmptyState, sanitizeHttpUrl } from '../../shared/dom.js';
 import {
   createRandomString,
   makeTrackKey,
@@ -18,6 +18,10 @@ import {
   updateProfileSlot,
 } from '../../pages/profile/index.js';
 
+const PLAYBACK_POLL_INTERVAL_MS = 12000;
+const PLAYBACK_BUSY_RETRY_MS = 1200;
+const PLAYBACK_RATE_LIMIT_FALLBACK_MS = 30000;
+
 function createSpotifyService({
   getCurrentGenreName,
   openLibraryView,
@@ -30,15 +34,27 @@ function createSpotifyService({
     scopes: window.SPOTIFY_CONFIG?.scopes ?? SPOTIFY_SCOPES,
   };
   const storage = window.sessionStorage;
+  let playbackPollTimer = null;
+  let playbackRequestInFlight = false;
+  let playbackPollingActive = false;
+  let playbackPollingBlocked = false;
+  let playbackVisibilityBound = false;
+  let playbackSessionVersion = 0;
+  let progressAnimationFrame = null;
+  let spotifyRefreshPromise = null;
 
   state.spotify.configured = isSpotifyConfigured(spotifyConfig);
 
   async function initializeSpotify() {
+    bindPlaybackVisibility();
     hydrateSpotifyToken();
     await handleSpotifyCallback();
 
     if (state.spotify.accessToken) {
       await syncSpotifyData();
+      if (!state.spotify.playbackNeedsReconnect) {
+        startPlaybackPolling();
+      }
     } else {
       renderSpotifyState();
     }
@@ -69,9 +85,35 @@ function createSpotifyService({
     }
 
     await syncSpotifyData();
+    if (!state.spotify.playbackNeedsReconnect) {
+      startPlaybackPolling();
+    }
+  }
+
+  async function handleVinylPlayerAction() {
+    if (!state.spotify.configured) {
+      updateSpotifyMessage(
+        'spotify-config.js 파일에 Spotify Client ID를 넣은 뒤 다시 시도해주세요.',
+      );
+      return;
+    }
+
+    if (!state.spotify.accessToken || state.spotify.playbackNeedsReconnect) {
+      await loginToSpotify();
+      return;
+    }
+
+    const spotifyUrl = sanitizeHttpUrl(state.spotify.currentPlayback?.spotifyUrl);
+    if (spotifyUrl) {
+      window.open(spotifyUrl, '_blank', 'noopener,noreferrer');
+      return;
+    }
+
+    startPlaybackPolling();
   }
 
   function disconnectSpotify() {
+    stopPlaybackPolling();
     [
       SPOTIFY_STORAGE_KEYS.token,
       SPOTIFY_STORAGE_KEYS.returnPath,
@@ -87,6 +129,8 @@ function createSpotifyService({
     state.spotify.likedTracks = [];
     state.spotify.likedTrackKeys = new Set();
     state.spotify.trackUriCache = new Map();
+    state.spotify.currentPlayback = null;
+    state.spotify.playbackNeedsReconnect = false;
 
     renderSpotifyState();
     renderTracksForCurrentGenre();
@@ -185,12 +229,12 @@ function createSpotifyService({
   }
 
   async function syncSpotifyData() {
-    if (!(await ensureSpotifyReady(false))) {
-      renderSpotifyState();
-      return;
-    }
-
     try {
+      if (!(await ensureSpotifyReady(false))) {
+        renderSpotifyState();
+        return;
+      }
+
       const [profile, playlists, liked] = await Promise.all([
         spotifyRequest('/me'),
         spotifyRequest('/me/playlists?limit=8'),
@@ -206,6 +250,13 @@ function createSpotifyService({
       renderSpotifyState();
       renderTracksForCurrentGenre();
     } catch (error) {
+      if (error.status === 401) {
+        state.spotify.currentPlayback = null;
+        state.spotify.playbackNeedsReconnect = true;
+        playbackPollingBlocked = true;
+        clearPlaybackPollTimer();
+        renderVinylPlayer();
+      }
       updateSpotifyMessage(error.message);
     }
   }
@@ -257,6 +308,303 @@ function createSpotifyService({
         ? 'Spotify 연결 상태는 위 프로필 요약과 라이브러리 화면에서 확인할 수 있습니다.'
         : 'Spotify를 연결하면 프로필과 라이브러리 정보를 더 자세히 볼 수 있습니다.';
     }
+
+    renderVinylPlayer();
+  }
+
+  function renderVinylPlayer() {
+    if (!elements.vinylPlayer) {
+      return;
+    }
+
+    const playback = state.spotify.currentPlayback;
+    let playerState = 'idle';
+    let status = 'VINYL PLAYER';
+    let title = '재생 중인 곡 없음';
+    let secondary = 'Spotify에서 음악을 재생해보세요';
+    let ariaLabel = '현재 재생곡 새로고침';
+
+    if (!state.spotify.configured) {
+      playerState = 'setup';
+      title = 'Spotify 설정 필요';
+      secondary = 'Client ID를 확인해주세요';
+      ariaLabel = 'Spotify 설정 필요';
+    } else if (!state.spotify.accessToken) {
+      playerState = 'connect';
+      title = 'Spotify 연결';
+      secondary = '현재 곡을 LP로 표시해요';
+      ariaLabel = 'Spotify 연결';
+    } else if (state.spotify.playbackNeedsReconnect) {
+      playerState = 'reconnect';
+      status = 'RECONNECT';
+      title = 'Spotify 다시 연결';
+      secondary = '현재 재생곡 권한이 필요해요';
+      ariaLabel = '현재 재생곡 권한을 위해 Spotify 다시 연결';
+    } else if (playback) {
+      playerState = playback.isPlaying ? 'playing' : 'paused';
+      status = playback.isPlaying ? 'PLAYING' : 'PAUSED';
+      title = playback.title;
+      secondary = [playback.artist, playback.album].filter(Boolean).join(' · ');
+      ariaLabel = `${playback.isPlaying ? '재생 중' : '일시정지'}: ${playback.title}. Spotify에서 열기`;
+    }
+
+    elements.vinylPlayer.dataset.state = playerState;
+    if (elements.vinylPlayer.getAttribute('aria-label') !== ariaLabel) {
+      elements.vinylPlayer.setAttribute('aria-label', ariaLabel);
+    }
+    elements.vinylPlayer.title = ariaLabel;
+    setTextIfChanged(elements.vinylPlayerStatus, status);
+    setTextIfChanged(elements.vinylPlayerTitle, title);
+    setTextIfChanged(elements.vinylPlayerArtist, secondary);
+
+    renderVinylArtwork(playback?.albumImage);
+    renderVinylProgress(playback);
+  }
+
+  function renderVinylArtwork(imageUrl) {
+    const image = elements.vinylAlbumArt;
+    const fallback = elements.vinylLabelFallback;
+    if (!image || !fallback) {
+      return;
+    }
+
+    const safeImageUrl = sanitizeHttpUrl(imageUrl);
+    if (!safeImageUrl) {
+      image.hidden = true;
+      image.removeAttribute('src');
+      delete image.dataset.source;
+      fallback.hidden = false;
+      return;
+    }
+
+    if (image.dataset.source === safeImageUrl) {
+      const imageReady = image.complete && image.naturalWidth > 0;
+      image.hidden = !imageReady;
+      fallback.hidden = imageReady;
+      return;
+    }
+
+    image.hidden = true;
+    fallback.hidden = false;
+    image.dataset.source = safeImageUrl;
+    image.onload = () => {
+      if (image.dataset.source !== safeImageUrl) {
+        return;
+      }
+      image.hidden = false;
+      fallback.hidden = true;
+    };
+    image.onerror = () => {
+      if (image.dataset.source !== safeImageUrl) {
+        return;
+      }
+      image.hidden = true;
+      fallback.hidden = false;
+    };
+    image.src = safeImageUrl;
+  }
+
+  function renderVinylProgress(playback) {
+    const fill = elements.vinylProgressFill;
+    if (!fill) {
+      return;
+    }
+
+    if (progressAnimationFrame !== null) {
+      window.cancelAnimationFrame(progressAnimationFrame);
+      progressAnimationFrame = null;
+    }
+
+    const durationMs = Math.max(0, Number(playback?.durationMs) || 0);
+    const observedAt = Number(playback?.observedAt) || Date.now();
+    const elapsedMs = playback?.isPlaying ? Math.max(0, Date.now() - observedAt) : 0;
+    const progressMs = Math.min(
+      durationMs,
+      Math.max(0, Number(playback?.progressMs) || 0) + elapsedMs,
+    );
+    const progressPercent = durationMs > 0 ? (progressMs / durationMs) * 100 : 0;
+
+    fill.style.transition = 'none';
+    fill.style.width = `${progressPercent}%`;
+
+    if (!playback?.isPlaying || durationMs <= progressMs || document.hidden) {
+      return;
+    }
+
+    progressAnimationFrame = window.requestAnimationFrame(() => {
+      if (state.spotify.currentPlayback !== playback) {
+        return;
+      }
+      fill.style.transition = `width ${durationMs - progressMs}ms linear`;
+      fill.style.width = '100%';
+      progressAnimationFrame = null;
+    });
+  }
+
+  function bindPlaybackVisibility() {
+    if (playbackVisibilityBound) {
+      return;
+    }
+
+    document.addEventListener('visibilitychange', () => {
+      clearPlaybackPollTimer();
+      if (!document.hidden && playbackPollingActive && !playbackPollingBlocked) {
+        void runPlaybackPoll();
+      }
+    });
+    playbackVisibilityBound = true;
+  }
+
+  function startPlaybackPolling() {
+    playbackPollingActive = true;
+    playbackPollingBlocked = false;
+    clearPlaybackPollTimer();
+
+    if (!document.hidden) {
+      void runPlaybackPoll();
+    }
+  }
+
+  function stopPlaybackPolling() {
+    playbackPollingActive = false;
+    playbackPollingBlocked = false;
+    playbackSessionVersion += 1;
+    clearPlaybackPollTimer();
+  }
+
+  function clearPlaybackPollTimer() {
+    if (playbackPollTimer !== null) {
+      window.clearTimeout(playbackPollTimer);
+      playbackPollTimer = null;
+    }
+  }
+
+  function schedulePlaybackPoll(delayMs = PLAYBACK_POLL_INTERVAL_MS) {
+    clearPlaybackPollTimer();
+    if (
+      !playbackPollingActive ||
+      playbackPollingBlocked ||
+      !state.spotify.accessToken ||
+      document.hidden
+    ) {
+      return;
+    }
+
+    playbackPollTimer = window.setTimeout(() => {
+      playbackPollTimer = null;
+      void runPlaybackPoll();
+    }, delayMs);
+  }
+
+  async function runPlaybackPoll() {
+    if (
+      !playbackPollingActive ||
+      playbackPollingBlocked ||
+      !state.spotify.accessToken ||
+      document.hidden
+    ) {
+      return;
+    }
+
+    if (playbackRequestInFlight) {
+      schedulePlaybackPoll(PLAYBACK_BUSY_RETRY_MS);
+      return;
+    }
+
+    playbackRequestInFlight = true;
+    const sessionVersion = playbackSessionVersion;
+    let nextPollDelay = PLAYBACK_POLL_INTERVAL_MS;
+
+    try {
+      if (!(await ensureSpotifyReady(false))) {
+        return;
+      }
+
+      const payload = await requestCurrentlyPlaying();
+      if (sessionVersion !== playbackSessionVersion || !playbackPollingActive) {
+        return;
+      }
+
+      state.spotify.currentPlayback = normalizeCurrentlyPlaying(payload);
+      state.spotify.playbackNeedsReconnect = false;
+      renderVinylPlayer();
+    } catch (error) {
+      if (sessionVersion !== playbackSessionVersion) {
+        return;
+      }
+
+      if (error.status === 401 || error.status === 403) {
+        state.spotify.currentPlayback = null;
+        state.spotify.playbackNeedsReconnect = true;
+        playbackPollingBlocked = true;
+        renderVinylPlayer();
+      } else if (error.status === 429) {
+        nextPollDelay = Math.max(
+          PLAYBACK_RATE_LIMIT_FALLBACK_MS,
+          Number(error.retryAfterMs) || 0,
+        );
+      }
+    } finally {
+      playbackRequestInFlight = false;
+      if (sessionVersion === playbackSessionVersion) {
+        schedulePlaybackPoll(nextPollDelay);
+      }
+    }
+  }
+
+  async function requestCurrentlyPlaying() {
+    try {
+      return await spotifyRequest('/me/player/currently-playing?additional_types=episode');
+    } catch (error) {
+      if (error.status !== 401 || !state.spotify.refreshToken) {
+        throw error;
+      }
+
+      let refreshed;
+      try {
+        refreshed = await refreshSpotifyToken();
+      } catch (refreshError) {
+        refreshError.status ??= 401;
+        throw refreshError;
+      }
+
+      if (!refreshed) {
+        throw error;
+      }
+
+      return spotifyRequest('/me/player/currently-playing?additional_types=episode');
+    }
+  }
+
+  function normalizeCurrentlyPlaying(payload) {
+    const item = payload?.item;
+    if (!item || (item.type !== 'track' && item.type !== 'episode')) {
+      return null;
+    }
+
+    const isEpisode = item.type === 'episode';
+    const artist = isEpisode
+      ? item.show?.publisher || item.show?.name || 'Spotify Podcast'
+      : (item.artists ?? []).map(entry => entry.name).filter(Boolean).join(', ') || 'Unknown Artist';
+    const album = isEpisode ? item.show?.name || 'Podcast' : item.album?.name || '';
+    const images = isEpisode && item.images?.length
+      ? item.images
+      : isEpisode ? item.show?.images : item.album?.images;
+    const durationMs = Math.max(0, Number(item.duration_ms) || 0);
+
+    return {
+      type: item.type,
+      title: item.name || 'Unknown Track',
+      artist,
+      album,
+      albumImage: images?.[0]?.url ?? '',
+      durationMs,
+      progressMs: Math.min(durationMs, Math.max(0, Number(payload.progress_ms) || 0)),
+      isPlaying: Boolean(payload.is_playing),
+      observedAt: Date.now(),
+      spotifyUrl: item.external_urls?.spotify ?? '',
+      spotifyUri: item.uri ?? '',
+    };
   }
 
   function updateSpotifyMessage(message) {
@@ -268,6 +616,12 @@ function createSpotifyService({
     if (elements.profileScreenCard) {
       clearChildren(elements.profileScreenCard);
       elements.profileScreenCard.appendChild(createEmptyState(message));
+    }
+  }
+
+  function setTextIfChanged(element, value) {
+    if (element && element.textContent !== value) {
+      element.textContent = value;
     }
   }
 
@@ -391,8 +745,22 @@ function createSpotifyService({
   }
 
   async function refreshSpotifyToken() {
-    if (!state.spotify.refreshToken) {
-      return;
+    if (spotifyRefreshPromise) {
+      return spotifyRefreshPromise;
+    }
+
+    spotifyRefreshPromise = performSpotifyTokenRefresh();
+    try {
+      return await spotifyRefreshPromise;
+    } finally {
+      spotifyRefreshPromise = null;
+    }
+  }
+
+  async function performSpotifyTokenRefresh() {
+    const refreshToken = state.spotify.refreshToken;
+    if (!refreshToken) {
+      return false;
     }
 
     const response = await fetch('https://accounts.spotify.com/api/token', {
@@ -403,15 +771,23 @@ function createSpotifyService({
       body: new URLSearchParams({
         client_id: spotifyConfig.clientId,
         grant_type: 'refresh_token',
-        refresh_token: state.spotify.refreshToken,
+        refresh_token: refreshToken,
       }),
     });
 
     if (!response.ok) {
-      throw new Error('Spotify 토큰을 갱신하지 못했습니다.');
+      const error = new Error('Spotify 토큰을 갱신하지 못했습니다.');
+      error.status = 401;
+      throw error;
     }
 
-    saveSpotifyToken(await response.json());
+    const token = await response.json();
+    if (state.spotify.refreshToken !== refreshToken) {
+      return false;
+    }
+
+    saveSpotifyToken(token);
+    return true;
   }
 
   function saveSpotifyToken(token) {
@@ -444,8 +820,13 @@ function createSpotifyService({
     }
 
     if (!response.ok) {
-      const error = await safeJson(response);
-      throw new Error(error?.error?.message ?? 'Spotify 요청에 실패했습니다.');
+      const responseBody = await safeJson(response);
+      const error = new Error(
+        responseBody?.error?.message ?? 'Spotify 요청에 실패했습니다.',
+      );
+      error.status = response.status;
+      error.retryAfterMs = Number(response.headers.get('Retry-After')) * 1000 || 0;
+      throw error;
     }
 
     return response.json();
@@ -525,6 +906,7 @@ function createSpotifyService({
     disconnectSpotify,
     handleSpotifyAuthButton,
     handleSpotifyRefreshButton,
+    handleVinylPlayerAction,
     initializeSpotify,
     likeTrack,
     openPlaylistComposer,

@@ -79,6 +79,9 @@ function bindEvents() {
   });
   addClick(elements.navProfile, openProfileView);
   addClick(elements.profileSlot, openProfileView);
+  addClick(elements.vinylPlayer, () => {
+    void spotifyService.handleVinylPlayerAction();
+  });
   addClick(elements.playlistCreateButton, () => {
     void spotifyService.openPlaylistComposer();
   });
