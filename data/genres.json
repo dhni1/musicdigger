@@ -21,7 +21,7 @@
           "title": "Empire State Of Mind",
           "artist": "JAY-Z feat. Alicia Keys",
           "album": "The Blueprint 3",
-          "albumImage": "https://image-cdn-fa.spotifycdn.com/image/ab67616d00001e02fec1b815bb3c50a64a90fd10",
+          "albumImage": "https://i.scdn.co/image/ab67616d00001e02fec1b815bb3c50a64a90fd10",
           "durationMs": 276920,
           "spotifyUri": "spotify:track:69yVxyuRahEzs2taFMVVoO",
           "spotifyUrl": "https://open.spotify.com/track/69yVxyuRahEzs2taFMVVoO"
@@ -125,12 +125,32 @@
       "fusion": [],
       "tracks": [
         { "title": "Welcome to the Party", "artist": "Pop Smoke" },
-        { "title": "Body", "artist": "Tion Wayne & Russ Millions" },
+        {
+          "title": "Body",
+          "artist": "Tion Wayne & Russ Millions",
+          "album": "Body",
+          "albumImage": "https://i.scdn.co/image/ab67616d00001e027b6f68fe66afeb11263268ed",
+          "durationMs": 183000
+        },
         { "title": "Dior", "artist": "Pop Smoke" },
-        { "title": "KEISHA & BECKY", "artist": "Russ Millions x Tion Wayne" },
+        {
+          "title": "KEISHA & BECKY",
+          "artist": "Russ Millions x Tion Wayne",
+          "album": "Keisha & Becky (Remix)",
+          "albumImage": "https://i.scdn.co/image/ab67616d00001e02b81594ffaf98e2323e30374a",
+          "durationMs": 173000
+        },
         { "title": "War", "artist": "Pop Smoke feat. Lil Tjay" },
         { "title": "No Suburban", "artist": "Sheff G" },
-        { "title": "Know Better", "artist": "Headie One" },
+        {
+          "title": "Know Better",
+          "artist": "Headie One",
+          "album": "The One",
+          "albumImage": "https://i.scdn.co/image/ab67616d00001e02a8bec1dedf76481968706cc3",
+          "durationMs": 210000,
+          "spotifyUri": "spotify:track:0IX9PL2dUVCHp6L4JQ9Rzq",
+          "spotifyUrl": "https://open.spotify.com/track/0IX9PL2dUVCHp6L4JQ9Rzq"
+        },
         { "title": "Doja", "artist": "Central Cee" }
       ]
     },
@@ -180,7 +200,7 @@
       "id": "soul",
       "name": "Soul",
       "description": "감정선이 깊고 그루브가 풍부한 보컬 중심 장르",
-      "aliases": ["neo soul"],
+      "aliases": ["classic soul"],
       "spotifySeedGenres": ["soul"],
       "spotifySearchTerms": ["soul", "neo soul"],
       "subgenres": ["neo-soul", "funk"],

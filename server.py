@@ -757,10 +757,16 @@ def build_local_genre_index(local_genres):
     index = {}
 
     for genre in local_genres:
-        for candidate in [genre.get("id", ""), genre.get("name", ""), *genre.get("aliases", [])]:
+        for candidate in [genre.get("id", ""), genre.get("name", "")]:
             key = normalize_genre_name(candidate)
             if key:
                 index[key] = genre
+
+    for genre in local_genres:
+        for alias in genre.get("aliases", []):
+            key = normalize_genre_name(alias)
+            if key:
+                index.setdefault(key, genre)
 
     return index
 
@@ -825,7 +831,7 @@ def format_genre_name(name):
 
 def get_primary_artist_name(name):
     parts = re.split(
-        r"\s+(?:feat(?:uring)?\.?|ft\.?)\s+|\s+[x×]\s+",
+        r"\s+(?:feat(?:uring)?\.?|ft\.?)\s+",
         str(name or ""),
         maxsplit=1,
         flags=re.IGNORECASE,
@@ -848,6 +854,15 @@ def normalize_track_text(value):
     return re.sub(r"[^\w]+", " ", normalized, flags=re.UNICODE).strip()
 
 
+def get_artist_tokens(value):
+    connector_tokens = {"and", "feat", "featuring", "ft", "vs", "with", "x", "×"}
+    return {
+        token
+        for token in normalize_track_text(value).split()
+        if token not in connector_tokens
+    }
+
+
 def score_track_match(target, candidate):
     target_title = normalize_track_text(target.get("title", ""))
     candidate_title = normalize_track_text(candidate.get("name", ""))
@@ -860,12 +875,28 @@ def score_track_match(target, candidate):
     if target_title and candidate_title:
         if target_title == candidate_title:
             title_score = 8
-        elif target_title in candidate_title or candidate_title in target_title:
+        elif (
+            candidate_title.startswith(f"{target_title} ")
+            or target_title.startswith(f"{candidate_title} ")
+        ):
             title_score = 5
+        elif target_title in candidate_title or candidate_title in target_title:
+            title_score = 2
 
     artist_score = 0
     if target_artist and candidate_artist:
+        target_artist_tokens = get_artist_tokens(target_artist)
+        candidate_artist_tokens = get_artist_tokens(candidate_artist)
         if target_artist == candidate_artist:
+            artist_score = 5
+        elif (
+            target_artist_tokens
+            and candidate_artist_tokens
+            and (
+                target_artist_tokens.issubset(candidate_artist_tokens)
+                or candidate_artist_tokens.issubset(target_artist_tokens)
+            )
+        ):
             artist_score = 5
         elif target_artist in candidate_artist or candidate_artist in target_artist:
             artist_score = 3

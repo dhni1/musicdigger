@@ -1,0 +1,292 @@
+body.is-vinyl-modal-open {
+  overflow: hidden;
+}
+
+.vinyl-player-modal {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  max-width: none;
+  height: 100dvh;
+  max-height: none;
+  padding: 24px;
+  border: 0;
+  margin: 0;
+  background: transparent;
+  color: var(--text-main);
+}
+
+.vinyl-player-modal[open] {
+  display: grid;
+  place-items: center;
+}
+
+.vinyl-player-modal::backdrop {
+  background: rgba(3, 5, 9, 0.78);
+  backdrop-filter: blur(10px);
+}
+
+.vinyl-modal-card {
+  width: min(880px, 100%);
+  max-height: calc(100dvh - 48px);
+  padding: 28px;
+  overflow: auto;
+  border-color: var(--line-strong);
+  border-radius: 26px;
+  box-shadow: 0 30px 90px rgba(0, 0, 0, 0.48);
+}
+
+.vinyl-modal-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+  margin-bottom: 24px;
+}
+
+.vinyl-modal-status {
+  margin: 0;
+  color: var(--text-dim);
+  font-family: "Space Grotesk", sans-serif;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.13em;
+}
+
+.vinyl-modal-card[data-state="playing"] .vinyl-modal-status {
+  color: var(--accent);
+}
+
+.vinyl-modal-card[data-state="reconnect"] .vinyl-modal-status {
+  color: var(--accent-warm);
+}
+
+.vinyl-modal-caption {
+  display: block;
+  margin-top: 5px;
+  color: var(--text-dim);
+  font-size: 0.72rem;
+}
+
+.vinyl-modal-body {
+  display: grid;
+  grid-template-columns: minmax(280px, 350px) minmax(0, 1fr);
+  gap: clamp(30px, 5vw, 54px);
+  align-items: center;
+}
+
+.vinyl-modal-stage {
+  display: grid;
+  min-width: 0;
+  place-items: center;
+}
+
+.vinyl-deck.vinyl-deck--modal {
+  --vinyl-size: clamp(280px, 32vw, 350px);
+  --vinyl-label-size: 38%;
+  width: var(--vinyl-size);
+  height: var(--vinyl-size);
+  border: 1px solid var(--line);
+  border-radius: 28px;
+  background:
+    radial-gradient(circle at 32% 24%, rgba(255, 255, 255, 0.06), transparent 30%),
+    color-mix(in srgb, var(--bg-panel-2) 92%, black);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    0 24px 50px rgba(0, 0, 0, 0.32);
+}
+
+.vinyl-deck--modal .vinyl-record {
+  inset: 6%;
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.07),
+    0 16px 32px rgba(0, 0, 0, 0.42);
+}
+
+.vinyl-deck--modal .vinyl-label-fallback {
+  font-size: 1rem;
+}
+
+.vinyl-deck--modal .vinyl-spindle {
+  width: 8px;
+  height: 8px;
+  box-shadow:
+    0 0 0 2px rgba(0, 0, 0, 0.5),
+    0 0 0 3px rgba(255, 255, 255, 0.16);
+}
+
+.vinyl-deck--modal .vinyl-tonearm {
+  top: 7%;
+  right: 7%;
+  width: 13%;
+  height: 73%;
+  transform: rotate(-27deg);
+  transform-origin: 50% 8%;
+}
+
+.vinyl-deck--modal .vinyl-tonearm::before {
+  top: 0;
+  left: 50%;
+  width: 28px;
+  height: 28px;
+  border-width: 2px;
+  background: #242932;
+  box-shadow: 0 7px 16px rgba(0, 0, 0, 0.32);
+  transform: translateX(-50%);
+}
+
+.vinyl-deck--modal .vinyl-tonearm > span {
+  top: 24px;
+  left: 50%;
+  width: 4px;
+  height: calc(100% - 30px);
+  background: linear-gradient(90deg, #747d8b, #d0d4db 52%, #737c89);
+  transform: translateX(-50%);
+}
+
+.vinyl-deck--modal .vinyl-tonearm > span::after {
+  right: -6px;
+  bottom: -3px;
+  width: 15px;
+  height: 9px;
+  border-radius: 3px;
+}
+
+.vinyl-modal-copy {
+  min-width: 0;
+}
+
+.vinyl-modal-copy .section-kicker {
+  color: var(--accent);
+}
+
+.vinyl-modal-copy h2 {
+  margin: 10px 0 0;
+  overflow: hidden;
+  font-family: "Space Grotesk", sans-serif;
+  font-size: clamp(1.9rem, 4vw, 2.8rem);
+  font-weight: 600;
+  line-height: 1.05;
+  letter-spacing: -0.055em;
+  text-overflow: ellipsis;
+}
+
+.vinyl-modal-artist,
+.vinyl-modal-album {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.vinyl-modal-artist {
+  margin: 14px 0 0;
+  color: var(--text-soft);
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.vinyl-modal-album {
+  margin: 6px 0 0;
+  color: var(--text-dim);
+  font-size: 0.86rem;
+}
+
+.vinyl-modal-progress {
+  height: 4px;
+  margin-top: 26px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--line-strong);
+}
+
+.vinyl-modal-progress > span {
+  display: block;
+  width: 0;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--accent);
+}
+
+.vinyl-modal-times {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 8px;
+  color: var(--text-dim);
+  font-family: "Space Grotesk", sans-serif;
+  font-size: 0.72rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.vinyl-modal-primary {
+  width: 100%;
+  min-height: 46px;
+  margin-top: 24px;
+}
+
+.vinyl-modal-hint {
+  margin: 10px 0 0;
+  color: var(--text-dim);
+  font-size: 0.7rem;
+  line-height: 1.45;
+  text-align: center;
+}
+
+@media (max-width: 680px) {
+  .vinyl-player-modal {
+    align-items: end;
+    padding: 0;
+  }
+
+  .vinyl-modal-card {
+    width: 100%;
+    max-height: 92dvh;
+    padding: 20px 18px calc(20px + env(safe-area-inset-bottom));
+    border-radius: 24px 24px 0 0;
+  }
+
+  .vinyl-modal-head {
+    margin-bottom: 12px;
+  }
+
+  .vinyl-modal-body {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+
+  .vinyl-deck.vinyl-deck--modal {
+    --vinyl-size: min(66vw, 250px);
+    border-radius: 22px;
+  }
+
+  .vinyl-modal-copy h2 {
+    display: -webkit-box;
+    overflow: hidden;
+    font-size: clamp(1.7rem, 9vw, 2.3rem);
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+  }
+
+  .vinyl-modal-progress {
+    margin-top: 20px;
+  }
+}
+
+@media (max-height: 620px) and (min-width: 681px) {
+  .vinyl-modal-card {
+    padding: 20px 24px;
+  }
+
+  .vinyl-modal-head {
+    margin-bottom: 12px;
+  }
+
+  .vinyl-modal-body {
+    grid-template-columns: 210px minmax(0, 1fr);
+    gap: 28px;
+  }
+
+  .vinyl-deck.vinyl-deck--modal {
+    --vinyl-size: 210px;
+    border-radius: 20px;
+  }
+}

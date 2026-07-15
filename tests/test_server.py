@@ -1,7 +1,7 @@
+import time
 import unittest
 from concurrent.futures import ThreadPoolExecutor
 from unittest import mock
-import time
 
 import server
 
@@ -59,6 +59,58 @@ class TrackMatchingTests(unittest.TestCase):
             metadata["albumImage"],
             "https://i.scdn.co/image/empire-state-of-mind",
         )
+
+    def test_reversed_collaborator_order_still_matches_body(self):
+        score = server.score_track_match(
+            {"title": "Body", "artist": "Tion Wayne & Russ Millions"},
+            {
+                "name": "Body",
+                "artists": [{"name": "Russ Millions"}, {"name": "Tion Wayne"}],
+            },
+        )
+
+        self.assertGreaterEqual(score, 10)
+
+    def test_keisha_title_suffix_and_artist_connector_still_match(self):
+        score = server.score_track_match(
+            {"title": "KEISHA & BECKY", "artist": "Russ Millions x Tion Wayne"},
+            {
+                "name": "Keisha & Becky - Russ Millions x Tion Wayne",
+                "artists": [{"name": "Russ Millions"}, {"name": "Tion Wayne"}],
+            },
+        )
+
+        self.assertGreaterEqual(score, 10)
+
+    def test_know_better_matches_feature_credit_but_not_longer_song_title(self):
+        target = {"title": "Know Better", "artist": "Headie One"}
+        correct = {
+            "name": "Know Better (feat. Rv)",
+            "artists": [{"name": "Headie One"}, {"name": "Rv"}],
+        }
+        incorrect = {
+            "name": "I Still Know Better",
+            "artists": [{"name": "Headie One"}],
+        }
+
+        self.assertGreaterEqual(server.score_track_match(target, correct), 10)
+        self.assertLess(server.score_track_match(target, incorrect), 10)
+
+
+class GenreIdentityTests(unittest.TestCase):
+    def test_neo_soul_canonical_id_wins_over_other_genre_aliases(self):
+        genre = server.find_local_genre("neo-soul", spotify_backed=False)
+
+        self.assertIsNotNone(genre)
+        self.assertEqual(genre["id"], "neo-soul")
+
+    def test_drill_curated_fallbacks_have_album_art(self):
+        genre = server.find_local_genre("drill", spotify_backed=False)
+        tracks = {track["title"]: track for track in genre["tracks"]}
+
+        for title in ["Body", "KEISHA & BECKY", "Know Better"]:
+            self.assertTrue(tracks[title]["album"])
+            self.assertTrue(tracks[title]["albumImage"])
 
 
 class GenreCacheTests(unittest.TestCase):

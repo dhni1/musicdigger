@@ -6,14 +6,13 @@
   <title>MUSICDIGGER</title>
   <link rel="preconnect" href="https://musicdigger.onrender.com" crossorigin>
   <link rel="preconnect" href="https://i.scdn.co" crossorigin>
-  <link rel="preconnect" href="https://image-cdn-fa.spotifycdn.com" crossorigin>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link
     href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap"
     rel="stylesheet"
   >
-  <link rel="stylesheet" href="design.css">
+  <link rel="stylesheet" href="design.css?v=20260715-2">
   <script src="config.js"></script>
   <script src="spotify-config.js"></script>
 </head>
@@ -100,7 +99,7 @@
         <div class="topbar-right">
           <button
             id="vinyl-player"
-            class="vinyl-player"
+            class="vinyl-player vinyl-surface"
             type="button"
             data-state="idle"
             aria-label="Spotify 연결"
@@ -503,6 +502,76 @@
 
     </div>
   </div>
+
+  <dialog
+    id="vinyl-player-modal"
+    class="vinyl-player-modal"
+    aria-labelledby="vinyl-modal-title"
+    aria-describedby="vinyl-modal-artist vinyl-modal-album"
+  >
+    <section id="vinyl-modal-card" class="vinyl-modal-card panel-surface vinyl-surface" data-state="idle">
+      <header class="vinyl-modal-head">
+        <div>
+          <p id="vinyl-modal-status" class="vinyl-modal-status">VINYL PLAYER</p>
+          <span class="vinyl-modal-caption">Spotify current playback</span>
+        </div>
+        <button
+          id="vinyl-modal-close"
+          class="modal-close vinyl-modal-close"
+          type="button"
+          aria-label="확장 Vinyl Player 닫기"
+          autofocus
+        >
+          Close
+        </button>
+      </header>
+
+      <div class="vinyl-modal-body">
+        <div class="vinyl-modal-stage">
+          <div class="vinyl-deck vinyl-deck--modal" aria-hidden="true">
+            <span class="vinyl-record">
+              <img id="vinyl-modal-album-art" class="vinyl-album-art" alt="" hidden>
+              <span id="vinyl-modal-label-fallback" class="vinyl-label-fallback">MD</span>
+              <span class="vinyl-spindle"></span>
+            </span>
+            <span class="vinyl-tonearm"><span></span></span>
+          </div>
+        </div>
+
+        <div class="vinyl-modal-copy">
+          <p class="section-kicker">Now playing</p>
+          <h2 id="vinyl-modal-title">Spotify 연결</h2>
+          <p id="vinyl-modal-artist" class="vinyl-modal-artist">
+            현재 재생 중인 곡을 LP로 확인하세요
+          </p>
+          <p id="vinyl-modal-album" class="vinyl-modal-album">
+            연결 후 앨범 정보가 표시됩니다
+          </p>
+
+          <div
+            id="vinyl-modal-progress"
+            class="vinyl-modal-progress"
+            role="progressbar"
+            aria-label="현재 곡 재생 진행률"
+            aria-valuemin="0"
+            aria-valuemax="100"
+            aria-valuenow="0"
+          >
+            <span id="vinyl-modal-progress-fill"></span>
+          </div>
+          <div class="vinyl-modal-times" aria-hidden="true">
+            <time id="vinyl-modal-elapsed">0:00</time>
+            <time id="vinyl-modal-duration">0:00</time>
+          </div>
+
+          <button id="vinyl-modal-primary" class="primary-button vinyl-modal-primary" type="button">
+            Spotify 연결
+          </button>
+          <p class="vinyl-modal-hint">재생 제어와 음량 조절은 Spotify 앱에서 이어집니다.</p>
+        </div>
+      </div>
+    </section>
+  </dialog>
 
   <div id="playlist-modal" class="modal-shell" aria-hidden="true">
     <div class="modal-backdrop" data-close-modal="true"></div>

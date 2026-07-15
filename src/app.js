@@ -79,9 +79,22 @@ function bindEvents() {
   });
   addClick(elements.navProfile, openProfileView);
   addClick(elements.profileSlot, openProfileView);
-  addClick(elements.vinylPlayer, () => {
+  addClick(elements.vinylPlayer, spotifyService.openVinylPlayerModal);
+  addClick(elements.vinylModalClose, spotifyService.closeVinylPlayerModal);
+  addClick(elements.vinylModalPrimary, () => {
     void spotifyService.handleVinylPlayerAction();
   });
+  if (elements.vinylModal) {
+    elements.vinylModal.addEventListener('cancel', event => {
+      event.preventDefault();
+      spotifyService.closeVinylPlayerModal();
+    });
+    elements.vinylModal.addEventListener('click', event => {
+      if (event.target === elements.vinylModal) {
+        spotifyService.closeVinylPlayerModal();
+      }
+    });
+  }
   addClick(elements.playlistCreateButton, () => {
     void spotifyService.openPlaylistComposer();
   });
@@ -171,6 +184,9 @@ function bindEvents() {
 
   document.addEventListener('keydown', event => {
     if (event.key === 'Escape') {
+      if (spotifyService.isVinylPlayerModalOpen()) {
+        return;
+      }
       mapPage.closeMapInspector();
       setMenuOpen(false);
     }

@@ -1,6 +1,7 @@
 @import "./styles/shared/tokens.css";
 @import "./styles/shared/layout.css";
 @import "./styles/shared/components.css";
+@import "./styles/shared/vinyl-modal.css";
 @import "./styles/pages/home.css";
 @import "./styles/pages/library.css";
 @import "./styles/pages/profile.css";

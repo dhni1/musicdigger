@@ -415,6 +415,9 @@ function createHomePage({ likeTrack, renderGenreMap, renderMapSelection, setActi
       if (!detail) {
         throw new Error('genre details unavailable');
       }
+      if (detail.id && slugify(detail.id) !== slugify(genre.id)) {
+        throw new Error('mismatched genre details');
+      }
       const detailsComplete = detail.tracksComplete !== false;
       const mergedTracks = mergeTrackDetails(genre.tracks, detail.tracks);
       Object.assign(genre, detail, {
@@ -450,11 +453,11 @@ function createHomePage({ likeTrack, renderGenreMap, renderMapSelection, setActi
       return {
         ...existing,
         ...track,
-        album: track.album || existing.album || '',
-        albumImage: track.albumImage || existing.albumImage,
-        durationMs: track.durationMs ?? existing.durationMs,
-        spotifyUri: track.spotifyUri || existing.spotifyUri,
-        spotifyUrl: track.spotifyUrl || existing.spotifyUrl,
+        album: existing.album || track.album || '',
+        albumImage: existing.albumImage || track.albumImage,
+        durationMs: existing.durationMs ?? track.durationMs,
+        spotifyUri: existing.spotifyUri || track.spotifyUri,
+        spotifyUrl: existing.spotifyUrl || track.spotifyUrl,
       };
     });
   }

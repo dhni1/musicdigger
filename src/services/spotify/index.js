@@ -42,6 +42,7 @@ function createSpotifyService({
   let playbackSessionVersion = 0;
   let progressAnimationFrame = null;
   let spotifyRefreshPromise = null;
+  let vinylModalTrigger = null;
 
   state.spotify.configured = isSpotifyConfigured(spotifyConfig);
 
@@ -110,6 +111,42 @@ function createSpotifyService({
     }
 
     startPlaybackPolling();
+  }
+
+  function openVinylPlayerModal() {
+    if (!elements.vinylModal) {
+      return;
+    }
+
+    vinylModalTrigger =
+      document.activeElement instanceof HTMLElement
+        ? document.activeElement
+        : elements.vinylPlayer;
+    renderVinylPlayer();
+
+    if (!elements.vinylModal.open) {
+      elements.vinylModal.showModal();
+    }
+    elements.body.classList.add('is-vinyl-modal-open');
+    elements.vinylModalClose?.focus({ preventScroll: true });
+  }
+
+  function closeVinylPlayerModal() {
+    if (!elements.vinylModal?.open) {
+      return;
+    }
+
+    elements.vinylModal.close();
+    elements.body.classList.remove('is-vinyl-modal-open');
+    const focusTarget = vinylModalTrigger;
+    vinylModalTrigger = null;
+    window.requestAnimationFrame(() => {
+      focusTarget?.focus({ preventScroll: true });
+    });
+  }
+
+  function isVinylPlayerModalOpen() {
+    return Boolean(elements.vinylModal?.open);
   }
 
   function disconnectSpotify() {
@@ -322,30 +359,40 @@ function createSpotifyService({
     let status = 'VINYL PLAYER';
     let title = '재생 중인 곡 없음';
     let secondary = 'Spotify에서 음악을 재생해보세요';
-    let ariaLabel = '현재 재생곡 새로고침';
+    let album = '연결 후 앨범 정보가 표시됩니다';
+    let primaryAction = '현재 곡 새로고침';
+    let ariaLabel = 'Vinyl Player 크게 열기';
 
     if (!state.spotify.configured) {
       playerState = 'setup';
       title = 'Spotify 설정 필요';
       secondary = 'Client ID를 확인해주세요';
-      ariaLabel = 'Spotify 설정 필요';
+      album = 'Spotify 연결 설정을 먼저 확인해주세요';
+      primaryAction = '설정 확인';
+      ariaLabel = 'Vinyl Player 열기, Spotify 설정 필요';
     } else if (!state.spotify.accessToken) {
       playerState = 'connect';
       title = 'Spotify 연결';
       secondary = '현재 곡을 LP로 표시해요';
-      ariaLabel = 'Spotify 연결';
+      album = '연결 후 현재 앨범이 표시됩니다';
+      primaryAction = 'Spotify 연결';
+      ariaLabel = 'Vinyl Player 열기 및 Spotify 연결';
     } else if (state.spotify.playbackNeedsReconnect) {
       playerState = 'reconnect';
       status = 'RECONNECT';
       title = 'Spotify 다시 연결';
       secondary = '현재 재생곡 권한이 필요해요';
-      ariaLabel = '현재 재생곡 권한을 위해 Spotify 다시 연결';
+      album = '현재 재생곡 권한을 다시 허용해주세요';
+      primaryAction = 'Spotify 다시 연결';
+      ariaLabel = 'Vinyl Player 열기, Spotify 다시 연결 필요';
     } else if (playback) {
       playerState = playback.isPlaying ? 'playing' : 'paused';
       status = playback.isPlaying ? 'PLAYING' : 'PAUSED';
       title = playback.title;
       secondary = [playback.artist, playback.album].filter(Boolean).join(' · ');
-      ariaLabel = `${playback.isPlaying ? '재생 중' : '일시정지'}: ${playback.title}. Spotify에서 열기`;
+      album = playback.album || '앨범 정보 없음';
+      primaryAction = 'Spotify에서 열기';
+      ariaLabel = `${playback.isPlaying ? '재생 중' : '일시정지'}: ${playback.title}. Vinyl Player 크게 열기`;
     }
 
     elements.vinylPlayer.dataset.state = playerState;
@@ -357,13 +404,29 @@ function createSpotifyService({
     setTextIfChanged(elements.vinylPlayerTitle, title);
     setTextIfChanged(elements.vinylPlayerArtist, secondary);
 
-    renderVinylArtwork(playback?.albumImage);
+    if (elements.vinylModalCard) {
+      elements.vinylModalCard.dataset.state = playerState;
+    }
+    setTextIfChanged(elements.vinylModalStatus, status);
+    setTextIfChanged(elements.vinylModalTitle, title);
+    setTextIfChanged(elements.vinylModalArtist, playback?.artist || secondary);
+    setTextIfChanged(elements.vinylModalAlbum, album);
+    setTextIfChanged(elements.vinylModalPrimary, primaryAction);
+
+    renderVinylArtworkTarget(
+      elements.vinylAlbumArt,
+      elements.vinylLabelFallback,
+      playback?.albumImage,
+    );
+    renderVinylArtworkTarget(
+      elements.vinylModalAlbumArt,
+      elements.vinylModalLabelFallback,
+      playback?.albumImage,
+    );
     renderVinylProgress(playback);
   }
 
-  function renderVinylArtwork(imageUrl) {
-    const image = elements.vinylAlbumArt;
-    const fallback = elements.vinylLabelFallback;
+  function renderVinylArtworkTarget(image, fallback, imageUrl) {
     if (!image || !fallback) {
       return;
     }
@@ -405,8 +468,8 @@ function createSpotifyService({
   }
 
   function renderVinylProgress(playback) {
-    const fill = elements.vinylProgressFill;
-    if (!fill) {
+    const fills = [elements.vinylProgressFill, elements.vinylModalProgressFill].filter(Boolean);
+    if (!fills.length) {
       return;
     }
 
@@ -424,8 +487,18 @@ function createSpotifyService({
     );
     const progressPercent = durationMs > 0 ? (progressMs / durationMs) * 100 : 0;
 
-    fill.style.transition = 'none';
-    fill.style.width = `${progressPercent}%`;
+    fills.forEach(fill => {
+      fill.style.transition = 'none';
+      fill.style.width = `${progressPercent}%`;
+    });
+    if (elements.vinylModalProgress) {
+      elements.vinylModalProgress.setAttribute(
+        'aria-valuenow',
+        String(Math.round(progressPercent)),
+      );
+    }
+    setTextIfChanged(elements.vinylModalElapsed, formatPlaybackTime(progressMs));
+    setTextIfChanged(elements.vinylModalDuration, formatPlaybackTime(durationMs));
 
     if (!playback?.isPlaying || durationMs <= progressMs || document.hidden) {
       return;
@@ -435,10 +508,19 @@ function createSpotifyService({
       if (state.spotify.currentPlayback !== playback) {
         return;
       }
-      fill.style.transition = `width ${durationMs - progressMs}ms linear`;
-      fill.style.width = '100%';
+      fills.forEach(fill => {
+        fill.style.transition = `width ${durationMs - progressMs}ms linear`;
+        fill.style.width = '100%';
+      });
       progressAnimationFrame = null;
     });
+  }
+
+  function formatPlaybackTime(durationMs) {
+    const totalSeconds = Math.max(0, Math.floor((Number(durationMs) || 0) / 1000));
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = totalSeconds % 60;
+    return `${minutes}:${String(seconds).padStart(2, '0')}`;
   }
 
   function bindPlaybackVisibility() {
@@ -902,14 +984,17 @@ function createSpotifyService({
   }
 
   return {
+    closeVinylPlayerModal,
     closePlaylistModal,
     disconnectSpotify,
     handleSpotifyAuthButton,
     handleSpotifyRefreshButton,
     handleVinylPlayerAction,
     initializeSpotify,
+    isVinylPlayerModalOpen,
     likeTrack,
     openPlaylistComposer,
+    openVinylPlayerModal,
     renderSpotifyState,
     submitPlaylistForm,
   };

@@ -497,12 +497,12 @@ body.is-nav-open {
   transform: rotate(18deg);
 }
 
-.vinyl-player[data-state="playing"] .vinyl-record {
+.vinyl-surface[data-state="playing"] .vinyl-record {
   animation-play-state: running;
 }
 
-.vinyl-player[data-state="playing"] .vinyl-tonearm,
-.vinyl-player[data-state="paused"] .vinyl-tonearm {
+.vinyl-surface[data-state="playing"] .vinyl-tonearm,
+.vinyl-surface[data-state="paused"] .vinyl-tonearm {
   transform: rotate(-10deg);
 }
 
