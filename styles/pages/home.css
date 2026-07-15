@@ -171,52 +171,32 @@ body.theme-light .hero-stat-card {
 .genre-card {
   position: relative;
   min-width: 0;
-  min-height: 126px;
+  min-height: 112px;
   overflow: hidden;
-  padding: 15px;
+  padding: 14px;
   border: 1px solid var(--line);
   border-radius: 14px;
-  background: color-mix(in srgb, var(--bg-panel-2) 62%, transparent);
+  background: color-mix(in srgb, var(--bg-panel-2) 72%, transparent);
   color: var(--text-main);
   text-align: left;
   cursor: pointer;
-  transition: border-color 170ms ease, background 170ms ease, transform 170ms ease, box-shadow 170ms ease;
+  transition: border-color 150ms ease, background 150ms ease;
 }
 
-.genre-card::before {
-  content: "";
-  position: absolute;
-  inset: auto -24px -38px auto;
-  width: 94px;
-  height: 94px;
-  border-radius: 50%;
-  background: radial-gradient(circle, color-mix(in srgb, var(--accent-2) 22%, transparent), transparent 68%);
-  opacity: 0;
-  transition: opacity 170ms ease, transform 170ms ease;
-}
-
-.genre-card:hover,
-.genre-card:focus-visible {
+.genre-card:hover {
   border-color: var(--line-strong);
-  background: color-mix(in srgb, var(--bg-panel-2) 88%, transparent);
-  outline: none;
-  transform: translateY(-2px);
-  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.16);
+  background: var(--bg-panel-2);
 }
 
-.genre-card:hover::before,
-.genre-card:focus-visible::before,
-.genre-card.is-active::before {
-  opacity: 1;
-  transform: scale(1.12);
+.genre-card:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--accent) 74%, white);
+  outline-offset: 2px;
 }
 
 .genre-card.is-active {
-  border-color: color-mix(in srgb, var(--accent) 52%, transparent);
-  background:
-    linear-gradient(135deg, color-mix(in srgb, var(--accent) 12%, transparent), transparent 62%),
-    color-mix(in srgb, var(--bg-panel-2) 88%, transparent);
-  box-shadow: inset 3px 0 0 var(--accent);
+  border-color: color-mix(in srgb, var(--accent) 42%, var(--line));
+  background: color-mix(in srgb, var(--accent) 5%, var(--bg-panel-2));
+  box-shadow: inset 2px 0 0 var(--accent);
 }
 
 .genre-card-content {
@@ -228,24 +208,24 @@ body.theme-light .hero-stat-card {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 30px;
-  height: 22px;
-  padding: 0 7px;
-  border-radius: 7px;
-  background: color-mix(in srgb, var(--text-main) 6%, transparent);
+  min-width: 0;
+  height: auto;
+  padding: 0;
+  background: transparent;
   color: var(--text-dim);
   font-family: "Space Grotesk", sans-serif;
   font-size: 0.65rem;
-  font-weight: 700;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
 }
 
 .genre-card.is-active .genre-index {
-  background: var(--accent);
-  color: var(--accent-ink);
+  background: transparent;
+  color: var(--accent);
 }
 
 .genre-card h4 {
-  margin: 17px 0 5px;
+  margin: 12px 0 5px;
   overflow: hidden;
   font-size: 1.02rem;
   font-weight: 600;
@@ -268,42 +248,52 @@ body.theme-light .hero-stat-card {
 .spotlight-card {
   position: relative;
   display: grid;
-  grid-template-columns: 112px minmax(0, 1fr);
-  gap: 20px;
+  grid-template-columns: 96px minmax(0, 1fr);
+  gap: 16px;
   align-items: center;
   margin-bottom: 14px;
-  padding: 17px;
+  padding: 12px;
   overflow: hidden;
   border: 1px solid var(--line);
-  border-radius: 17px;
-  background:
-    radial-gradient(circle at 84% 16%, color-mix(in srgb, var(--accent-2) 15%, transparent), transparent 34%),
-    color-mix(in srgb, var(--bg-panel-2) 82%, transparent);
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--bg-panel-2) 86%, transparent);
 }
 
 .spotlight-art {
   position: relative;
   display: grid;
-  min-height: 112px;
+  width: 96px;
+  height: 96px;
   overflow: hidden;
   place-items: center;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 15px;
-  background:
-    linear-gradient(145deg, color-mix(in srgb, var(--accent-2) 80%, #111827), color-mix(in srgb, var(--accent-3) 58%, #0c1119));
-  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.22);
+  border-radius: 8px;
+  background: var(--bg-panel-solid);
 }
 
-.spotlight-art::before {
+.spotlight-art img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.spotlight-art.is-fallback {
+  background: linear-gradient(
+    145deg,
+    hsl(var(--cover-hue) 36% 35%),
+    color-mix(in srgb, var(--bg-panel-solid) 94%, black)
+  );
+}
+
+.spotlight-art.is-fallback::before {
   content: "";
   position: absolute;
-  width: 84px;
-  height: 84px;
+  width: 66px;
+  height: 66px;
   border-radius: 50%;
   background:
     repeating-radial-gradient(circle, rgba(255, 255, 255, 0.1) 0 1px, transparent 2px 8px),
     #10131a;
-  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.34);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.28);
 }
 
 .art-core {
@@ -327,7 +317,7 @@ body.theme-light .hero-stat-card {
   color: var(--accent);
   font-size: 0.65rem;
   font-weight: 700;
-  letter-spacing: 0.16em;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
 }
 

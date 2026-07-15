@@ -1,3 +1,4 @@
+from concurrent.futures import ThreadPoolExecutor
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib import error, parse, request
@@ -6,6 +7,7 @@ import json
 import mimetypes
 import os
 import re
+import threading
 import time
 
 
@@ -16,9 +18,12 @@ SPOTIFY_CLIENT_ID = os.environ.get("SPOTIFY_CLIENT_ID", "")
 SPOTIFY_CLIENT_SECRET = os.environ.get("SPOTIFY_CLIENT_SECRET", "")
 SPOTIFY_MARKET = os.environ.get("SPOTIFY_MARKET", "US")
 TRACKS_PER_GENRE = 8
-SEARCH_LIMIT = 50
-ARTIST_SEARCH_LIMIT = 12
-ARTIST_POOL_SIZE = 12
+SEARCH_LIMIT = 10
+TRACK_METADATA_SEARCH_LIMIT = 5
+TRACK_METADATA_WORKERS = 4
+SPOTIFY_REQUEST_TIMEOUT_SECONDS = 6
+TRACK_METADATA_CACHE_TTL = 86400
+TRACK_METADATA_MISS_TTL = 300
 GENRE_DETAIL_CACHE_TTL = 1800
 GENRE_DETAIL_CACHE_MAX_ITEMS = 256
 GENRE_QUERY_MAX_LENGTH = 80
@@ -32,6 +37,29 @@ ALLOWED_ORIGINS = {
     ).split(",")
     if origin.strip()
 }
+TRACK_METADATA_EXECUTOR = ThreadPoolExecutor(
+    max_workers=TRACK_METADATA_WORKERS,
+    thread_name_prefix="spotify-metadata",
+)
+TRACK_METADATA_TASK_SLOTS = threading.BoundedSemaphore(TRACK_METADATA_WORKERS * 2)
+
+
+def submit_track_metadata_task(callback, *args):
+    if not TRACK_METADATA_TASK_SLOTS.acquire(blocking=False):
+        return None
+
+    try:
+        return TRACK_METADATA_EXECUTOR.submit(run_track_metadata_task, callback, args)
+    except RuntimeError:
+        TRACK_METADATA_TASK_SLOTS.release()
+        return None
+
+
+def run_track_metadata_task(callback, args):
+    try:
+        return callback(*args)
+    finally:
+        TRACK_METADATA_TASK_SLOTS.release()
 PUBLIC_ROOT_FILES = {
     "index.html",
     "design.css",
@@ -57,6 +85,9 @@ class SpotifyCatalog:
         self._genres_cache = None
         self._genres_cache_time = 0
         self._genre_detail_cache = {}
+        self._track_metadata_cache = {}
+        self._track_metadata_locks = {}
+        self._track_metadata_locks_guard = threading.Lock()
 
     def configured(self):
         return bool(SPOTIFY_CLIENT_ID and SPOTIFY_CLIENT_SECRET)
@@ -87,45 +118,38 @@ class SpotifyCatalog:
 
         if self.configured():
             try:
-                tracks = self._popular_tracks_for_genre(seed_genres, search_terms)
+                tracks = (
+                    self._enrich_local_tracks(local_tracks)
+                    if local_tracks
+                    else self._popular_tracks_for_genre(search_terms)
+                )
             except RuntimeError:
                 tracks = []
 
         if not tracks:
             tracks = local_tracks[:TRACKS_PER_GENRE]
 
-        artist_ids = []
+        enriched_track_count = sum(bool(track.get("albumImage")) for track in tracks)
+        if enriched_track_count == len(tracks) and tracks:
+            tracks_source = "spotify"
+        elif enriched_track_count:
+            tracks_source = "spotify-partial"
+        else:
+            tracks_source = "local"
+        tracks_complete = bool(tracks) and enriched_track_count == len(tracks)
+
         artist_names = []
 
         for track in tracks:
-            artist_id = track.get("artistId")
             artist_name = track.get("artist")
-
-            if artist_id and artist_id not in artist_ids:
-                artist_ids.append(artist_id)
 
             if artist_name and artist_name not in artist_names:
                 artist_names.append(artist_name)
 
-            if len(artist_ids) >= 4:
+            if len(artist_names) >= 4:
                 break
 
-        related_pool = []
-        for artist_id in artist_ids:
-            try:
-                artist = self._spotify_get(f"/artists/{artist_id}")
-            except RuntimeError:
-                continue
-            related_pool.extend(artist.get("genres", []))
-
         related_names = []
-        current = normalize_genre_name(genre)
-        for name in related_pool:
-            normalized = normalize_genre_name(name)
-            if normalized == current:
-                continue
-            if name not in related_names:
-                related_names.append(name)
 
         description = build_description(local_genre or {"id": genre}, artist_names, tracks)
         data = {
@@ -136,6 +160,8 @@ class SpotifyCatalog:
             "similar": local_genre.get("similar", []) if local_genre else [],
             "fusion": local_genre.get("fusion", []) if local_genre else [],
             "tracks": tracks,
+            "tracksSource": tracks_source,
+            "tracksComplete": tracks_complete,
             "spotifyBacked": self.configured(),
             "aliases": local_genre.get("aliases", []) if local_genre else [],
             "spotifySeedGenres": seed_genres,
@@ -143,10 +169,11 @@ class SpotifyCatalog:
             "relatedNames": related_names[:8],
         }
 
-        self._genre_detail_cache[cache_key] = {
-            "time": time.time(),
-            "data": data,
-        }
+        if tracks_complete or not self.configured():
+            self._genre_detail_cache[cache_key] = {
+                "time": time.time(),
+                "data": data,
+            }
         return data
 
     def _prune_genre_detail_cache(self):
@@ -172,48 +199,97 @@ class SpotifyCatalog:
         for key in oldest_keys:
             self._genre_detail_cache.pop(key, None)
 
-    def _popular_tracks_for_genre(self, seed_genres, search_terms):
-        ranked_tracks = []
+    def _popular_tracks_for_genre(self, search_terms):
+        return self._search_tracks_for_genre(search_terms)
 
-        try:
-            ranked_tracks = self._search_tracks_for_genre(search_terms)
-        except RuntimeError:
-            ranked_tracks = []
+    def _enrich_local_tracks(self, local_tracks):
+        tracks = [dict(track) for track in local_tracks[:TRACKS_PER_GENRE]]
+        if not tracks:
+            return []
 
-        if len(ranked_tracks) >= TRACKS_PER_GENRE:
-            return ranked_tracks[:TRACKS_PER_GENRE]
+        self._get_token()
+        enriched_tracks = list(tracks)
+        pending = []
 
-        recommended_tracks = []
+        for index, track in enumerate(tracks):
+            future = submit_track_metadata_task(self._enrich_local_track, track)
+            if future is not None:
+                pending.append((index, future))
 
-        try:
-            recommended_tracks = self._recommend_tracks_for_genre(seed_genres)
-        except RuntimeError:
-            recommended_tracks = []
+        for index, future in pending:
+            enriched_tracks[index] = future.result()
 
-        artist_top_tracks = []
+        return enriched_tracks
 
-        try:
-            artist_top_tracks = self._artist_top_tracks_for_genre(search_terms, seed_genres)
-        except RuntimeError:
-            artist_top_tracks = []
+    def _enrich_local_track(self, track):
+        cache_key = make_track_identity(track)
+        if not cache_key:
+            return track
 
-        merged = merge_tracks(ranked_tracks, recommended_tracks)
-        merged = merge_tracks(merged, artist_top_tracks)
-        return rank_tracks(merged)[:TRACKS_PER_GENRE]
+        metadata_lock = self._get_track_metadata_lock(cache_key)
+        with metadata_lock:
+            cached = self._track_metadata_cache.get(cache_key)
+            if cached and time.time() < cached["expiresAt"]:
+                return {**track, **cached["metadata"]}
 
-    def _recommend_tracks_for_genre(self, seed_genres):
-        seed_values = ",".join(seed_genres[:5])
-        data = self._spotify_get(
-            "/recommendations",
-            {
-                "limit": str(TRACKS_PER_GENRE),
-                "market": SPOTIFY_MARKET,
-                "seed_genres": seed_values,
-            },
-        )
-        items = data.get("tracks", [])
-        tracks = [map_track(item) for item in items]
-        return rank_tracks(tracks)
+            try:
+                metadata = self._fetch_local_track_metadata(track)
+            except RuntimeError:
+                return track
+            ttl = TRACK_METADATA_CACHE_TTL if metadata else TRACK_METADATA_MISS_TTL
+            self._track_metadata_cache[cache_key] = {
+                "expiresAt": time.time() + ttl,
+                "metadata": metadata,
+            }
+            return {**track, **metadata}
+
+    def _get_track_metadata_lock(self, cache_key):
+        with self._track_metadata_locks_guard:
+            return self._track_metadata_locks.setdefault(cache_key, threading.Lock())
+
+    def _fetch_local_track_metadata(self, track):
+        title = str(track.get("title", "")).strip()
+        artist = str(track.get("artist", "")).strip()
+        primary_artist = get_primary_artist_name(artist)
+
+        if not title or not primary_artist:
+            return {}
+
+        clean_title = spotify_search_phrase(title)
+        clean_artist = spotify_search_phrase(primary_artist)
+        queries = [
+            f'track:"{clean_title}" artist:"{clean_artist}"',
+            f'"{clean_title}" {clean_artist}',
+        ]
+
+        for query in queries:
+            data = self._spotify_get(
+                "/search",
+                {
+                    "q": query,
+                    "type": "track",
+                    "limit": str(TRACK_METADATA_SEARCH_LIMIT),
+                    "market": SPOTIFY_MARKET,
+                },
+            )
+
+            items = data.get("tracks", {}).get("items", [])
+            if not items:
+                continue
+
+            scored_items = [(score_track_match(track, item), item) for item in items]
+            best_score, best_match = max(scored_items, key=lambda pair: pair[0])
+            if best_score >= 10:
+                mapped = map_track(best_match)
+                return {
+                    "album": mapped.get("album", ""),
+                    "albumImage": mapped.get("albumImage"),
+                    "durationMs": mapped.get("durationMs"),
+                    "spotifyUri": mapped.get("spotifyUri"),
+                    "spotifyUrl": mapped.get("spotifyUrl"),
+                }
+
+        return {}
 
     def _search_tracks_for_genre(self, search_terms):
         candidates = []
@@ -223,92 +299,49 @@ class SpotifyCatalog:
                 continue
 
             query = f'genre:"{term}"'
-            data = self._spotify_get(
-                "/search",
-                {
-                    "q": query,
-                    "type": "track",
-                    "limit": str(SEARCH_LIMIT),
-                    "market": SPOTIFY_MARKET,
-                },
-            )
+            try:
+                data = self._spotify_get(
+                    "/search",
+                    {
+                        "q": query,
+                        "type": "track",
+                        "limit": str(SEARCH_LIMIT),
+                        "market": SPOTIFY_MARKET,
+                    },
+                )
+            except RuntimeError:
+                continue
             items = data.get("tracks", {}).get("items", [])
 
             if items:
-                candidates.extend(map_track(item) for item in items)
-                ranked = rank_tracks(candidates)
-                if len(ranked) >= TRACKS_PER_GENRE:
-                    return ranked[:TRACKS_PER_GENRE]
+                candidates = merge_tracks(candidates, [map_track(item) for item in items])
+                if len(candidates) >= TRACKS_PER_GENRE:
+                    return candidates[:TRACKS_PER_GENRE]
 
         for term in search_terms:
             if not term:
                 continue
 
-            fallback = self._spotify_get(
-                "/search",
-                {
-                    "q": term,
-                    "type": "track",
-                    "limit": str(SEARCH_LIMIT),
-                    "market": SPOTIFY_MARKET,
-                },
-            )
+            try:
+                fallback = self._spotify_get(
+                    "/search",
+                    {
+                        "q": term,
+                        "type": "track",
+                        "limit": str(SEARCH_LIMIT),
+                        "market": SPOTIFY_MARKET,
+                    },
+                )
+            except RuntimeError:
+                continue
             items = fallback.get("tracks", {}).get("items", [])
 
             if items:
-                candidates.extend(map_track(item) for item in items)
-                ranked = rank_tracks(candidates)
-                if len(ranked) >= TRACKS_PER_GENRE:
-                    return ranked[:TRACKS_PER_GENRE]
+                candidates = merge_tracks(candidates, [map_track(item) for item in items])
+                if len(candidates) >= TRACKS_PER_GENRE:
+                    return candidates[:TRACKS_PER_GENRE]
 
-        return rank_tracks(candidates)[:TRACKS_PER_GENRE]
-
-    def _artist_top_tracks_for_genre(self, search_terms, seed_genres):
-        artist_ids = []
-        targets = build_genre_targets(search_terms, seed_genres)
-
-        for term in search_terms:
-            if not term:
-                continue
-
-            data = self._spotify_get(
-                "/search",
-                {
-                    "q": term,
-                    "type": "artist",
-                    "limit": str(ARTIST_SEARCH_LIMIT),
-                    "market": SPOTIFY_MARKET,
-                },
-            )
-            items = data.get("artists", {}).get("items", [])
-
-            for artist in items:
-                artist_id = artist.get("id")
-                if not artist_id or artist_id in artist_ids:
-                    continue
-                if not artist_matches_genre(artist, targets):
-                    continue
-
-                artist_ids.append(artist_id)
-                if len(artist_ids) >= ARTIST_POOL_SIZE:
-                    break
-
-            if len(artist_ids) >= ARTIST_POOL_SIZE:
-                break
-
-        tracks = []
-
-        for artist_id in artist_ids:
-            data = self._spotify_get(
-                f"/artists/{artist_id}/top-tracks",
-                {"market": SPOTIFY_MARKET},
-            )
-            tracks.extend(map_track(item) for item in data.get("tracks", []))
-            ranked = rank_tracks(tracks)
-            if len(ranked) >= TRACKS_PER_GENRE:
-                return ranked[:TRACKS_PER_GENRE]
-
-        return rank_tracks(tracks)
+        return candidates[:TRACKS_PER_GENRE]
 
     def _spotify_get(self, path, params=None):
         token = self._get_token()
@@ -325,13 +358,14 @@ class SpotifyCatalog:
         )
 
         try:
-            with request.urlopen(req, timeout=20) as response:
+            with request.urlopen(req, timeout=SPOTIFY_REQUEST_TIMEOUT_SECONDS) as response:
                 return json.loads(response.read().decode("utf-8"))
         except error.HTTPError as exc:
             payload = exc.read().decode("utf-8", errors="ignore")
             raise RuntimeError(payload or f"Spotify API error: {exc.code}") from exc
-        except error.URLError as exc:
-            raise RuntimeError(f"Spotify API connection failed: {exc.reason}") from exc
+        except (error.URLError, TimeoutError) as exc:
+            reason = getattr(exc, "reason", str(exc))
+            raise RuntimeError(f"Spotify API connection failed: {reason}") from exc
 
     def _get_token(self):
         if self._token and time.time() < self._expires_at - 60:
@@ -351,13 +385,14 @@ class SpotifyCatalog:
         )
 
         try:
-            with request.urlopen(req, timeout=20) as response:
+            with request.urlopen(req, timeout=SPOTIFY_REQUEST_TIMEOUT_SECONDS) as response:
                 data = json.loads(response.read().decode("utf-8"))
         except error.HTTPError as exc:
             payload = exc.read().decode("utf-8", errors="ignore")
             raise RuntimeError(payload or "Failed to fetch Spotify token") from exc
-        except error.URLError as exc:
-            raise RuntimeError(f"Spotify token request failed: {exc.reason}") from exc
+        except (error.URLError, TimeoutError) as exc:
+            reason = getattr(exc, "reason", str(exc))
+            raise RuntimeError(f"Spotify token request failed: {reason}") from exc
 
         self._token = data["access_token"]
         self._expires_at = time.time() + int(data.get("expires_in", 3600))
@@ -567,18 +602,6 @@ def map_track(item):
     }
 
 
-def rank_tracks(tracks):
-    unique = merge_tracks(tracks, [])
-    return sorted(
-        unique,
-        key=lambda track: (
-            -int(track.get("popularity", 0) or 0),
-            normalize_genre_name(track.get("title", "")),
-            normalize_genre_name(track.get("artist", "")),
-        ),
-    )
-
-
 def merge_tracks(primary_tracks, secondary_tracks):
     merged = []
     seen = set()
@@ -730,19 +753,6 @@ def get_search_terms(local_genre, fallback_value):
     return terms
 
 
-def build_genre_targets(search_terms, seed_genres):
-    targets = []
-    seen = set()
-
-    for candidate in [*search_terms, *seed_genres]:
-        normalized = normalize_genre_name(format_search_label(candidate))
-        if normalized and normalized not in seen:
-            targets.append(normalized)
-            seen.add(normalized)
-
-    return targets
-
-
 def genre_to_seed(value):
     return normalize_genre_name(value).replace(" ", "-")
 
@@ -755,26 +765,51 @@ def format_genre_name(name):
     return " ".join(part.capitalize() for part in name.replace("_", " ").replace("-", " ").split())
 
 
+def get_primary_artist_name(name):
+    parts = re.split(
+        r"\s+(?:feat(?:uring)?\.?|ft\.?)\s+|\s+[x×]\s+",
+        str(name or ""),
+        maxsplit=1,
+        flags=re.IGNORECASE,
+    )
+    return parts[0].strip() if parts else ""
+
+
+def spotify_search_phrase(value):
+    return re.sub(r"\s+", " ", re.sub(r'["\\]+', " ", str(value or ""))).strip()
+
+
+def normalize_track_text(value):
+    return re.sub(r"[^\w]+", " ", str(value or "").casefold(), flags=re.UNICODE).strip()
+
+
+def score_track_match(target, candidate):
+    target_title = normalize_track_text(target.get("title", ""))
+    candidate_title = normalize_track_text(candidate.get("name", ""))
+    target_artist = normalize_track_text(get_primary_artist_name(target.get("artist", "")))
+    candidate_artist = normalize_track_text(
+        " ".join(artist.get("name", "") for artist in (candidate.get("artists", []) or []))
+    )
+
+    title_score = 0
+    if target_title and candidate_title:
+        if target_title == candidate_title:
+            title_score = 8
+        elif target_title in candidate_title or candidate_title in target_title:
+            title_score = 5
+
+    artist_score = 0
+    if target_artist and candidate_artist:
+        if target_artist == candidate_artist:
+            artist_score = 5
+        elif target_artist in candidate_artist or candidate_artist in target_artist:
+            artist_score = 3
+
+    return title_score + artist_score
+
+
 def normalize_genre_name(name):
     return re.sub(r"[^a-z0-9]+", " ", str(name or "").lower()).strip()
-
-
-def artist_matches_genre(artist, targets):
-    artist_genres = [normalize_genre_name(item) for item in artist.get("genres", [])]
-
-    if not artist_genres or not targets:
-        return False
-
-    for artist_genre in artist_genres:
-        for target in targets:
-            if (
-                artist_genre == target
-                or target in artist_genre
-                or artist_genre in target
-            ):
-                return True
-
-    return False
 
 
 def build_description(genre, artist_names, tracks):

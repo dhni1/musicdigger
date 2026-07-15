@@ -15,7 +15,7 @@ const SPOTIFY_STORAGE_KEYS = {
 };
 
 const DEFAULT_VISIBLE_GENRES = 10;
-const BACKEND_REQUEST_TIMEOUT_MS = 1800;
+const BACKEND_REQUEST_TIMEOUT_MS = 45000;
 const MAX_MAP_PREVIEW_TRACKS = 3;
 const MAP_SURFACE_WIDTH = 1800;
 const MAP_SURFACE_HEIGHT = 1280;
@@ -204,6 +204,7 @@ const elements = {
   searchInput: document.getElementById('genre-search'),
   menuToggle: document.getElementById('menu-toggle'),
   sidebarRandom: document.getElementById('sidebar-random'),
+  playerAlbumArt: document.getElementById('player-album-art'),
   playerTrackTitle: document.getElementById('player-track-title'),
   playerTrackArtist: document.getElementById('player-track-artist'),
   navHome: document.getElementById('nav-home'),

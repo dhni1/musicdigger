@@ -307,8 +307,11 @@ function createHomePage({ likeTrack, renderGenreMap, renderMapSelection, setActi
       button.type = 'button';
       button.className = 'genre-card';
       const genreIndex = state.filteredGenres.findIndex(item => item.id === genre.id) + 1;
+      const isActive = genre.id === state.currentGenreId;
 
-      if (genre.id === state.currentGenreId) {
+      button.setAttribute('aria-pressed', String(isActive));
+
+      if (isActive) {
         button.classList.add('is-active');
       }
 
@@ -364,7 +367,7 @@ function createHomePage({ likeTrack, renderGenreMap, renderMapSelection, setActi
     try {
       const detail = await fetchGenreDetails(genre.id);
       Object.assign(genre, detail, {
-        detailsLoaded: true,
+        detailsLoaded: detail.tracksComplete !== false,
         detailsLoading: false,
       });
 
@@ -373,7 +376,7 @@ function createHomePage({ likeTrack, renderGenreMap, renderMapSelection, setActi
       }
     } catch {
       genre.detailsLoading = false;
-      genre.detailsLoaded = true;
+      genre.detailsLoaded = false;
       if (!genre.description) {
         genre.description = `${genre.name} 장르 상세 정보를 불러오지 못했습니다.`;
       }
@@ -401,8 +404,9 @@ function createHomePage({ likeTrack, renderGenreMap, renderMapSelection, setActi
     elements.relationCount.textContent = String(relationTotal);
     elements.playerTrackTitle.textContent = leadTrack ? leadTrack.title : 'No track available';
     elements.playerTrackArtist.textContent = leadTrack
-      ? `${leadTrack.artist} · ${genre.name}`
+      ? formatTrackSecondary(leadTrack)
       : 'Track information will appear here.';
+    renderSpotlightCover(leadTrack);
     if (genre.detailsLoading && tracks.length) {
       renderTracks(tracks);
     } else if (genre.detailsLoading) {
@@ -454,9 +458,7 @@ function createHomePage({ likeTrack, renderGenreMap, renderMapSelection, setActi
       const saved = state.spotify.likedTrackKeys.has(makeTrackKey(track));
       const item = document.createElement('li');
       const info = createElement('div', { className: 'track-info' });
-      const secondaryText = track.album
-        ? `${track.artist} · ${track.album}`
-        : track.artist;
+      const secondaryText = formatTrackSecondary(track);
       const actionButton = createElement('button', {
         className: `track-action${saved ? ' is-saved' : ''}`,
         text: saved ? 'Liked' : 'Like',
@@ -516,6 +518,43 @@ function createHomePage({ likeTrack, renderGenreMap, renderMapSelection, setActi
     return cover;
   }
 
+  function renderSpotlightCover(track) {
+    clearChildren(elements.playerAlbumArt);
+    elements.playerAlbumArt.classList.remove('has-image', 'is-fallback');
+    const imageUrl = sanitizeHttpUrl(track?.albumImage ?? track?.imageUrl ?? track?.image);
+
+    if (!imageUrl) {
+      applySpotlightFallback(track);
+      return;
+    }
+
+    const image = createElement('img', {
+      attributes: {
+        src: imageUrl,
+        alt: '',
+        decoding: 'async',
+      },
+    });
+    elements.playerAlbumArt.classList.add('has-image');
+    elements.playerAlbumArt.appendChild(image);
+
+    image.addEventListener('error', () => {
+      if (elements.playerAlbumArt.firstElementChild !== image) {
+        return;
+      }
+      clearChildren(elements.playerAlbumArt);
+      applySpotlightFallback(track);
+    });
+  }
+
+  function applySpotlightFallback(track) {
+    const hue = hashString(`${track?.title ?? 'music'}::${track?.artist ?? 'digger'}`) % 360;
+    elements.playerAlbumArt.classList.remove('has-image');
+    elements.playerAlbumArt.classList.add('is-fallback');
+    elements.playerAlbumArt.style.setProperty('--cover-hue', String(hue));
+    elements.playerAlbumArt.appendChild(createElement('span', { className: 'art-core' }));
+  }
+
   function applyFallbackTrackCover(cover, track) {
     const hue = hashString(`${track.title}::${track.artist}`) % 360;
     const monogram = getTrackMonogram(track.title);
@@ -573,6 +612,7 @@ function createHomePage({ likeTrack, renderGenreMap, renderMapSelection, setActi
     elements.relationCount.textContent = '0';
     elements.playerTrackTitle.textContent = 'No track available';
     elements.playerTrackArtist.textContent = 'Track information will appear here.';
+    renderSpotlightCover(null);
     clearChildren(elements.trackList);
     elements.trackList.appendChild(
       createEmptyState('표시할 트랙이 없습니다.', {
@@ -655,6 +695,11 @@ function createHomePage({ likeTrack, renderGenreMap, renderMapSelection, setActi
     const minutes = Math.floor(totalSeconds / 60);
     const seconds = totalSeconds % 60;
     return `${minutes}:${String(seconds).padStart(2, '0')}`;
+  }
+
+  function formatTrackSecondary(track) {
+    const artist = track?.artist || 'Unknown Artist';
+    return track?.album ? `${artist} · ${track.album}` : artist;
   }
 
   function getCurrentGenreName() {

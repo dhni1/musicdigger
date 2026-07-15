@@ -160,22 +160,23 @@
   }
 
   .genre-card {
-    min-height: 104px;
+    min-height: 100px;
   }
 
   .spotlight-card {
-    grid-template-columns: 94px minmax(0, 1fr);
+    grid-template-columns: 88px minmax(0, 1fr);
     gap: 14px;
     padding: 13px;
   }
 
   .spotlight-art {
-    min-height: 94px;
+    width: 88px;
+    height: 88px;
   }
 
-  .spotlight-art::before {
-    width: 70px;
-    height: 70px;
+  .spotlight-art.is-fallback::before {
+    width: 62px;
+    height: 62px;
   }
 
   .track-list li {
@@ -367,35 +368,34 @@
   }
 
   .genre-card {
-    min-height: 88px;
+    min-height: 86px;
     padding: 13px;
   }
 
   .genre-card-content {
-    padding-left: 43px;
+    padding-left: 0;
   }
 
   .genre-index {
-    position: absolute;
-    top: 0;
-    left: 0;
+    position: static;
   }
 
   .genre-card h4 {
-    margin: 1px 0 5px;
+    margin: 10px 0 5px;
   }
 
   .spotlight-card {
-    grid-template-columns: 82px minmax(0, 1fr);
+    grid-template-columns: 76px minmax(0, 1fr);
   }
 
   .spotlight-art {
-    min-height: 82px;
+    width: 76px;
+    height: 76px;
   }
 
-  .spotlight-art::before {
-    width: 61px;
-    height: 61px;
+  .spotlight-art.is-fallback::before {
+    width: 54px;
+    height: 54px;
   }
 
   .art-core {
