@@ -12,6 +12,52 @@ function slugify(value) {
   return value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 }
 
+const SPOTIFY_ALBUM_IMAGE_VARIANTS = {
+  small: 'ab67616d00004851',
+  medium: 'ab67616d00001e02',
+  large: 'ab67616d0000b273',
+};
+const SPOTIFY_ALBUM_IMAGE_PATH_RE =
+  /^\/image\/ab67616d(?:00004851|00001e02|0000b273)([a-z0-9]{24})$/i;
+
+function getOptimizedSpotifyImageUrls(imageSources, preferredSize = 'medium') {
+  const originals = [...new Set(
+    (Array.isArray(imageSources) ? imageSources : [imageSources])
+      .map(value => String(value ?? '').trim())
+      .filter(Boolean),
+  )];
+  const variantOrder = {
+    small: ['small', 'medium', 'large'],
+    medium: ['medium', 'large', 'small'],
+    large: ['large', 'medium', 'small'],
+  }[preferredSize] ?? ['medium', 'large', 'small'];
+  const optimized = [];
+
+  originals.forEach(source => {
+    try {
+      const url = new URL(source);
+      const match =
+        url.protocol === 'https:' && url.hostname === 'i.scdn.co'
+          ? url.pathname.match(SPOTIFY_ALBUM_IMAGE_PATH_RE)
+          : null;
+
+      if (!match) {
+        return;
+      }
+
+      variantOrder.forEach(size => {
+        const variantUrl = new URL(url.href);
+        variantUrl.pathname = `/image/${SPOTIFY_ALBUM_IMAGE_VARIANTS[size]}${match[1]}`;
+        optimized.push(variantUrl.href);
+      });
+    } catch {
+      // Keep unknown providers unchanged and use their original URL below.
+    }
+  });
+
+  return [...new Set([...optimized, ...originals])];
+}
+
 function getSpotifyTrackId(track) {
   const explicitId = String(
     track?.spotifyTrackId ?? track?.spotifyId ?? track?.id ?? '',
@@ -75,6 +121,7 @@ async function safeJson(response) {
 export {
   clamp,
   createRandomString,
+  getOptimizedSpotifyImageUrls,
   getSpotifyTrackId,
   hashString,
   makeTrackKey,

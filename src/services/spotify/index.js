@@ -7,11 +7,12 @@ import {
 import { clearChildren, createEmptyState, sanitizeHttpUrl } from '../../shared/dom.js';
 import {
   createRandomString,
+  getOptimizedSpotifyImageUrls,
   getSpotifyTrackId,
   makeTrackKey,
   makeTrackKeyFromSpotify,
   safeJson,
-} from '../../shared/utils.js?v=20260715-7';
+} from '../../shared/utils.js?v=20260716-1';
 import { renderLikedTracks, renderPlaylistList } from '../../pages/library/index.js';
 import {
   renderProfileCard,
@@ -430,25 +431,29 @@ function createSpotifyService({
       elements.vinylAlbumArt,
       elements.vinylLabelFallback,
       playback?.albumImages?.length ? playback.albumImages : playback?.albumImage,
+      'small',
     );
-    renderVinylArtworkTarget(
-      elements.vinylModalAlbumArt,
-      elements.vinylModalLabelFallback,
-      playback?.albumImages?.length ? playback.albumImages : playback?.albumImage,
-    );
+    if (elements.vinylModal?.open) {
+      renderVinylArtworkTarget(
+        elements.vinylModalAlbumArt,
+        elements.vinylModalLabelFallback,
+        playback?.albumImages?.length ? playback.albumImages : playback?.albumImage,
+        'medium',
+      );
+    }
     renderVinylProgress(playback, { force: forceProgressSync });
   }
 
-  function renderVinylArtworkTarget(image, fallback, imageSources) {
+  function renderVinylArtworkTarget(image, fallback, imageSources, preferredSize) {
     if (!image || !fallback) {
       return;
     }
 
-    const imageUrls = [...new Set(
+    const imageUrls = getOptimizedSpotifyImageUrls([...new Set(
       (Array.isArray(imageSources) ? imageSources : [imageSources])
         .map(sanitizeHttpUrl)
         .filter(Boolean),
-    )];
+    )], preferredSize);
     const artworkKey = imageUrls.join('|');
 
     if (!imageUrls.length) {

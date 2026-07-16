@@ -13,13 +13,15 @@ import {
   createTextBlock,
 } from '../../shared/dom.js';
 import {
+  getOptimizedSpotifyImageUrls,
   getSpotifyTrackId,
   hashString,
   makeTrackKey,
   slugify,
-} from '../../shared/utils.js?v=20260715-7';
+} from '../../shared/utils.js?v=20260716-1';
 
 function createHomePage({ likeTrack, renderGenreMap, renderMapSelection, setActiveNav, showView }) {
+  const GENRE_CATALOG_VERSION = '20260716-1';
   const GENRE_DETAIL_RETRY_MS = 60_000;
   const COVER_IMAGE_RETRY_DELAY_MS = 750;
   const genreDetailRequests = new Map();
@@ -51,7 +53,9 @@ function createHomePage({ likeTrack, renderGenreMap, renderMapSelection, setActi
   }
 
   async function fetchGenreFile(path) {
-    const response = await fetch(path, { cache: 'no-cache' });
+    const response = await fetch(`${path}?v=${GENRE_CATALOG_VERSION}`, {
+      cache: 'force-cache',
+    });
     if (!response.ok) {
       throw new Error(`${path} unavailable`);
     }
@@ -115,11 +119,6 @@ function createHomePage({ likeTrack, renderGenreMap, renderMapSelection, setActi
   }
 
   async function refreshGenresFromBackend() {
-    const prefetchedGenreId = state.currentGenreId ?? state.filteredGenres[0]?.id;
-    const prefetchedDetailRequest = prefetchedGenreId
-      ? requestGenreDetails(prefetchedGenreId).catch(() => null)
-      : null;
-
     try {
       const backendGenres = await fetchBackendGenres();
       commitGenreCatalog(backendGenres, { usingBackendGenres: true });
@@ -130,10 +129,7 @@ function createHomePage({ likeTrack, renderGenreMap, renderMapSelection, setActi
           : state.filteredGenres[0]?.id;
 
       if (targetGenreId) {
-        void showGenre(
-          targetGenreId,
-          targetGenreId === prefetchedGenreId ? prefetchedDetailRequest : null,
-        );
+        void showGenre(targetGenreId);
       }
     } catch {
       updateSearchStatus(buildSearchToken(state.searchQuery));
@@ -597,6 +593,7 @@ function createHomePage({ likeTrack, renderGenreMap, renderMapSelection, setActi
   }
 
   function renderTrackLoading() {
+    elements.trackList.dataset.renderSignature = `loading:${state.currentGenreId ?? ''}`;
     clearChildren(elements.trackList);
     elements.trackList.appendChild(
       createEmptyState('Spotify에서 대표 트랙을 불러오는 중입니다.', {
@@ -617,6 +614,24 @@ function createHomePage({ likeTrack, renderGenreMap, renderMapSelection, setActi
   }
 
   function renderTracks(tracks) {
+    const renderSignature = tracks.map(track => [
+      makeTrackKey(track),
+      track.title,
+      track.artist,
+      track.album,
+      track.durationMs,
+      getTrackImageUrls(track, 'small')[0] ?? '',
+      state.spotify.likedTrackKeys.has(makeTrackKey(track)) ? 'liked' : 'unliked',
+    ].join('\u0001')).join('\u0002');
+
+    if (
+      elements.trackList.dataset.renderSignature === renderSignature &&
+      elements.trackList.childElementCount > 0
+    ) {
+      return;
+    }
+
+    elements.trackList.dataset.renderSignature = renderSignature;
     clearChildren(elements.trackList);
 
     if (!tracks.length) {
@@ -666,7 +681,7 @@ function createHomePage({ likeTrack, renderGenreMap, renderMapSelection, setActi
       className: 'track-cover',
       attributes: { 'aria-hidden': 'true' },
     });
-    const imageUrls = getTrackImageUrls(track);
+    const imageUrls = getTrackImageUrls(track, 'small');
     const recoverImageUrl = getSpotifyCoverRecovery(track);
 
     applyFallbackTrackCover(cover, track);
@@ -704,10 +719,21 @@ function createHomePage({ likeTrack, renderGenreMap, renderMapSelection, setActi
   }
 
   function renderSpotlightCover(track) {
+    const imageUrls = getTrackImageUrls(track, 'medium');
+    const recoverImageUrl = getSpotifyCoverRecovery(track);
+    const artworkKey = [makeTrackKey(track ?? {}), ...imageUrls].join('|');
+
+    if (
+      elements.playerAlbumArt.dataset.artworkKey === artworkKey &&
+      elements.playerAlbumArt.dataset.loadState !== 'error'
+    ) {
+      return;
+    }
+
+    elements.playerAlbumArt.dataset.artworkKey = artworkKey;
+    elements.playerAlbumArt.dataset.loadState = imageUrls.length ? 'loading' : 'fallback';
     clearChildren(elements.playerAlbumArt);
     elements.playerAlbumArt.classList.remove('has-image', 'is-fallback');
-    const imageUrls = getTrackImageUrls(track);
-    const recoverImageUrl = getSpotifyCoverRecovery(track);
 
     applySpotlightFallback(track);
 
@@ -732,23 +758,26 @@ function createHomePage({ likeTrack, renderGenreMap, renderMapSelection, setActi
           return;
         }
         elements.playerAlbumArt.classList.add('has-image');
+        elements.playerAlbumArt.dataset.loadState = 'ready';
         image.classList.add('is-ready');
       },
       onError: () => {
         if (image.parentElement === elements.playerAlbumArt) {
+          elements.playerAlbumArt.dataset.loadState = 'error';
           image.remove();
         }
       },
     });
   }
 
-  function getTrackImageUrls(track) {
-    return [...new Set([
+  function getTrackImageUrls(track, preferredSize = 'medium') {
+    const imageUrls = [...new Set([
       track?.albumImage,
       ...(track?.albumImages ?? []),
       track?.imageUrl,
       track?.image,
     ].map(sanitizeHttpUrl).filter(Boolean))];
+    return getOptimizedSpotifyImageUrls(imageUrls, preferredSize);
   }
 
   function getSpotifyCoverRecovery(track) {

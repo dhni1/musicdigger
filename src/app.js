@@ -10,9 +10,9 @@ import {
   toggleTheme,
   updateThemeUI,
 } from './shared/navigation.js';
-import { createHomePage } from './pages/home/index.js?v=20260715-7';
+import { createHomePage } from './pages/home/index.js?v=20260716-1';
 import { createMapPage } from './pages/map/index.js';
-import { createSpotifyService } from './services/spotify/index.js?v=20260715-7';
+import { createSpotifyService } from './services/spotify/index.js?v=20260716-1';
 
 let homePage;
 let spotifyService;
