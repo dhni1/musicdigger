@@ -67,6 +67,9 @@ def run_track_metadata_task(callback, args):
     finally:
         TRACK_METADATA_TASK_SLOTS.release()
 PUBLIC_ROOT_FILES = {
+    "apple-touch-icon.png",
+    "favicon.ico",
+    "favicon.svg",
     "index.html",
     "design.css",
     "script.js",

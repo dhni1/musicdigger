@@ -2,7 +2,7 @@
 @import "./styles/shared/layout.css?v=20260716-2";
 @import "./styles/shared/components.css";
 @import "./styles/shared/vinyl-modal.css?v=20260716-2";
-@import "./styles/pages/home.css";
+@import "./styles/pages/home.css?v=20260723-1";
 @import "./styles/pages/library.css";
 @import "./styles/pages/profile.css";
 @import "./styles/pages/map.css";
